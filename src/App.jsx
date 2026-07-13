@@ -738,113 +738,187 @@ export default function App() {
             </button>
           </div>
           {showBulanFilters && (
-            <div className="space-y-3 pt-3 border-t border-[#2A2A2A]">
-              
-              {/* TOGGLE - full width */}
+            <div className="space-y-3 pt-3 border-t border-gray-700/30">
               <div className="flex items-center gap-3">
                 <span className="text-xs text-silver-400 font-medium">
-                  {filterGunaFilterBulan ? '🔴 Guna Filter Bulan' : '⚪ Guna Status Semasa 2026'}
+                  {filterGunaFilterBulan
+                    ? '🔴 Guna Filter Bulan'
+                    : '⚪ Guna Status Semasa 2026'}
                 </span>
-                <div 
-                  onClick={() => { 
-                    const n = !filterGunaFilterBulan; 
-                    setFilterGunaFilterBulan(n); 
-                    if(n && !filterBulanMula) setFilterBulanMula(monthlyColumns[0]?.label||''); 
-                  }} 
-                  className={`toggle-switch ${filterGunaFilterBulan?'toggle-switch-on':'toggle-switch-off'}`}
+                <div
+                  onClick={() => {
+                    const n = !filterGunaFilterBulan;
+                    setFilterGunaFilterBulan(n);
+                    if (n && !filterBulanMula)
+                      setFilterBulanMula(monthlyColumns[0]?.label || '');
+                  }}
+                  className={`toggle-switch ${
+                    filterGunaFilterBulan
+                      ? 'toggle-switch-on'
+                      : 'toggle-switch-off'
+                  }`}
                 >
-                  <div className={`toggle-knob ${filterGunaFilterBulan?'left-[22px]':'left-[2px]'}`}/>
+                  <div
+                    className={`toggle-knob ${
+                      filterGunaFilterBulan ? 'left-[22px]' : 'left-[2px]'
+                    }`}
+                  />
                 </div>
               </div>
-
-              {/* DROPDOWNS + CHECKBOX + INFO - FLEX ROW */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end' }}>
-                
-                {/* BULAN MULA */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">📅 Bulan Mula</label>
-                  <select 
-                    value={filterBulanMula} 
-                    onChange={e => { setFilterBulanMula(e.target.value); if(!filterGunaFilterBulan) setFilterGunaFilterBulan(true); }} 
-                    className="filter-select w-full" 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">
+                    📅 Bulan Mula
+                  </label>
+                  <select
+                    value={filterBulanMula}
+                    onChange={(e) => {
+                      setFilterBulanMula(e.target.value);
+                      if (!filterGunaFilterBulan)
+                        setFilterGunaFilterBulan(true);
+                    }}
+                    className="filter-select w-full"
                     disabled={!filterGunaFilterBulan}
                   >
                     <option value="">Pilih Bulan</option>
-                    {monthlyColumns.map(mc => <option key={mc.label} value={mc.label}>{mc.label}</option>)}
+                    {monthlyColumns.map((mc) => (
+                      <option key={mc.label} value={mc.label}>
+                        {mc.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
-
-                {/* BULAN AKHIR */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">📅 Bulan Akhir</label>
-                  <select 
-                    value={filterBulanAkhir} 
-                    onChange={e => { setFilterBulanAkhir(e.target.value); if(!filterGunaFilterBulan) setFilterGunaFilterBulan(true); }} 
-                    className="filter-select w-full" 
+                <div>
+                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">
+                    📅 Bulan Akhir
+                  </label>
+                  <select
+                    value={filterBulanAkhir}
+                    onChange={(e) => {
+                      setFilterBulanAkhir(e.target.value);
+                      if (!filterGunaFilterBulan)
+                        setFilterGunaFilterBulan(true);
+                    }}
+                    className="filter-select w-full"
                     disabled={!filterGunaFilterBulan || !filterBulanMula}
                   >
                     <option value="">Sama dengan Bulan Mula</option>
                     {monthlyColumns
-                      .filter(mc => { 
-                        const idxs = monthlyColumns.map(m => m.label); 
-                        return idxs.indexOf(mc.label) >= idxs.indexOf(filterBulanMula); 
+                      .filter((mc) => {
+                        const idxs = monthlyColumns.map((m) => m.label);
+                        return (
+                          idxs.indexOf(mc.label) >=
+                          idxs.indexOf(filterBulanMula)
+                        );
                       })
-                      .map(mc => <option key={mc.label} value={mc.label}>{mc.label}</option>)
-                    }
+                      .map((mc) => (
+                        <option key={mc.label} value={mc.label}>
+                          {mc.label}
+                        </option>
+                      ))}
                   </select>
                 </div>
-
-                {/* CHECKBOX KEROSAKAN */}
-                <div style={{ flex: '1 1 200px', minWidth: '180px' }}>
-                  <label className="flex items-center gap-3 cursor-pointer bg-[#1E1E1E] rounded-xl px-4 py-2.5 border border-[#2A2A2A] hover:border-[#444] transition-all h-[42px]">
-                    <input 
-                      type="checkbox" 
-                      checked={filterKerosakanSahaja} 
-                      onChange={e => { setFilterKerosakanSahaja(e.target.checked); if(!filterGunaFilterBulan) setFilterGunaFilterBulan(true); }} 
-                      className="w-4 h-4 rounded accent-[#CC0000]" 
-                      disabled={!filterGunaFilterBulan}
-                    />
-                    <div>
-                      <span className="text-sm text-white font-semibold flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-amber-400"/> Kerosakan Sahaja
-                      </span>
-                    </div>
-                  </label>
-                </div>
-
-                {/* INFO JULAT */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <div className="bg-[#1E1E1E] rounded-xl px-4 py-2.5 border border-[#2A2A2A] h-[42px] flex items-center">
-                    <div>
-                      <span className="text-xs text-[#888] block">Julat:</span>
-                      <span className="text-sm text-white font-bold">{getBulanLabel()}</span>
-                    </div>
-                  </div>
-                </div>
-
               </div>
-
-              {/* BUTANG PANTAS */}
-              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#2A2A2A]">
-                <span className="text-xs text-[#888] mr-2 font-medium">⚡ Pantas:</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="flex items-center gap-3 cursor-pointer bg-navy-900/50 rounded-xl px-4 py-3 border border-gray-700/30 hover:border-bomba-700/40 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={filterKerosakanSahaja}
+                    onChange={(e) => {
+                      setFilterKerosakanSahaja(e.target.checked);
+                      if (!filterGunaFilterBulan)
+                        setFilterGunaFilterBulan(true);
+                    }}
+                    className="w-4 h-4 rounded accent-bomba-600"
+                    disabled={!filterGunaFilterBulan}
+                  />
+                  <div>
+                    <span className="text-sm text-white font-semibold flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />{' '}
+                      Kerosakan Sahaja
+                    </span>
+                    <span className="text-xs text-silver-500 block">
+                      Hanya rekod bermasalah
+                    </span>
+                  </div>
+                </label>
+                <div className="bg-navy-900/50 rounded-xl px-4 py-3 border border-gray-700/30">
+                  <span className="text-xs text-silver-500 block font-medium">
+                    Julat Aktif:
+                  </span>
+                  <span className="text-sm text-white font-bold">
+                    {getBulanLabel()}
+                  </span>
+                  {filterKerosakanSahaja && (
+                    <span className="text-xs text-amber-400 block font-medium">
+                      ⚠️ Kerosakan sahaja
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-gray-700/30">
+                <span className="text-xs text-silver-500 mr-2 font-medium">
+                  ⚡ Pantas:
+                </span>
                 {[
-                  ['6 Bulan Terkini', () => { setFilterGunaFilterBulan(true); setFilterBulanMula(monthlyColumns[5]?.label||''); setFilterBulanAkhir(monthlyColumns[0]?.label||''); setFilterKerosakanSahaja(false); }],
-                  ['Tahun 2026', () => { setFilterGunaFilterBulan(true); setFilterBulanMula('JAN 2026'); setFilterBulanAkhir('JUN 2026'); setFilterKerosakanSahaja(false); }],
-                  ['Tahun 2025', () => { setFilterGunaFilterBulan(true); setFilterBulanMula('JAN 2025'); setFilterBulanAkhir('DIS 2025'); setFilterKerosakanSahaja(false); }],
-                  ['🔥 Kerosakan 2026', () => { setFilterGunaFilterBulan(true); setFilterBulanMula('JAN 2026'); setFilterBulanAkhir('JUN 2026'); setFilterKerosakanSahaja(true); }],
-                  ['Reset', () => { setFilterGunaFilterBulan(false); setFilterBulanMula(''); setFilterBulanAkhir(''); setFilterKerosakanSahaja(false); }],
+                  [
+                    '6 Bulan Terkini',
+                    () => {
+                      setFilterGunaFilterBulan(true);
+                      setFilterBulanMula(monthlyColumns[5]?.label || '');
+                      setFilterBulanAkhir(monthlyColumns[0]?.label || '');
+                      setFilterKerosakanSahaja(false);
+                    },
+                  ],
+                  [
+                    'Tahun 2026',
+                    () => {
+                      setFilterGunaFilterBulan(true);
+                      setFilterBulanMula('JAN 2026');
+                      setFilterBulanAkhir('JUN 2026');
+                      setFilterKerosakanSahaja(false);
+                    },
+                  ],
+                  [
+                    'Tahun 2025',
+                    () => {
+                      setFilterGunaFilterBulan(true);
+                      setFilterBulanMula('JAN 2025');
+                      setFilterBulanAkhir('DIS 2025');
+                      setFilterKerosakanSahaja(false);
+                    },
+                  ],
+                  [
+                    '🔥 Kerosakan 2026',
+                    () => {
+                      setFilterGunaFilterBulan(true);
+                      setFilterBulanMula('JAN 2026');
+                      setFilterBulanAkhir('JUN 2026');
+                      setFilterKerosakanSahaja(true);
+                    },
+                  ],
+                  [
+                    'Reset',
+                    () => {
+                      setFilterGunaFilterBulan(false);
+                      setFilterBulanMula('');
+                      setFilterBulanAkhir('');
+                      setFilterKerosakanSahaja(false);
+                    },
+                  ],
                 ].map(([label, action]) => (
-                  <button 
-                    key={label} 
-                    onClick={action} 
-                    className="text-xs bg-[#1E1E1E] hover:bg-[#2A2A2A] text-[#999] hover:text-white px-3 py-1.5 rounded-full transition-all border border-[#2A2A2A] hover:border-[#444] font-medium"
+                  <button
+                    key={label}
+                    onClick={action}
+                    className="text-xs bg-navy-800 hover:bg-navy-900 text-silver-400 hover:text-white px-3 py-1.5 rounded-full transition-all border border-gray-700/30 hover:border-bomba-600/40 font-medium"
                   >
                     {label}
                   </button>
                 ))}
               </div>
             </div>
-          )}        </div>
+          )}
+        </div>
 
         {/* FILTER UMUM */}
         <div className="card-bomba">
@@ -869,87 +943,92 @@ export default function App() {
           {showFilters && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                {/* ZON */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">📍 ZON</label>
-                  <select value={filterZon} onChange={e => setFilterZon(e.target.value)} className="filter-select w-full">
-                    <option value="">Semua ZON</option>
-                    {uniqueValues.zon.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                </div>
-                
-                {/* BALAI */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">🏢 BALAI</label>
-                  <select value={filterBalai} onChange={e => setFilterBalai(e.target.value)} className="filter-select w-full">
-                    <option value="">Semua BALAI</option>
-                    {uniqueValues.balai.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                </div>
-                
-                {/* JENIS TERMINAL */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">📡 TERMINAL</label>
-                  <select value={filterJenisTerminal} onChange={e => setFilterJenisTerminal(e.target.value)} className="filter-select w-full">
-                    <option value="">Semua Jenis</option>
-                    {uniqueValues.jenisTerminal.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                </div>
-                
-                {/* TAHUN */}
-                <div style={{ flex: '1 1 150px', minWidth: '120px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">📅 TAHUN</label>
-                  <select value={filterTahunIsytihar} onChange={e => setFilterTahunIsytihar(e.target.value)} className="filter-select w-full">
-                    <option value="">Semua Tahun</option>
-                    {uniqueValues.tahunIsytihar.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                </div>
-                
-                {/* STATUS */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">📊 STATUS</label>
-                  <select value={filterStatusSemasa} onChange={e => setFilterStatusSemasa(e.target.value)} className="filter-select w-full">
-                    <option value="">Semua Status</option>
-                    {Object.keys(STATUS_COLORS).map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                
-                {/* TANGGUNGJAWAB */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">👤 T.JAWAB</label>
-                  <select value={filterTanggungjawab} onChange={e => setFilterTanggungjawab(e.target.value)} className="filter-select w-full">
+                {[
+                  ['ZON', filterZon, setFilterZon, uniqueValues.zon],
+                  ['BALAI', filterBalai, setFilterBalai, uniqueValues.balai],
+                  [
+                    'JENIS TERMINAL',
+                    filterJenisTerminal,
+                    setFilterJenisTerminal,
+                    uniqueValues.jenisTerminal,
+                  ],
+                  [
+                    'TAHUN ISYTIHAR',
+                    filterTahunIsytihar,
+                    setFilterTahunIsytihar,
+                    uniqueValues.tahunIsytihar,
+                  ],
+                  [
+                    'TANGGUNGJAWAB',
+                    filterTanggungjawab,
+                    setFilterTanggungjawab,
+                    uniqueValues.tanggungjawab,
+                  ],
+                  [
+                    'FINDING VS SPA',
+                    filterFinding,
+                    setFilterFinding,
+                    uniqueValues.finding,
+                  ],
+                ].map(([label, val, setter, options]) => (
+                  <div key={label}>
+                    <label className="block text-xs text-silver-400 mb-1.5 font-medium">
+                      {label}
+                    </label>
+                    <select
+                      value={val}
+                      onChange={(e) => setter(e.target.value)}
+                      className="filter-select w-full"
+                    >
+                      <option value="">Semua</option>
+                      {options.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">
+                    STATUS ({getBulanLabel()})
+                  </label>
+                  <select
+                    value={filterStatusSemasa}
+                    onChange={(e) => setFilterStatusSemasa(e.target.value)}
+                    className="filter-select w-full"
+                  >
                     <option value="">Semua</option>
-                    {uniqueValues.tanggungjawab.map(v => <option key={v} value={v}>{v}</option>)}
+                    {Object.keys(STATUS_COLORS).map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                
-                {/* FINDING */}
-                <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">🔍 FINDING</label>
-                  <select value={filterFinding} onChange={e => setFilterFinding(e.target.value)} className="filter-select w-full">
-                    <option value="">Semua</option>
-                    {uniqueValues.finding.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
+                <div className="md:col-span-2">
+                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">
+                    🔍 CARIAN (NO. SIRI / ISSI / SUBSCRIBER)
+                  </label>
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-silver-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      placeholder="Taip untuk mencari..."
+                      className="filter-input pl-10"
+                    />
+                    {searchText && (
+                      <X
+                        className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-silver-500 cursor-pointer hover:text-white"
+                        onClick={() => setSearchText('')}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* CARIAN - Full width */}
-              <div>
-                <label className="block text-xs text-silver-400 mb-1.5 font-medium">🔎 CARIAN (NO. SIRI / ISSI / SUBSCRIBER)</label>
-                <div className="relative">
-                  <Search className="w-4 h-4 text-[#666] absolute left-3 top-1/2 -translate-y-1/2"/>
-                  <input 
-                    value={searchText} 
-                    onChange={e => setSearchText(e.target.value)} 
-                    placeholder="Taip untuk mencari..." 
-                    className="filter-input pl-10"
-                  />
-                  {searchText && 
-                    <X className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[#666] cursor-pointer hover:text-white" onClick={() => setSearchText('')}/>
-                  }
-                </div>
-              </div>              </div>
               {(filterZon ||
                 filterBalai ||
                 filterJenisTerminal ||
