@@ -1,0 +1,21 @@
+h1/* Custom overrides if needed */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Smooth transitions for filter changes */
+.card, .stat-card {
+  transition: all 0.3s ease;
+}
+
+/* Pulse animation for live indicator */
+@keyframes live-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.live-indicator {
+  animation: live-pulse 2s infinite;
+}
