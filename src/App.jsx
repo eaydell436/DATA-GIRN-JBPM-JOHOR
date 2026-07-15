@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import {
@@ -27,7 +27,6 @@ import {
   Wrench,
   Trash2,
   Truck,
-  Menu,
 } from 'lucide-react';
 import {
   BarChart,
@@ -90,42 +89,53 @@ const STATUS_ICONS = {
 };
 
 // ============================================
-// RESPONSIVE HOOK
-// ============================================
-const useMediaQuery = (query) => {
-  const [matches, setMatches] = useState(
-    () => window.matchMedia(query).matches
-  );
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const listener = (e) => setMatches(e.matches);
-    
-    // Modern browsers
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
-  }, [query]);
-
-  return matches;
-};
-
-// ============================================
 // HELPERS
 // ============================================
 const extractMonthlyColumns = (headers) => {
   const monthNames = [
-    'JUN 2026', 'MEI 2026', 'APRIL 2026', 'MAC 2026',
-    'FEB 2026', 'JAN 2026', 'DIS 2025', 'NOVEMBER 2025',
-    'OKT 2025', 'SEPT 2025', 'OGOS 2025', 'JULAI 2025',
-    'JUN 2025', 'MEI 2025', 'APR 2025', 'MAC 2025',
-    'FEB 2025', 'JAN 2025', 'DISEMBER 2024', 'NOV 2024',
-    'OKT 2024', 'SEPT 2024', 'OGOS 2024', 'JUL 2024',
-    'JUN 2024', 'MEI 2024', 'APR 2024', 'MAC 2024',
-    'FEB 2024', 'JAN 2024', 'DISEMBER', 'NOVEMBER',
-    'OKTOBER', 'SEPTEMBER', 'OGOS', 'JUL', 'JUN',
-    'MEI', 'APRIL', 'MAC', 'FEB', 'JAN',
+    'JUN 2026',
+    'MEI 2026',
+    'APRIL 2026',
+    'MAC 2026',
+    'FEB 2026',
+    'JAN 2026',
+    'DIS 2025',
+    'NOVEMBER 2025',
+    'OKT 2025',
+    'SEPT 2025',
+    'OGOS 2025',
+    'JULAI 2025',
+    'JUN 2025',
+    'MEI 2025',
+    'APR 2025',
+    'MAC 2025',
+    'FEB 2025',
+    'JAN 2025',
+    'DISEMBER 2024',
+    'NOV 2024',
+    'OKT 2024',
+    'SEPT 2024',
+    'OGOS 2024',
+    'JUL 2024',
+    'JUN 2024',
+    'MEI 2024',
+    'APR 2024',
+    'MAC 2024',
+    'FEB 2024',
+    'JAN 2024',
+    'DISEMBER',
+    'NOVEMBER',
+    'OKTOBER',
+    'SEPTEMBER',
+    'OGOS',
+    'JUL',
+    'JUN',
+    'MEI',
+    'APRIL',
+    'MAC',
+    'FEB',
+    'JAN',
   ];
-  
   return monthNames
     .map((mn) => {
       const statusCol = headers.find(
@@ -176,37 +186,6 @@ const isKerosakan = (status) => {
 };
 
 // ============================================
-// RESPONSIVE STYLES HELPER
-// ============================================
-const responsiveStyles = {
-  // Container padding
-  container: {
-    base: { padding: '20px' },
-    mobile: { padding: '12px' },
-    tablet: { padding: '16px' },
-  },
-  
-  // Heading sizes
-  heading: {
-    base: { fontSize: '28px' },
-    mobile: { fontSize: '18px' },
-    tablet: { fontSize: '22px' },
-  },
-  
-  // Card padding
-  card: {
-    base: { padding: '20px' },
-    mobile: { padding: '14px' },
-  },
-  
-  // Button sizes
-  button: {
-    base: { padding: '10px 18px', fontSize: '14px' },
-    mobile: { padding: '12px 16px', fontSize: '13px', minHeight: '44px' },
-  },
-};
-
-// ============================================
 // COMPONENTS
 // ============================================
 const StatusBadge = memo(({ status }) => {
@@ -215,9 +194,21 @@ const StatusBadge = memo(({ status }) => {
     ROSAK: { bg: '#ffebee', text: '#c62828', border: '#ef9a9a' },
     'TIDAK DIJUMPAI': { bg: '#fff8e1', text: '#f57f17', border: '#ffe082' },
     'TIDAK DAPAT DIUJI': { bg: '#f3e5f5', text: '#6a1b9a', border: '#ce93d8' },
-    'BER - TINDAKAN SAPURA': { bg: '#e3f2fd', text: '#1565c0', border: '#90caf9' },
-    'BER - TINDAKAN JABATAN': { bg: '#e0f7fa', text: '#00838f', border: '#80deea' },
-    'BER - SELESAI PROSES PELUPUSAN': { bg: '#f5f5f5', text: '#616161', border: '#bdbdbd' },
+    'BER - TINDAKAN SAPURA': {
+      bg: '#e3f2fd',
+      text: '#1565c0',
+      border: '#90caf9',
+    },
+    'BER - TINDAKAN JABATAN': {
+      bg: '#e0f7fa',
+      text: '#00838f',
+      border: '#80deea',
+    },
+    'BER - SELESAI PROSES PELUPUSAN': {
+      bg: '#f5f5f5',
+      text: '#616161',
+      border: '#bdbdbd',
+    },
     'TIADA DATA': { bg: '#eceff1', text: '#546e7a', border: '#b0bec5' },
   };
   const colors = colorMap[status] || colorMap['TIADA DATA'];
@@ -225,10 +216,9 @@ const StatusBadge = memo(({ status }) => {
 
   return (
     <span
-      className="status-badge"
       style={{
-        fontSize: 'clamp(10px, 1.5vw, 12px)',
-        padding: 'clamp(3px, 0.5vw, 4px) clamp(6px, 1vw, 10px)',
+        fontSize: '12px',
+        padding: '4px 10px',
         borderRadius: '20px',
         border: `1px solid ${colors.border}`,
         backgroundColor: colors.bg,
@@ -240,8 +230,7 @@ const StatusBadge = memo(({ status }) => {
         fontWeight: '500',
       }}
     >
-      <Icon style={{ width: 'clamp(10px, 1.5vw, 12px)', height: 'clamp(10px, 1.5vw, 12px)' }} /> 
-      {status}
+      <Icon style={{ width: '12px', height: '12px' }} /> {status}
     </span>
   );
 });
@@ -258,10 +247,9 @@ const FilterBadge = memo(({ label, onRemove, type = 'default' }) => {
 
   return (
     <span
-      className="filter-badge"
       style={{
-        fontSize: 'clamp(10px, 1.5vw, 12px)',
-        padding: 'clamp(3px, 0.5vw, 4px) clamp(6px, 1vw, 10px)',
+        fontSize: '12px',
+        padding: '4px 10px',
         borderRadius: '20px',
         display: 'flex',
         alignItems: 'center',
@@ -270,12 +258,11 @@ const FilterBadge = memo(({ label, onRemove, type = 'default' }) => {
         backgroundColor: style.bg,
         color: style.text,
         border: `1px solid ${style.border}`,
-        minHeight: '32px',
       }}
     >
       {label}
       <X
-        style={{ width: '14px', height: '14px', cursor: 'pointer', minWidth: '14px' }}
+        style={{ width: '12px', height: '12px', cursor: 'pointer' }}
         onClick={onRemove}
       />
     </span>
@@ -284,21 +271,19 @@ const FilterBadge = memo(({ label, onRemove, type = 'default' }) => {
 
 FilterBadge.displayName = 'FilterBadge';
 
-const PieChartCard = memo(({ title, data, colorMap, isMobile }) => (
+const PieChartCard = memo(({ title, data, colorMap }) => (
   <div
-    className="pie-card"
     style={{
       backgroundColor: '#fff',
       borderRadius: '16px',
-      padding: isMobile ? '14px' : '20px',
+      padding: '20px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       border: '1px solid #e0e0e0',
-      width: '100%',
     }}
   >
     <h3
       style={{
-        fontSize: 'clamp(11px, 1.8vw, 14px)',
+        fontSize: '14px',
         fontWeight: '600',
         color: '#424242',
         marginBottom: '16px',
@@ -309,7 +294,7 @@ const PieChartCard = memo(({ title, data, colorMap, isMobile }) => (
     >
       {title}
     </h3>
-    <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
+    <ResponsiveContainer width="100%" height={220}>
       <RePieChart>
         <Pie
           data={data}
@@ -317,14 +302,17 @@ const PieChartCard = memo(({ title, data, colorMap, isMobile }) => (
           nameKey="name"
           cx="50%"
           cy="50%"
-          outerRadius={isMobile ? 60 : 80}
-          innerRadius={isMobile ? 30 : 40}
+          outerRadius={80}
+          innerRadius={40}
           paddingAngle={4}
         >
           {data.map((_, idx) => (
             <Cell
               key={idx}
-              fill={colorMap?.[data[idx].name] || PIE_COLORS[idx % PIE_COLORS.length]}
+              fill={
+                colorMap?.[data[idx].name] ||
+                PIE_COLORS[idx % PIE_COLORS.length]
+              }
               stroke="transparent"
             />
           ))}
@@ -336,7 +324,6 @@ const PieChartCard = memo(({ title, data, colorMap, isMobile }) => (
             borderRadius: '8px',
             color: '#333',
             fontFamily: 'Inter, sans-serif',
-            fontSize: '12px',
           }}
         />
       </RePieChart>
@@ -350,11 +337,11 @@ const PieChartCard = memo(({ title, data, colorMap, isMobile }) => (
         marginTop: '12px',
       }}
     >
-      {data.slice(0, isMobile ? 3 : 5).map((e, i) => (
+      {data.slice(0, 5).map((e, i) => (
         <span
           key={i}
           style={{
-            fontSize: 'clamp(10px, 1.3vw, 12px)',
+            fontSize: '12px',
             color: '#757575',
             display: 'flex',
             alignItems: 'center',
@@ -381,27 +368,34 @@ const PieChartCard = memo(({ title, data, colorMap, isMobile }) => (
 PieChartCard.displayName = 'PieChartCard';
 
 // ============================================
-// MULTI-SELECT DROPDOWN (MOBILE OPTIMIZED)
+// MULTI-SELECT DROPDOWN COMPONENT
 // ============================================
 const MultiSelectDropdown = memo(
-  ({ options, selected, onChange, placeholder, searchPlaceholder, disabled }) => {
+  ({
+    options,
+    selected,
+    onChange,
+    placeholder,
+    searchPlaceholder,
+    disabled,
+  }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
-    const dropdownRef = useRef(null);
+    const dropdownRef = React.useRef(null);
 
     useEffect(() => {
       const handleClickOutside = (event) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target)
+        ) {
           setIsOpen(false);
           setSearch('');
         }
       };
       document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-      return () => {
+      return () =>
         document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside);
-      };
     }, []);
 
     const filteredOptions = useMemo(
@@ -423,24 +417,25 @@ const MultiSelectDropdown = memo(
       [selected, onChange]
     );
 
-    const selectAll = useCallback(() => onChange([...options]), [options, onChange]);
+    const selectAll = useCallback(
+      () => onChange([...options]),
+      [options, onChange]
+    );
     const deselectAll = useCallback(() => onChange([]), [onChange]);
 
     return (
-      <div ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
+      <div ref={dropdownRef} style={{ position: 'relative' }}>
         <button
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className="dropdown-trigger"
           style={{
             width: '100%',
-            padding: 'clamp(10px, 1.5vw, 12px) clamp(12px, 2vw, 14px)',
-            minHeight: '44px',
+            padding: '10px 14px',
             backgroundColor: '#fff',
             border: '1px solid #e0e0e0',
             borderRadius: '8px',
-            fontSize: 'clamp(13px, 1.5vw, 14px)',
+            fontSize: '13px',
             textAlign: 'left',
             display: 'flex',
             alignItems: 'center',
@@ -457,7 +452,6 @@ const MultiSelectDropdown = memo(
             style={{
               width: '16px',
               height: '16px',
-              minWidth: '16px',
               color: '#999',
               transform: isOpen ? 'rotate(180deg)' : 'none',
               transition: 'transform 0.2s',
@@ -467,22 +461,19 @@ const MultiSelectDropdown = memo(
 
         {isOpen && (
           <div
-            className="dropdown-menu"
             style={{
-              position: 'fixed',
-              top: 'auto',
-              left: '50%',
-              transform: 'translateX(-50%)',
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
               zIndex: 9999,
               marginTop: '4px',
               backgroundColor: '#fff',
               border: '1px solid #e0e0e0',
               borderRadius: '12px',
-              maxHeight: '50vh',
-              width: '90vw',
-              maxWidth: '400px',
+              maxHeight: '300px',
               overflow: 'hidden',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
             }}
           >
             <div style={{ padding: '8px', borderBottom: '1px solid #f0f0f0' }}>
@@ -503,16 +494,14 @@ const MultiSelectDropdown = memo(
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="dropdown-search"
                   style={{
                     width: '100%',
-                    padding: '10px 10px 10px 32px',
+                    padding: '8px 8px 8px 32px',
                     border: '1px solid #e0e0e0',
                     borderRadius: '8px',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     outline: 'none',
                     boxSizing: 'border-box',
-                    minHeight: '44px',
                   }}
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -528,38 +517,32 @@ const MultiSelectDropdown = memo(
             >
               <button
                 onClick={selectAll}
-                className="dropdown-action-btn"
                 style={{
-                  fontSize: 'clamp(12px, 1.5vw, 13px)',
+                  fontSize: '12px',
                   color: '#1976d2',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '8px 12px',
-                  minHeight: '44px',
-                  fontWeight: '500',
+                  padding: '4px 8px',
                 }}
               >
                 Pilih Semua
               </button>
               <button
                 onClick={deselectAll}
-                className="dropdown-action-btn"
                 style={{
-                  fontSize: 'clamp(12px, 1.5vw, 13px)',
+                  fontSize: '12px',
                   color: '#999',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '8px 12px',
-                  minHeight: '44px',
-                  fontWeight: '500',
+                  padding: '4px 8px',
                 }}
               >
                 Reset
               </button>
             </div>
-            <div style={{ maxHeight: '35vh', overflowY: 'auto' }}>
+            <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
               {filteredOptions.length === 0 ? (
                 <div
                   style={{
@@ -576,22 +559,19 @@ const MultiSelectDropdown = memo(
                   <label
                     key={option}
                     onClick={() => toggleOption(option)}
-                    className="dropdown-option"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      padding: '12px',
+                      padding: '10px 12px',
                       cursor: 'pointer',
                       color: selected.includes(option) ? '#1976d2' : '#666',
                       backgroundColor: selected.includes(option)
                         ? '#f5f5f5'
                         : 'transparent',
-                      fontSize: 'clamp(13px, 1.5vw, 14px)',
+                      fontSize: '13px',
                       fontWeight: selected.includes(option) ? '600' : '400',
                       transition: 'background-color 0.15s',
-                      minHeight: '44px',
-                      borderBottom: '1px solid #f5f5f5',
                     }}
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.backgroundColor = '#fafafa')
@@ -609,9 +589,8 @@ const MultiSelectDropdown = memo(
                       checked={selected.includes(option)}
                       onChange={() => {}}
                       style={{
-                        width: '18px',
-                        height: '18px',
-                        minWidth: '18px',
+                        width: '16px',
+                        height: '16px',
                         accentColor: '#1976d2',
                       }}
                     />
@@ -633,18 +612,13 @@ MultiSelectDropdown.displayName = 'MultiSelectDropdown';
 // MAIN APP
 // ============================================
 export default function App() {
-  // Responsive breakpoints
-  const isMobile = useMediaQuery('(max-width: 640px)');
-  const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
-  const isDesktop = useMediaQuery('(min-width: 1025px)');
-
   const [rawData, setRawData] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [error, setError] = useState(null);
 
-  // Filters
+  // SEMUA FILTER DALAM SATU LAYER
   const [filterZon, setFilterZon] = useState([]);
   const [filterBalai, setFilterBalai] = useState([]);
   const [filterJenisTerminal, setFilterJenisTerminal] = useState([]);
@@ -657,22 +631,17 @@ export default function App() {
 
   const [showFilters, setShowFilters] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(isMobile ? 10 : 25);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Update rows per page when device changes
-  useEffect(() => {
-    setRowsPerPage(isMobile ? 10 : isTablet ? 20 : 25);
-  }, [isMobile, isTablet]);
-
+  // Cari header TARIKH PENGUJIAN (handle line break)
   const tarikhUjianHeader = useMemo(() => {
     return headers.find((h) =>
       h.replace(/\s+/g, ' ').trim().toUpperCase().includes('TARIKH PENGUJIAN')
     );
   }, [headers]);
 
-  // Fetch data
+  // Fetch data function
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -709,12 +678,26 @@ export default function App() {
     return () => clearInterval(i);
   }, [fetchData]);
 
-  const monthlyColumns = useMemo(() => extractMonthlyColumns(headers), [headers]);
-  const monthOptions = useMemo(() => monthlyColumns.map((mc) => mc.label), [monthlyColumns]);
+  // Extract monthly columns
+  const monthlyColumns = useMemo(
+    () => extractMonthlyColumns(headers),
+    [headers]
+  );
 
+  // Month options for filter
+  const monthOptions = useMemo(
+    () => monthlyColumns.map((mc) => mc.label),
+    [monthlyColumns]
+  );
+
+  // Unique values for all filters
   const uniqueValues = useMemo(() => {
     const g = (k) =>
-      [...new Set(rawData.map((d) => d[k]?.toString().trim()).filter((v) => v))].sort();
+      [
+        ...new Set(
+          rawData.map((d) => d[k]?.toString().trim()).filter((v) => v)
+        ),
+      ].sort();
     return {
       zon: g('ZON'),
       balai: g('BALAI'),
@@ -724,6 +707,7 @@ export default function App() {
     };
   }, [rawData]);
 
+  // Status semasa column
   const statusSemasaCol = useMemo(
     () =>
       headers.find(
@@ -734,11 +718,13 @@ export default function App() {
     [headers]
   );
 
+  // Get columns for selected months
   const selectedMonthColumns = useMemo(() => {
     if (filterBulanDipilih.length === 0) return [];
     return monthlyColumns.filter((mc) => filterBulanDipilih.includes(mc.label));
   }, [filterBulanDipilih, monthlyColumns]);
 
+  // Active status column
   const activeStatusCol = useMemo(() => {
     if (filterBulanDipilih.length > 0 && selectedMonthColumns.length > 0) {
       return selectedMonthColumns[0].status;
@@ -746,11 +732,17 @@ export default function App() {
     return statusSemasaCol;
   }, [filterBulanDipilih, selectedMonthColumns, statusSemasaCol]);
 
-  const allStatusOptions = useMemo(() => [...Object.keys(STATUS_COLORS)].sort(), []);
+  // All possible statuses for dropdown
+  const allStatusOptions = useMemo(
+    () => [...Object.keys(STATUS_COLORS)].sort(),
+    []
+  );
 
+  // SINGLE FILTER - ALL IN ONE
   const filteredData = useMemo(() => {
     let data = rawData;
 
+    // Filter bulan
     if (filterBulanDipilih.length > 0) {
       data = data.filter((d) => {
         let hasData = false;
@@ -772,10 +764,16 @@ export default function App() {
       });
     }
 
+    // Filter umum
     return data.filter((d) => {
-      if (filterZon.length > 0 && !filterZon.includes(d['ZON']?.trim())) return false;
-      if (filterBalai.length > 0 && !filterBalai.includes(d['BALAI']?.trim())) return false;
-      if (filterJenisTerminal.length > 0 && !filterJenisTerminal.includes(d['JENIS TERMINAL']?.trim()))
+      if (filterZon.length > 0 && !filterZon.includes(d['ZON']?.trim()))
+        return false;
+      if (filterBalai.length > 0 && !filterBalai.includes(d['BALAI']?.trim()))
+        return false;
+      if (
+        filterJenisTerminal.length > 0 &&
+        !filterJenisTerminal.includes(d['JENIS TERMINAL']?.trim())
+      )
         return false;
 
       if (filterStatusSemasa.length > 0) {
@@ -788,9 +786,15 @@ export default function App() {
         }
       }
 
-      if (filterTanggungjawab.length > 0 && !filterTanggungjawab.includes(d['TANGGUNGJAWAB PENGUJIAN']?.trim()))
+      if (
+        filterTanggungjawab.length > 0 &&
+        !filterTanggungjawab.includes(d['TANGGUNGJAWAB PENGUJIAN']?.trim())
+      )
         return false;
-      if (filterFinding.length > 0 && !filterFinding.includes(d['FINDING VS SPA']?.trim()))
+      if (
+        filterFinding.length > 0 &&
+        !filterFinding.includes(d['FINDING VS SPA']?.trim())
+      )
         return false;
 
       if (searchText) {
@@ -824,6 +828,7 @@ export default function App() {
     statusSemasaCol,
   ]);
 
+  // Compute statistics and distributions
   const statusDistribution = useMemo(() => {
     const c = {};
     filteredData.forEach((d) => {
@@ -850,9 +855,9 @@ export default function App() {
     });
     return Object.entries(c)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, isMobile ? 6 : 10)
+      .slice(0, 10)
       .map(([n, v]) => ({ name: n, value: v }));
-  }, [filteredData, isMobile]);
+  }, [filteredData]);
 
   const terminalDistribution = useMemo(() => {
     const c = {};
@@ -893,7 +898,11 @@ export default function App() {
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData = useMemo(
-    () => filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage),
+    () =>
+      filteredData.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      ),
     [filteredData, currentPage, rowsPerPage]
   );
 
@@ -929,6 +938,9 @@ export default function App() {
     setFilterKerosakanSahaja(false);
   }, []);
 
+  // ============================================
+  // EXPORT CSV FUNCTION
+  // ============================================
   const exportCSV = useCallback(() => {
     if (!filteredData.length) {
       toast.error('Tiada data untuk dieksport');
@@ -940,12 +952,24 @@ export default function App() {
 
     if (filterBulanDipilih.length > 0) {
       const FIXED_GENERAL_HEADERS = [
-        'NO. SIRI', 'NO. ISSI TETRA', 'NO. TEI', 'SUBSCRIBER',
-        'VEHICLE REG NO.', 'ZON', 'BALAI', 'JENIS TERMINAL',
-        'TANGGUNGJAWAB PENGUJIAN', 'FINDING VS SPA', 'STATUS SEMASA 2026',
-        'TAHUN DIBEKAL', 'TAHUN DIPASANG', 'KUMPULAN', 'JENIS JENTERA',
+        'NO. SIRI',
+        'NO. ISSI TETRA',
+        'NO. TEI',
+        'SUBSCRIBER',
+        'VEHICLE REG NO.',
+        'ZON',
+        'BALAI',
+        'JENIS TERMINAL',
+        'TANGGUNGJAWAB PENGUJIAN',
+        'FINDING VS SPA',
+        'STATUS SEMASA 2026',
+        'TAHUN DIBEKAL',
+        'TAHUN DIPASANG',
+        'KUMPULAN',
+        'JENIS JENTERA',
       ];
 
+      // Tambah TARIKH PENGUJIAN kalau wujud
       if (tarikhUjianHeader) {
         FIXED_GENERAL_HEADERS.push(tarikhUjianHeader);
       }
@@ -1022,7 +1046,12 @@ export default function App() {
       `✅ ${exportData.length} rekod × ${exportHeaders.length} kolum berjaya dieksport!`,
       { duration: 3000 }
     );
-  }, [filteredData, filterBulanDipilih, selectedMonthColumns, tarikhUjianHeader]);
+  }, [
+    filteredData,
+    filterBulanDipilih,
+    selectedMonthColumns,
+    tarikhUjianHeader,
+  ]);
 
   const hasActiveFilters =
     filterZon.length > 0 ||
@@ -1042,72 +1071,15 @@ export default function App() {
       style={{
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      {/* Responsive Styles */}
-      <style>{`
-        @media (max-width: 640px) {
-          .mobile-stack {
-            flex-direction: column !important;
-          }
-          .mobile-full-width {
-            width: 100% !important;
-          }
-          .mobile-hide {
-            display: none !important;
-          }
-          .mobile-scroll {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-          }
-          .touch-friendly {
-            min-height: 44px;
-            min-width: 44px;
-          }
-          .filter-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .stats-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .charts-grid {
-            grid-template-columns: 1fr !important;
-          }
-          table {
-            font-size: 12px;
-          }
-          th, td {
-            padding: 8px 6px !important;
-          }
-        }
-        @media (min-width: 641px) and (max-width: 1024px) {
-          .filter-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-          .stats-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-          .charts-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
-
-      {/* HEADER */}
+      {/* HEADER - SIMPLE & CENTERED */}
       <header
         style={{
           backgroundColor: '#fff',
           borderBottom: '1px solid #e0e0e0',
-          padding: isMobile ? '16px 12px' : '24px 16px',
+          padding: '24px 16px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
         }}
       >
@@ -1118,7 +1090,7 @@ export default function App() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: isMobile ? '12px' : '16px',
+            gap: '16px',
           }}
         >
           {/* Logo & Title */}
@@ -1127,39 +1099,40 @@ export default function App() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: isMobile ? '8px' : '12px',
-              width: '100%',
+              gap: '12px',
             }}
           >
+            {/* Icon */}
             <div
               style={{
                 backgroundColor: '#1976d2',
-                padding: isMobile ? '10px' : '12px',
+                padding: '12px',
                 borderRadius: '16px',
                 color: '#fff',
               }}
             >
-              <Flame style={{ width: isMobile ? '24px' : '32px', height: isMobile ? '24px' : '32px' }} />
+              <Flame style={{ width: '32px', height: '32px' }} />
             </div>
 
-            <div style={{ textAlign: 'center', width: '100%', padding: '0 8px' }}>
+            {/* Title & Badge */}
+            <div style={{ textAlign: 'center' }}>
               <h1
                 style={{
-                  fontSize: 'clamp(18px, 4vw, 28px)',
+                  fontSize: '28px',
                   fontWeight: '800',
                   color: '#212121',
                   margin: 0,
-                  lineHeight: '1.3',
                 }}
               >
-                DASHBOARD PENGURUSAN ASET GIRN{' '}
+                DASHBOARD ASET GIRN{' '}
                 <span style={{ color: '#1976d2' }}>JBPM NEGERI JOHOR</span>
               </h1>
             </div>
 
+            {/* Update Time */}
             <p
               style={{
-                fontSize: 'clamp(11px, 1.8vw, 13px)',
+                fontSize: '13px',
                 color: '#757575',
                 fontWeight: '500',
                 margin: 0,
@@ -1173,36 +1146,33 @@ export default function App() {
 
           {/* Buttons */}
           <div
-            className="mobile-stack"
             style={{
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              width: '100%',
             }}
           >
+            {/* Toggle Dashboard/Table */}
             <button
-              onClick={() => setActiveTab((t) => (t === 'dashboard' ? 'table' : 'dashboard'))}
-              className="touch-friendly"
+              onClick={() =>
+                setActiveTab((t) => (t === 'dashboard' ? 'table' : 'dashboard'))
+              }
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
-                padding: isMobile ? '12px 16px' : '10px 18px',
-                minHeight: '44px',
+                padding: '10px 18px',
                 backgroundColor: '#fff',
                 color: '#424242',
                 border: '1px solid #e0e0e0',
                 borderRadius: '10px',
-                fontSize: 'clamp(13px, 1.8vw, 14px)',
+                fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-                flex: isMobile ? '1' : 'none',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#f5f5f5';
@@ -1219,31 +1189,29 @@ export default function App() {
                 </>
               ) : (
                 <>
-                  <BarChart3 style={{ width: '16px', height: '16px' }} /> Dashboard
+                  <BarChart3 style={{ width: '16px', height: '16px' }} />{' '}
+                  Dashboard
                 </>
               )}
             </button>
 
+            {/* Export Button */}
             <button
               onClick={exportCSV}
-              className="touch-friendly"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
-                padding: isMobile ? '12px 16px' : '10px 18px',
-                minHeight: '44px',
+                padding: '10px 18px',
                 backgroundColor: '#fff',
                 color: '#424242',
                 border: '1px solid #e0e0e0',
                 borderRadius: '10px',
-                fontSize: 'clamp(13px, 1.8vw, 14px)',
+                fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-                flex: isMobile ? '1' : 'none',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#f5f5f5';
@@ -1257,28 +1225,25 @@ export default function App() {
               <Download style={{ width: '16px', height: '16px' }} /> Eksport
             </button>
 
+            {/* Refresh Button */}
             <button
               onClick={fetchData}
               disabled={loading}
-              className="touch-friendly"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
-                padding: isMobile ? '12px 16px' : '10px 18px',
-                minHeight: '44px',
+                padding: '10px 18px',
                 backgroundColor: '#1976d2',
                 color: '#fff',
                 border: '1px solid #1565c0',
                 borderRadius: '10px',
-                fontSize: 'clamp(13px, 1.8vw, 14px)',
+                fontSize: '14px',
                 fontWeight: '500',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.6 : 1,
                 transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-                flex: isMobile ? '1' : 'none',
               }}
               onMouseEnter={(e) => {
                 if (!loading) {
@@ -1304,30 +1269,25 @@ export default function App() {
         </div>
       </header>
 
-      <main style={{ 
-        maxWidth: '1800px', 
-        margin: '0 auto', 
-        padding: isMobile ? '12px' : '20px' 
-      }}>
+      <main style={{ maxWidth: '1800px', margin: '0 auto', padding: '20px' }}>
         {/* Auto-refresh info */}
         <div
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            fontSize: 'clamp(10px, 1.3vw, 12px)',
+            fontSize: '12px',
             color: '#9e9e9e',
             backgroundColor: '#fff',
             borderRadius: '10px',
             padding: '8px 12px',
             marginBottom: '16px',
             border: '1px solid #e0e0e0',
-            flexWrap: 'wrap',
           }}
         >
-          <Clock style={{ width: '12px', height: '12px', minWidth: '12px' }} />
-          <span className="mobile-hide">Auto-refresh setiap 6 jam | </span>
-          Jabatan Bomba & Penyelamat Malaysia Negeri Johor
+          <Clock style={{ width: '12px', height: '12px' }} />
+          Auto-refresh setiap 6 jam | Jabatan Bomba & Penyelamat Malaysia Negeri
+          Johor
         </div>
 
         {/* Error Message */}
@@ -1344,8 +1304,10 @@ export default function App() {
               marginBottom: '16px',
             }}
           >
-            <Siren style={{ width: '20px', height: '20px', color: '#c62828', minWidth: '20px' }} />
-            <p style={{ color: '#c62828', fontWeight: '500', margin: 0, fontSize: 'clamp(12px, 1.5vw, 14px)' }}>
+            <Siren
+              style={{ width: '20px', height: '20px', color: '#c62828' }}
+            />
+            <p style={{ color: '#c62828', fontWeight: '500', margin: 0 }}>
               {error}
             </p>
           </div>
@@ -1356,7 +1318,7 @@ export default function App() {
           style={{
             backgroundColor: '#fff',
             borderRadius: '16px',
-            padding: isMobile ? '14px' : '20px',
+            padding: '20px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
             border: '1px solid #e0e0e0',
             marginBottom: '20px',
@@ -1368,11 +1330,9 @@ export default function App() {
               alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: showFilters ? '16px' : '0',
-              flexWrap: 'wrap',
-              gap: '8px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '200px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div
                 style={{
                   backgroundColor: '#e3f2fd',
@@ -1380,11 +1340,13 @@ export default function App() {
                   borderRadius: '8px',
                 }}
               >
-                <Filter style={{ width: '20px', height: '20px', color: '#1976d2' }} />
+                <Filter
+                  style={{ width: '20px', height: '20px', color: '#1976d2' }}
+                />
               </div>
               <h2
                 style={{
-                  fontSize: 'clamp(14px, 2vw, 18px)',
+                  fontSize: '18px',
                   fontWeight: '700',
                   color: '#212121',
                   margin: 0,
@@ -1392,29 +1354,27 @@ export default function App() {
               >
                 Tapisan
               </h2>
-              <span style={{ fontSize: 'clamp(10px, 1.3vw, 12px)', color: '#999' }}>
+              <span style={{ fontSize: '12px', color: '#999' }}>
                 ({filteredData.length} rekod)
               </span>
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="touch-friendly"
               style={{
                 background: 'none',
                 border: 'none',
                 color: '#757575',
                 cursor: 'pointer',
-                padding: '8px',
+                padding: '6px',
                 borderRadius: '8px',
                 transition: 'background-color 0.2s',
-                minWidth: '44px',
-                minHeight: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = '#f5f5f5')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = 'transparent')
+              }
             >
               {showFilters ? (
                 <ChevronUp style={{ width: '20px', height: '20px' }} />
@@ -1428,54 +1388,107 @@ export default function App() {
             <div>
               {/* Filter Grid */}
               <div
-                className="filter-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile 
-                    ? '1fr' 
-                    : isTablet 
-                      ? 'repeat(2, 1fr)' 
-                      : 'repeat(auto-fill, minmax(250px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
                   gap: '12px',
                   marginBottom: '16px',
                 }}
               >
                 {[
-                  ['📅 BULAN', filterBulanDipilih, setFilterBulanDipilih, monthOptions, 'Pilih bulan...', 'Cari bulan...'],
-                  ['📍 ZON', filterZon, setFilterZon, uniqueValues.zon, 'Pilih ZON...', 'Cari ZON...'],
-                  ['🏢 BALAI', filterBalai, setFilterBalai, uniqueValues.balai, 'Pilih BALAI...', 'Cari BALAI...'],
-                  ['📡 TERMINAL', filterJenisTerminal, setFilterJenisTerminal, uniqueValues.jenisTerminal, 'Pilih TERMINAL...', 'Cari TERMINAL...'],
-                  ['📊 STATUS', filterStatusSemasa, setFilterStatusSemasa, allStatusOptions, 'Pilih STATUS...', 'Cari STATUS...'],
-                  ['👤 T.JAWAB', filterTanggungjawab, setFilterTanggungjawab, uniqueValues.tanggungjawab, 'Pilih...', 'Cari...'],
-                  ['🔍 FINDING', filterFinding, setFilterFinding, uniqueValues.finding, 'Pilih FINDING...', 'Cari FINDING...'],
-                ].map(([label, val, setter, options, placeholder, searchPlaceholder]) => (
-                  <div key={label}>
-                    <label
-                      style={{
-                        display: 'block',
-                        fontSize: 'clamp(11px, 1.3vw, 12px)',
-                        color: '#757575',
-                        marginBottom: '6px',
-                        fontWeight: '500',
-                      }}
-                    >
-                      {label}
-                      {val.length > 0 && (
-                        <span style={{ color: '#1976d2', marginLeft: '4px' }}>
-                          ({val.length})
-                        </span>
-                      )}
-                    </label>
-                    <MultiSelectDropdown
-                      options={options}
-                      selected={val}
-                      onChange={setter}
-                      placeholder={placeholder}
-                      searchPlaceholder={searchPlaceholder}
-                      disabled={false}
-                    />
-                  </div>
-                ))}
+                  [
+                    '📅 BULAN',
+                    filterBulanDipilih,
+                    setFilterBulanDipilih,
+                    monthOptions,
+                    'Pilih bulan...',
+                    'Cari bulan...',
+                  ],
+                  [
+                    '📍 ZON',
+                    filterZon,
+                    setFilterZon,
+                    uniqueValues.zon,
+                    'Pilih ZON...',
+                    'Cari ZON...',
+                  ],
+                  [
+                    '🏢 BALAI',
+                    filterBalai,
+                    setFilterBalai,
+                    uniqueValues.balai,
+                    'Pilih BALAI...',
+                    'Cari BALAI...',
+                  ],
+                  [
+                    '📡 TERMINAL',
+                    filterJenisTerminal,
+                    setFilterJenisTerminal,
+                    uniqueValues.jenisTerminal,
+                    'Pilih TERMINAL...',
+                    'Cari TERMINAL...',
+                  ],
+                  [
+                    '📊 STATUS',
+                    filterStatusSemasa,
+                    setFilterStatusSemasa,
+                    allStatusOptions,
+                    'Pilih STATUS...',
+                    'Cari STATUS...',
+                  ],
+                  [
+                    '👤 T.JAWAB',
+                    filterTanggungjawab,
+                    setFilterTanggungjawab,
+                    uniqueValues.tanggungjawab,
+                    'Pilih...',
+                    'Cari...',
+                  ],
+                  [
+                    '🔍 FINDING',
+                    filterFinding,
+                    setFilterFinding,
+                    uniqueValues.finding,
+                    'Pilih FINDING...',
+                    'Cari FINDING...',
+                  ],
+                ].map(
+                  ([
+                    label,
+                    val,
+                    setter,
+                    options,
+                    placeholder,
+                    searchPlaceholder,
+                  ]) => (
+                    <div key={label}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          color: '#757575',
+                          marginBottom: '6px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        {label}
+                        {val.length > 0 && (
+                          <span style={{ color: '#1976d2', marginLeft: '4px' }}>
+                            ({val.length})
+                          </span>
+                        )}
+                      </label>
+                      <MultiSelectDropdown
+                        options={options}
+                        selected={val}
+                        onChange={setter}
+                        placeholder={placeholder}
+                        searchPlaceholder={searchPlaceholder}
+                        disabled={false}
+                      />
+                    </div>
+                  )
+                )}
               </div>
 
               {/* Kerosakan Checkbox */}
@@ -1489,29 +1502,30 @@ export default function App() {
                     backgroundColor: '#fff',
                     border: '1px solid #e0e0e0',
                     borderRadius: '10px',
-                    padding: isMobile ? '12px 16px' : '10px 16px',
-                    minHeight: '44px',
+                    padding: '10px 16px',
                     transition: 'border-color 0.2s',
-                    width: isMobile ? '100%' : 'auto',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#bdbdbd')}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e0e0e0')}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor = '#bdbdbd')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor = '#e0e0e0')
+                  }
                 >
                   <input
                     type="checkbox"
                     checked={filterKerosakanSahaja}
                     onChange={(e) => setFilterKerosakanSahaja(e.target.checked)}
                     style={{
-                      width: '20px',
-                      height: '20px',
-                      minWidth: '20px',
+                      width: '16px',
+                      height: '16px',
                       accentColor: '#f57c00',
                     }}
                   />
                   <div>
                     <span
                       style={{
-                        fontSize: 'clamp(12px, 1.5vw, 14px)',
+                        fontSize: '14px',
                         color: '#212121',
                         fontWeight: '600',
                         display: 'flex',
@@ -1519,12 +1533,18 @@ export default function App() {
                         gap: '6px',
                       }}
                     >
-                      <AlertTriangle style={{ width: '16px', height: '16px', color: '#f57c00' }} />{' '}
+                      <AlertTriangle
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          color: '#f57c00',
+                        }}
+                      />{' '}
                       Kerosakan Sahaja
                     </span>
                     <span
                       style={{
-                        fontSize: 'clamp(10px, 1.2vw, 12px)',
+                        fontSize: '12px',
                         color: '#999',
                         display: 'block',
                       }}
@@ -1540,7 +1560,7 @@ export default function App() {
                 <label
                   style={{
                     display: 'block',
-                    fontSize: 'clamp(11px, 1.3vw, 12px)',
+                    fontSize: '12px',
                     color: '#757575',
                     marginBottom: '6px',
                     fontWeight: '500',
@@ -1566,13 +1586,12 @@ export default function App() {
                     placeholder="Taip untuk mencari..."
                     style={{
                       width: '100%',
-                      padding: '12px 12px 12px 40px',
+                      padding: '10px 10px 10px 40px',
                       border: '1px solid #e0e0e0',
                       borderRadius: '8px',
                       fontSize: '14px',
                       outline: 'none',
                       boxSizing: 'border-box',
-                      minHeight: '44px',
                       transition: 'border-color 0.2s',
                     }}
                     onFocus={(e) => (e.target.style.borderColor = '#1976d2')}
@@ -1589,7 +1608,6 @@ export default function App() {
                         transform: 'translateY(-50%)',
                         color: '#9e9e9e',
                         cursor: 'pointer',
-                        minWidth: '16px',
                       }}
                       onClick={() => setSearchText('')}
                     />
@@ -1611,7 +1629,7 @@ export default function App() {
                 >
                   <span
                     style={{
-                      fontSize: 'clamp(10px, 1.3vw, 12px)',
+                      fontSize: '12px',
                       color: '#757575',
                       fontWeight: '500',
                     }}
@@ -1629,31 +1647,53 @@ export default function App() {
                     />
                   )}
                   {filterZon.length > 0 && (
-                    <FilterBadge label={`ZON: ${filterZon.length}`} onRemove={() => setFilterZon([])} />
+                    <FilterBadge
+                      label={`ZON: ${filterZon.length}`}
+                      onRemove={() => setFilterZon([])}
+                    />
                   )}
                   {filterBalai.length > 0 && (
-                    <FilterBadge label={`BALAI: ${filterBalai.length}`} onRemove={() => setFilterBalai([])} />
+                    <FilterBadge
+                      label={`BALAI: ${filterBalai.length}`}
+                      onRemove={() => setFilterBalai([])}
+                    />
                   )}
                   {filterJenisTerminal.length > 0 && (
-                    <FilterBadge label={`TERMINAL: ${filterJenisTerminal.length}`} onRemove={() => setFilterJenisTerminal([])} />
+                    <FilterBadge
+                      label={`TERMINAL: ${filterJenisTerminal.length}`}
+                      onRemove={() => setFilterJenisTerminal([])}
+                    />
                   )}
                   {filterStatusSemasa.length > 0 && (
-                    <FilterBadge label={`STATUS: ${filterStatusSemasa.length}`} type="amber" onRemove={() => setFilterStatusSemasa([])} />
+                    <FilterBadge
+                      label={`STATUS: ${filterStatusSemasa.length}`}
+                      type="amber"
+                      onRemove={() => setFilterStatusSemasa([])}
+                    />
                   )}
                   {filterTanggungjawab.length > 0 && (
-                    <FilterBadge label={`T.JAWAB: ${filterTanggungjawab.length}`} onRemove={() => setFilterTanggungjawab([])} />
+                    <FilterBadge
+                      label={`T.JAWAB: ${filterTanggungjawab.length}`}
+                      onRemove={() => setFilterTanggungjawab([])}
+                    />
                   )}
                   {filterFinding.length > 0 && (
-                    <FilterBadge label={`FINDING: ${filterFinding.length}`} onRemove={() => setFilterFinding([])} />
+                    <FilterBadge
+                      label={`FINDING: ${filterFinding.length}`}
+                      onRemove={() => setFilterFinding([])}
+                    />
                   )}
                   {filterKerosakanSahaja && (
-                    <FilterBadge label="⚠️ KEROSAKAN" type="amber" onRemove={() => setFilterKerosakanSahaja(false)} />
+                    <FilterBadge
+                      label="⚠️ KEROSAKAN"
+                      type="amber"
+                      onRemove={() => setFilterKerosakanSahaja(false)}
+                    />
                   )}
                   <button
                     onClick={resetAll}
-                    className="touch-friendly"
                     style={{
-                      fontSize: 'clamp(11px, 1.3vw, 12px)',
+                      fontSize: '12px',
                       color: '#c62828',
                       background: 'none',
                       border: 'none',
@@ -1661,8 +1701,6 @@ export default function App() {
                       cursor: 'pointer',
                       textDecoration: 'underline',
                       marginLeft: '8px',
-                      padding: '8px',
-                      minHeight: '44px',
                     }}
                   >
                     Reset Semua
@@ -1710,7 +1748,6 @@ export default function App() {
                   color: '#757575',
                   fontWeight: '500',
                   marginTop: '16px',
-                  fontSize: 'clamp(13px, 1.5vw, 15px)',
                 }}
               >
                 Memuatkan data dari Google Sheets...
@@ -1725,14 +1762,9 @@ export default function App() {
             <>
               {/* STATS CARDS */}
               <div
-                className="stats-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile
-                    ? '1fr'
-                    : isTablet
-                      ? 'repeat(2, 1fr)'
-                      : 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                   gap: '16px',
                   marginBottom: '20px',
                 }}
@@ -1742,7 +1774,7 @@ export default function App() {
                   style={{
                     backgroundColor: '#fff',
                     borderRadius: '16px',
-                    padding: isMobile ? '14px' : '20px',
+                    padding: '20px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                     border: '1px solid #e0e0e0',
                   }}
@@ -1763,11 +1795,17 @@ export default function App() {
                         borderRadius: '8px',
                       }}
                     >
-                      <Flame style={{ width: '20px', height: '20px', color: '#1976d2' }} />
+                      <Flame
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          color: '#1976d2',
+                        }}
+                      />
                     </div>
                     <span
                       style={{
-                        fontSize: 'clamp(11px, 1.5vw, 14px)',
+                        fontSize: '14px',
                         fontWeight: '600',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
@@ -1778,7 +1816,7 @@ export default function App() {
                   </div>
                   <p
                     style={{
-                      fontSize: 'clamp(28px, 5vw, 36px)',
+                      fontSize: '36px',
                       fontWeight: '800',
                       color: '#212121',
                       margin: '0 0 4px 0',
@@ -1788,7 +1826,7 @@ export default function App() {
                   </p>
                   <p
                     style={{
-                      fontSize: 'clamp(10px, 1.2vw, 12px)',
+                      fontSize: '12px',
                       color: '#9e9e9e',
                       fontWeight: '500',
                       margin: 0,
@@ -1805,7 +1843,7 @@ export default function App() {
                   style={{
                     backgroundColor: '#fff',
                     borderRadius: '16px',
-                    padding: isMobile ? '14px' : '20px',
+                    padding: '20px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                     border: '1px solid #e0e0e0',
                   }}
@@ -1826,11 +1864,17 @@ export default function App() {
                         borderRadius: '8px',
                       }}
                     >
-                      <BadgeCheck style={{ width: '20px', height: '20px', color: '#2e7d32' }} />
+                      <BadgeCheck
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          color: '#2e7d32',
+                        }}
+                      />
                     </div>
                     <span
                       style={{
-                        fontSize: 'clamp(11px, 1.5vw, 14px)',
+                        fontSize: '14px',
                         fontWeight: '600',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
@@ -1841,7 +1885,7 @@ export default function App() {
                   </div>
                   <p
                     style={{
-                      fontSize: 'clamp(28px, 5vw, 36px)',
+                      fontSize: '36px',
                       fontWeight: '800',
                       color: '#2e7d32',
                       margin: '0 0 4px 0',
@@ -1851,7 +1895,7 @@ export default function App() {
                   </p>
                   <p
                     style={{
-                      fontSize: 'clamp(10px, 1.2vw, 12px)',
+                      fontSize: '12px',
                       color: '#66bb6a',
                       fontWeight: '500',
                       margin: 0,
@@ -1869,7 +1913,7 @@ export default function App() {
                   style={{
                     backgroundColor: '#fff',
                     borderRadius: '16px',
-                    padding: isMobile ? '14px' : '20px',
+                    padding: '20px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                     border: '1px solid #e0e0e0',
                   }}
@@ -1890,11 +1934,17 @@ export default function App() {
                         borderRadius: '8px',
                       }}
                     >
-                      <Siren style={{ width: '20px', height: '20px', color: '#c62828' }} />
+                      <Siren
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          color: '#c62828',
+                        }}
+                      />
                     </div>
                     <span
                       style={{
-                        fontSize: 'clamp(11px, 1.5vw, 14px)',
+                        fontSize: '14px',
                         fontWeight: '600',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
@@ -1905,7 +1955,7 @@ export default function App() {
                   </div>
                   <p
                     style={{
-                      fontSize: 'clamp(28px, 5vw, 36px)',
+                      fontSize: '36px',
                       fontWeight: '800',
                       color: '#c62828',
                       margin: '0 0 4px 0',
@@ -1915,7 +1965,7 @@ export default function App() {
                   </p>
                   <p
                     style={{
-                      fontSize: 'clamp(10px, 1.2vw, 12px)',
+                      fontSize: '12px',
                       color: '#ef5350',
                       fontWeight: '500',
                       margin: 0,
@@ -1929,7 +1979,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Trend Kerosakan */}
+              {/* CHARTS ROW - Trend Kerosakan Sahaja */}
               <div
                 style={{
                   display: 'grid',
@@ -1938,19 +1988,19 @@ export default function App() {
                   marginBottom: '20px',
                 }}
               >
+                {/* Trend Kerosakan */}
                 <div
                   style={{
                     backgroundColor: '#fff',
                     borderRadius: '16px',
-                    padding: isMobile ? '14px' : '20px',
+                    padding: '20px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                     border: '1px solid #e0e0e0',
-                    overflow: 'hidden',
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: 'clamp(11px, 1.5vw, 14px)',
+                      fontSize: '14px',
                       fontWeight: '600',
                       color: '#424242',
                       marginBottom: '16px',
@@ -1961,44 +2011,57 @@ export default function App() {
                       gap: '8px',
                     }}
                   >
-                    <BarChart3 style={{ width: '16px', height: '16px', color: '#1976d2', minWidth: '16px' }} />
+                    <BarChart3
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        color: '#1976d2',
+                      }}
+                    />
                     Trend Kerosakan ({getBulanLabel()})
                   </h3>
-                  <div className="mobile-scroll" style={{ overflowX: 'auto' }}>
-                    <ResponsiveContainer width="100%" height={isMobile ? 250 : 350} minWidth={isMobile ? 500 : undefined}>
-                      <BarChart data={monthlyTrend} barGap={6}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="month" stroke="#9e9e9e" fontSize={11} />
-                        <YAxis stroke="#9e9e9e" fontSize={11} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: '8px',
-                            color: '#333',
-                            fontSize: '12px',
-                          }}
-                        />
-                        <Legend />
-                        <Bar dataKey="BAIK" fill="#4caf50" name="✅ Baik" radius={[6, 6, 0, 0]} />
-                        <Bar dataKey="ROSAK" fill="#f44336" name="🔥 Rosak" radius={[6, 6, 0, 0]} />
-                        <Bar dataKey="LAIN" fill="#ff9800" name="⚠️ Lain" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart data={monthlyTrend} barGap={6}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="month" stroke="#9e9e9e" fontSize={11} />
+                      <YAxis stroke="#9e9e9e" fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                          color: '#333',
+                        }}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="BAIK"
+                        fill="#4caf50"
+                        name="✅ Baik"
+                        radius={[6, 6, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="ROSAK"
+                        fill="#f44336"
+                        name="🔥 Rosak"
+                        radius={[6, 6, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="LAIN"
+                        fill="#ff9800"
+                        name="⚠️ Lain"
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
               {/* PIE CHARTS */}
               <div
-                className="charts-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile
-                    ? '1fr'
-                    : isTablet
-                      ? '1fr'
-                      : 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                   gap: '16px',
                 }}
               >
@@ -2006,50 +2069,41 @@ export default function App() {
                   title={`Status (${getBulanLabel()})`}
                   data={statusDistribution}
                   colorMap={STATUS_COLORS}
-                  isMobile={isMobile}
                 />
-                <PieChartCard
-                  title="Pecahan ZON"
-                  data={zonDistribution}
-                  isMobile={isMobile}
-                />
-                <PieChartCard
-                  title={`Top ${isMobile ? '6' : '10'} BALAI`}
-                  data={balaiDistribution}
-                  isMobile={isMobile}
-                />
+                <PieChartCard title="Pecahan ZON" data={zonDistribution} />
+                <PieChartCard title="Top 10 BALAI" data={balaiDistribution} />
                 <PieChartCard
                   title="Jenis Terminal"
                   data={terminalDistribution}
-                  isMobile={isMobile}
                 />
               </div>
             </>
           ) : (
-            /* TABLE VIEW */
+            /* ============================================ */
+            /* TABLE VIEW - SUSUNAN BARU                     */
+            /* # | NO. SIRI | TERMINAL | ISSI | SUBSCRIBER | ZON | BALAI | T.JAWAB | STATUS | TARIKH UJIAN | REG NO. */
+            /* ============================================ */
             <div
               style={{
                 backgroundColor: '#fff',
                 borderRadius: '16px',
-                padding: isMobile ? '14px' : '20px',
+                padding: '20px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                 border: '1px solid #e0e0e0',
               }}
             >
               <div
-                className="mobile-stack"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   marginBottom: '16px',
                   flexWrap: 'wrap',
                   gap: '12px',
-                  alignItems: 'center',
                 }}
               >
                 <h3
                   style={{
-                    fontSize: 'clamp(12px, 1.5vw, 14px)',
+                    fontSize: '14px',
                     fontWeight: '600',
                     color: '#424242',
                     textTransform: 'uppercase',
@@ -2060,7 +2114,9 @@ export default function App() {
                     margin: 0,
                   }}
                 >
-                  <Table2 style={{ width: '16px', height: '16px', color: '#1976d2', minWidth: '16px' }} />
+                  <Table2
+                    style={{ width: '16px', height: '16px', color: '#1976d2' }}
+                  />
                   Data Peranti —{' '}
                   <span style={{ color: '#212121' }}>
                     {filteredData.length} rekod
@@ -2069,9 +2125,8 @@ export default function App() {
                 <select
                   value={rowsPerPage}
                   onChange={(e) => setRowsPerPage(+e.target.value)}
-                  className="touch-friendly"
                   style={{
-                    padding: '10px 12px',
+                    padding: '8px 12px',
                     border: '1px solid #e0e0e0',
                     borderRadius: '8px',
                     fontSize: '13px',
@@ -2079,25 +2134,23 @@ export default function App() {
                     color: '#424242',
                     outline: 'none',
                     cursor: 'pointer',
-                    minHeight: '44px',
                   }}
                 >
                   <option value={10}>10 baris</option>
                   <option value={25}>25 baris</option>
                   <option value={50}>50 baris</option>
                   <option value={100}>100 baris</option>
-                  {!isMobile && <option value={200}>200 baris</option>}
-                  {!isMobile && <option value={300}>300 baris</option>}
+                  <option value={200}>200 baris</option>
+                  <option value={300}>300 baris</option>
                 </select>
               </div>
 
-              <div className="mobile-scroll" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ overflowX: 'auto' }}>
                 <table
                   style={{
                     width: '100%',
                     borderCollapse: 'collapse',
-                    fontSize: 'clamp(11px, 1.3vw, 13px)',
-                    minWidth: isMobile ? '800px' : 'auto',
+                    fontSize: '13px',
                   }}
                 >
                   <thead>
@@ -2110,24 +2163,24 @@ export default function App() {
                       {[
                         '#',
                         'NO. SIRI',
+                        'TERMINAL',
+                        'ISSI',
+                        'SUBSCRIBER',
                         'ZON',
                         'BALAI',
-                        'TERMINAL',
-                        'SUBSCRIBER',
+                        'T.JAWAB',
                         'STATUS',
                         'TARIKH UJIAN',
                         'REG NO.',
-                        'T.JAWAB',
                       ].map((h) => (
                         <th
                           key={h}
                           style={{
-                            padding: '12px 8px',
+                            padding: '12px',
                             textAlign: 'left',
                             fontWeight: '600',
                             color: '#616161',
                             whiteSpace: 'nowrap',
-                            fontSize: 'clamp(10px, 1.2vw, 12px)',
                           }}
                         >
                           {h}
@@ -2144,50 +2197,69 @@ export default function App() {
                           (e.currentTarget.style.backgroundColor = '#fafafa')
                         }
                         onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor = 'transparent')
+                          (e.currentTarget.style.backgroundColor =
+                            'transparent')
                         }
                       >
                         <td
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 12px',
                             color: '#9e9e9e',
                             fontFamily: 'monospace',
-                            fontSize: 'clamp(10px, 1.1vw, 12px)',
+                            fontSize: '12px',
                           }}
                         >
                           {(currentPage - 1) * rowsPerPage + i + 1}
                         </td>
                         <td
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 12px',
                             color: '#212121',
                             fontFamily: 'monospace',
-                            fontSize: 'clamp(10px, 1.1vw, 12px)',
+                            fontSize: '12px',
                             fontWeight: '600',
                           }}
                         >
                           {d['NO. SIRI'] || '—'}
                         </td>
+                        <td style={{ padding: '10px 12px', color: '#616161' }}>
+                          {d['JENIS TERMINAL'] || '—'}
+                        </td>
                         <td
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 12px',
+                            color: '#616161',
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                          }}
+                        >
+                          {d['NO. ISSI TETRA'] || '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: '#616161' }}>
+                          {d['SUBSCRIBER'] || '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 12px',
                             color: '#616161',
                             fontWeight: '500',
-                            fontSize: 'clamp(10px, 1.1vw, 12px)',
                           }}
                         >
                           {d['ZON'] || '—'}
                         </td>
-                        <td style={{ padding: '10px 8px', color: '#616161', fontSize: 'clamp(10px, 1.1vw, 12px)' }}>
+                        <td style={{ padding: '10px 12px', color: '#616161' }}>
                           {d['BALAI'] || '—'}
                         </td>
-                        <td style={{ padding: '10px 8px', color: '#616161', fontSize: 'clamp(10px, 1.1vw, 12px)' }}>
-                          {d['JENIS TERMINAL'] || '—'}
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: '#616161',
+                            fontSize: '12px',
+                          }}
+                        >
+                          {d['TANGGUNGJAWAB PENGUJIAN'] || '—'}
                         </td>
-                        <td style={{ padding: '10px 8px', color: '#616161', fontSize: 'clamp(10px, 1.1vw, 12px)' }}>
-                          {d['SUBSCRIBER'] || '—'}
-                        </td>
-                        <td style={{ padding: '10px 8px' }}>
+                        <td style={{ padding: '10px 12px' }}>
                           <StatusBadge
                             status={
                               activeStatusCol
@@ -2198,9 +2270,9 @@ export default function App() {
                         </td>
                         <td
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 12px',
                             color: '#616161',
-                            fontSize: 'clamp(10px, 1.1vw, 12px)',
+                            fontSize: '12px',
                             whiteSpace: 'nowrap',
                           }}
                         >
@@ -2208,29 +2280,20 @@ export default function App() {
                         </td>
                         <td
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 12px',
                             color: '#616161',
                             fontFamily: 'monospace',
-                            fontSize: 'clamp(10px, 1.1vw, 12px)',
+                            fontSize: '12px',
                           }}
                         >
                           {d['VEHICLE REG NO.'] || '—'}
-                        </td>
-                        <td
-                          style={{
-                            padding: '10px 8px',
-                            color: '#616161',
-                            fontSize: 'clamp(10px, 1.1vw, 12px)',
-                          }}
-                        >
-                          {d['TANGGUNGJAWAB PENGUJIAN'] || '—'}
                         </td>
                       </tr>
                     ))}
                     {!paginatedData.length && (
                       <tr>
                         <td
-                          colSpan={10}
+                          colSpan={11}
                           style={{
                             textAlign: 'center',
                             padding: '64px 0',
@@ -2257,7 +2320,6 @@ export default function App() {
               {/* PAGINATION */}
               {totalPages > 1 && (
                 <div
-                  className="mobile-stack"
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -2265,26 +2327,24 @@ export default function App() {
                     paddingTop: '12px',
                     borderTop: '1px solid #e0e0e0',
                     alignItems: 'center',
-                    gap: '8px',
                   }}
                 >
                   <span
                     style={{
-                      fontSize: 'clamp(10px, 1.2vw, 12px)',
+                      fontSize: '12px',
                       color: '#9e9e9e',
                       fontWeight: '500',
                     }}
                   >
                     Halaman {currentPage} / {totalPages}
                   </span>
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="touch-friendly"
                       style={{
-                        padding: isMobile ? '8px' : '6px 10px',
-                        fontSize: 'clamp(11px, 1.2vw, 12px)',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                         backgroundColor: '#fff',
                         border: '1px solid #e0e0e0',
                         borderRadius: '8px',
@@ -2292,8 +2352,6 @@ export default function App() {
                         cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                         fontWeight: '600',
                         transition: 'all 0.2s',
-                        minWidth: '44px',
-                        minHeight: '44px',
                       }}
                     >
                       ««
@@ -2301,10 +2359,9 @@ export default function App() {
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="touch-friendly"
                       style={{
-                        padding: isMobile ? '8px' : '6px 12px',
-                        fontSize: 'clamp(11px, 1.2vw, 12px)',
+                        padding: '6px 12px',
+                        fontSize: '12px',
                         backgroundColor: '#fff',
                         border: '1px solid #e0e0e0',
                         borderRadius: '8px',
@@ -2312,37 +2369,39 @@ export default function App() {
                         cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                         fontWeight: '600',
                         transition: 'all 0.2s',
-                        minWidth: '44px',
-                        minHeight: '44px',
                       }}
                     >
                       «
                     </button>
-                    {Array.from({ length: Math.min(isMobile ? 3 : 5, totalPages) }, (_, i) => {
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                       let p;
-                      if (totalPages <= (isMobile ? 3 : 5)) p = i + 1;
-                      else if (currentPage <= (isMobile ? 2 : 3)) p = i + 1;
-                      else if (currentPage >= totalPages - (isMobile ? 1 : 2))
-                        p = totalPages - (isMobile ? 2 : 4) + i;
-                      else p = currentPage - (isMobile ? 1 : 2) + i;
+                      if (totalPages <= 5) p = i + 1;
+                      else if (currentPage <= 3) p = i + 1;
+                      else if (currentPage >= totalPages - 2)
+                        p = totalPages - 4 + i;
+                      else p = currentPage - 2 + i;
                       return (
                         <button
                           key={p}
                           onClick={() => setCurrentPage(p)}
-                          className="touch-friendly"
                           style={{
-                            padding: isMobile ? '8px' : '6px 12px',
-                            fontSize: 'clamp(11px, 1.2vw, 12px)',
-                            backgroundColor: currentPage === p ? '#1976d2' : '#fff',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            backgroundColor:
+                              currentPage === p ? '#1976d2' : '#fff',
                             color: currentPage === p ? '#fff' : '#616161',
-                            border: currentPage === p ? '1px solid #1565c0' : '1px solid #e0e0e0',
+                            border:
+                              currentPage === p
+                                ? '1px solid #1565c0'
+                                : '1px solid #e0e0e0',
                             borderRadius: '8px',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
-                            boxShadow: currentPage === p ? '0 2px 8px rgba(25,118,210,0.3)' : 'none',
-                            minWidth: '44px',
-                            minHeight: '44px',
+                            boxShadow:
+                              currentPage === p
+                                ? '0 2px 8px rgba(25,118,210,0.3)'
+                                : 'none',
                           }}
                         >
                           {p}
@@ -2350,21 +2409,24 @@ export default function App() {
                       );
                     })}
                     <button
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
                       disabled={currentPage === totalPages}
-                      className="touch-friendly"
                       style={{
-                        padding: isMobile ? '8px' : '6px 12px',
-                        fontSize: 'clamp(11px, 1.2vw, 12px)',
+                        padding: '6px 12px',
+                        fontSize: '12px',
                         backgroundColor: '#fff',
                         border: '1px solid #e0e0e0',
                         borderRadius: '8px',
-                        color: currentPage === totalPages ? '#bdbdbd' : '#616161',
-                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        color:
+                          currentPage === totalPages ? '#bdbdbd' : '#616161',
+                        cursor:
+                          currentPage === totalPages
+                            ? 'not-allowed'
+                            : 'pointer',
                         fontWeight: '600',
                         transition: 'all 0.2s',
-                        minWidth: '44px',
-                        minHeight: '44px',
                       }}
                     >
                       »
@@ -2372,19 +2434,20 @@ export default function App() {
                     <button
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="touch-friendly"
                       style={{
-                        padding: isMobile ? '8px' : '6px 10px',
-                        fontSize: 'clamp(11px, 1.2vw, 12px)',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                         backgroundColor: '#fff',
                         border: '1px solid #e0e0e0',
                         borderRadius: '8px',
-                        color: currentPage === totalPages ? '#bdbdbd' : '#616161',
-                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        color:
+                          currentPage === totalPages ? '#bdbdbd' : '#616161',
+                        cursor:
+                          currentPage === totalPages
+                            ? 'not-allowed'
+                            : 'pointer',
                         fontWeight: '600',
                         transition: 'all 0.2s',
-                        minWidth: '44px',
-                        minHeight: '44px',
                       }}
                     >
                       »»
@@ -2396,22 +2459,22 @@ export default function App() {
           ))}
       </main>
 
-      {/* FOOTER */}
+      {/* FOOTER DENGAN WATERMARK */}
       <footer
         style={{
           backgroundColor: '#fff',
           borderTop: '1px solid #e0e0e0',
-          padding: isMobile ? '16px 12px' : '20px 16px',
+          padding: '20px 16px',
           textAlign: 'center',
         }}
       >
+        {/* Info Utama */}
         <div
           style={{
-            fontSize: 'clamp(10px, 1.2vw, 12px)',
+            fontSize: '12px',
             color: '#9e9e9e',
             fontWeight: '500',
             marginBottom: '12px',
-            lineHeight: '1.6',
           }}
         >
           🚒 Data Pengurusan Aset GIRN{' '}
@@ -2426,6 +2489,7 @@ export default function App() {
           )}
         </div>
 
+        {/* Garis Pemisah */}
         <div
           style={{
             width: '60px',
@@ -2435,9 +2499,10 @@ export default function App() {
           }}
         />
 
+        {/* Watermark - Pembangun */}
         <div
           style={{
-            fontSize: 'clamp(10px, 1.1vw, 11px)',
+            fontSize: '11px',
             color: '#bdbdbd',
             lineHeight: '1.8',
           }}
@@ -2455,7 +2520,9 @@ export default function App() {
             </span>
           </div>
           <div>
-            Hak Cipta &copy; 2026 | Semua Hak Terpelihara
+            Hak Cipta &copy; 2026{' '}
+            <span style={{ fontWeight: '600', color: '#616161' }}></span> |
+            Semua Hak Terpelihara
           </div>
         </div>
       </footer>
