@@ -1,38 +1,90 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import {
-  RefreshCw, AlertCircle, CheckCircle2, HelpCircle, Ticket,
-  Search, X, Filter, Zap, Clock, BarChart3, PieChart, Table2,
-  Download, ChevronDown, ChevronUp, Calendar, AlertTriangle,
-  Flame, Shield, Siren, BadgeCheck, Wrench, Trash2, Truck,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  HelpCircle,
+  Ticket,
+  Search,
+  X,
+  Filter,
+  Zap,
+  Clock,
+  BarChart3,
+  PieChart,
+  Table2,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  AlertTriangle,
+  Flame,
+  Shield,
+  Siren,
+  BadgeCheck,
+  Wrench,
+  Trash2,
+  Truck,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
 } from 'recharts';
 
 // ============================================
 // CONSTANTS
 // ============================================
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQGUzVyeUmHfSW65OMonkjq0VRzBs0zDqpgWDCVaN_ba07ANW34ix3M8AhCErROdQv3ixNqi8qhKgGg/pub?gid=0&single=true&output=csv';
+const CSV_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQGUzVyeUmHfSW65OMonkjq0VRzBs0zDqpgWDCVaN_ba07ANW34ix3M8AhCErROdQv3ixNqi8qhKgGg/pub?gid=0&single=true&output=csv';
 const AUTO_REFRESH_INTERVAL = 6 * 60 * 60 * 1000;
 
 const STATUS_COLORS = {
-  BAIK: '#00C853', ROSAK: '#FF1744', 'TIDAK DIJUMPAI': '#FFC107',
-  'TIDAK DAPAT DIUJI': '#7C4DFF', 'BER - TINDAKAN SAPURA': '#448AFF',
-  'BER - TINDAKAN JABATAN': '#00B8D4', 'BER - SELESAI PROSES PELUPUSAN': '#9E9E9E',
+  BAIK: '#00C853',
+  ROSAK: '#FF1744',
+  'TIDAK DIJUMPAI': '#FFC107',
+  'TIDAK DAPAT DIUJI': '#7C4DFF',
+  'BER - TINDAKAN SAPURA': '#448AFF',
+  'BER - TINDAKAN JABATAN': '#00B8D4',
+  'BER - SELESAI PROSES PELUPUSAN': '#9E9E9E',
+  'TIADA DATA': '#607D8B',
 };
 
 const PIE_COLORS = [
-  '#CC0000', '#FFC107', '#00C853', '#448AFF', '#7C4DFF', '#FF6D00',
-  '#00B8D4', '#FF4081', '#64DD17', '#FFD740', '#536DFE', '#78909C',
+  '#CC0000',
+  '#FFC107',
+  '#00C853',
+  '#448AFF',
+  '#7C4DFF',
+  '#FF6D00',
+  '#00B8D4',
+  '#FF4081',
+  '#64DD17',
+  '#FFD740',
+  '#536DFE',
+  '#78909C',
 ];
 
 const STATUS_ICONS = {
-  BAIK: CheckCircle2, ROSAK: AlertCircle, 'TIDAK DIJUMPAI': HelpCircle,
-  'TIDAK DAPAT DIUJI': Wrench, 'BER - TINDAKAN SAPURA': Truck,
-  'BER - TINDAKAN JABATAN': Shield, 'BER - SELESAI PROSES PELUPUSAN': Trash2,
+  BAIK: CheckCircle2,
+  ROSAK: AlertCircle,
+  'TIDAK DIJUMPAI': HelpCircle,
+  'TIDAK DAPAT DIUJI': Wrench,
+  'BER - TINDAKAN SAPURA': Truck,
+  'BER - TINDAKAN JABATAN': Shield,
+  'BER - SELESAI PROSES PELUPUSAN': Trash2,
   'TIADA DATA': HelpCircle,
 };
 
@@ -41,19 +93,70 @@ const STATUS_ICONS = {
 // ============================================
 const extractMonthlyColumns = (headers) => {
   const monthNames = [
-    'JUN 2026','MEI 2026','APRIL 2026','MAC 2026','FEB 2026','JAN 2026',
-    'DIS 2025','NOVEMBER 2025','OKT 2025','SEPT 2025','OGOS 2025','JULAI 2025',
-    'JUN 2025','MEI 2025','APR 2025','MAC 2025','FEB 2025','JAN 2025',
-    'DISEMBER 2024','NOV 2024','OKT 2024','SEPT 2024','OGOS 2024','JUL 2024',
-    'JUN 2024','MEI 2024','APR 2024','MAC 2024','FEB 2024','JAN 2024',
-    'DISEMBER','NOVEMBER','OKTOBER','SEPTEMBER','OGOS','JUL','JUN',
-    'MEI','APRIL','MAC','FEB','JAN',
+    'JUN 2026',
+    'MEI 2026',
+    'APRIL 2026',
+    'MAC 2026',
+    'FEB 2026',
+    'JAN 2026',
+    'DIS 2025',
+    'NOVEMBER 2025',
+    'OKT 2025',
+    'SEPT 2025',
+    'OGOS 2025',
+    'JULAI 2025',
+    'JUN 2025',
+    'MEI 2025',
+    'APR 2025',
+    'MAC 2025',
+    'FEB 2025',
+    'JAN 2025',
+    'DISEMBER 2024',
+    'NOV 2024',
+    'OKT 2024',
+    'SEPT 2024',
+    'OGOS 2024',
+    'JUL 2024',
+    'JUN 2024',
+    'MEI 2024',
+    'APR 2024',
+    'MAC 2024',
+    'FEB 2024',
+    'JAN 2024',
+    'DISEMBER',
+    'NOVEMBER',
+    'OKTOBER',
+    'SEPTEMBER',
+    'OGOS',
+    'JUL',
+    'JUN',
+    'MEI',
+    'APRIL',
+    'MAC',
+    'FEB',
+    'JAN',
   ];
-  return monthNames.map((mn) => {
-    const statusCol = headers.find(h => h.toUpperCase().includes('STATUS') && h.toUpperCase().includes(mn) && !h.toUpperCase().includes('VT') && !h.toUpperCase().includes('SEMASA'));
-    const ttCol = headers.find(h => h.toUpperCase().includes('TT') && h.toUpperCase().includes(mn) && !h.toUpperCase().includes('TIDAK') && !h.toUpperCase().includes('TINDAKAN'));
-    return statusCol ? { label: mn, status: statusCol, tt: ttCol || null } : null;
-  }).filter(Boolean);
+  return monthNames
+    .map((mn) => {
+      const statusCol = headers.find(
+        (h) =>
+          h.toUpperCase().includes('STATUS') &&
+          h.toUpperCase().includes(mn) &&
+          !h.toUpperCase().includes('VT') &&
+          !h.toUpperCase().includes('SEMASA')
+      );
+      const ttCol = headers.find(
+        (h) =>
+          h.toUpperCase().includes('TT') &&
+          h.toUpperCase().includes(mn) &&
+          !h.toUpperCase().includes('TIDAK') &&
+          !h.toUpperCase().includes('TINDAKAN')
+      );
+      return statusCol
+        ? { label: mn, status: statusCol, tt: ttCol || null }
+        : null;
+    })
+    .filter(Boolean);
 };
 
 const normalizeStatus = (raw) => {
@@ -65,143 +168,445 @@ const normalizeStatus = (raw) => {
   if (upper.includes('TIDAK DAPAT DIUJI')) return 'TIDAK DAPAT DIUJI';
   if (upper.includes('SAPURA')) return 'BER - TINDAKAN SAPURA';
   if (upper.includes('JABATAN')) return 'BER - TINDAKAN JABATAN';
-  if (upper.includes('SELESAI') || upper.includes('PELUPUSAN')) return 'BER - SELESAI PROSES PELUPUSAN';
+  if (upper.includes('SELESAI') || upper.includes('PELUPUSAN'))
+    return 'BER - SELESAI PROSES PELUPUSAN';
   return raw.toString().trim();
 };
 
 const isKerosakan = (status) => {
   const s = status.toUpperCase();
-  return s.includes('ROSAK') || s.includes('TIDAK DIJUMPAI') || s.includes('TIDAK DAPAT DIUJI') || s.includes('SAPURA') || s.includes('JABATAN') || s.includes('PELUPUSAN');
+  return (
+    s.includes('ROSAK') ||
+    s.includes('TIDAK DIJUMPAI') ||
+    s.includes('TIDAK DAPAT DIUJI') ||
+    s.includes('SAPURA') ||
+    s.includes('JABATAN') ||
+    s.includes('PELUPUSAN')
+  );
 };
 
 // ============================================
 // COMPONENTS
 // ============================================
-const StatusBadge = ({ status }) => {
-  const map = {
-    BAIK: 'bg-green-950/70 text-green-400 border-green-700/50',
-    ROSAK: 'bg-red-950/70 text-red-400 border-red-700/50',
-    'TIDAK DIJUMPAI': 'bg-amber-950/70 text-amber-400 border-amber-700/50',
-    'TIDAK DAPAT DIUJI': 'bg-purple-950/70 text-purple-400 border-purple-700/50',
-    'BER - TINDAKAN SAPURA': 'bg-blue-950/70 text-blue-400 border-blue-700/50',
-    'BER - TINDAKAN JABATAN': 'bg-cyan-950/70 text-cyan-400 border-cyan-700/50',
-    'BER - SELESAI PROSES PELUPUSAN': 'bg-gray-800/70 text-gray-400 border-gray-600/50',
-    'TIADA DATA': 'bg-gray-900/70 text-gray-500 border-gray-700/50',
+const StatusBadge = memo(({ status }) => {
+  const colorMap = {
+    BAIK: { bg: '#e8f5e9', text: '#2e7d32', border: '#a5d6a7' },
+    ROSAK: { bg: '#ffebee', text: '#c62828', border: '#ef9a9a' },
+    'TIDAK DIJUMPAI': { bg: '#fff8e1', text: '#f57f17', border: '#ffe082' },
+    'TIDAK DAPAT DIUJI': { bg: '#f3e5f5', text: '#6a1b9a', border: '#ce93d8' },
+    'BER - TINDAKAN SAPURA': {
+      bg: '#e3f2fd',
+      text: '#1565c0',
+      border: '#90caf9',
+    },
+    'BER - TINDAKAN JABATAN': {
+      bg: '#e0f7fa',
+      text: '#00838f',
+      border: '#80deea',
+    },
+    'BER - SELESAI PROSES PELUPUSAN': {
+      bg: '#f5f5f5',
+      text: '#616161',
+      border: '#bdbdbd',
+    },
+    'TIADA DATA': { bg: '#eceff1', text: '#546e7a', border: '#b0bec5' },
   };
+  const colors = colorMap[status] || colorMap['TIADA DATA'];
   const Icon = STATUS_ICONS[status] || HelpCircle;
+
   return (
-    <span className={`text-xs px-2.5 py-1 rounded-full border ${map[status] || map['TIADA DATA']} whitespace-nowrap inline-flex items-center gap-1.5 font-medium`}>
-      <Icon className="w-3 h-3" /> {status}
+    <span
+      style={{
+        fontSize: '12px',
+        padding: '4px 10px',
+        borderRadius: '20px',
+        border: `1px solid ${colors.border}`,
+        backgroundColor: colors.bg,
+        color: colors.text,
+        whiteSpace: 'nowrap',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        fontWeight: '500',
+      }}
+    >
+      <Icon style={{ width: '12px', height: '12px' }} /> {status}
     </span>
   );
-};
+});
 
-const FilterBadge = ({ label, onRemove, color = 'bomba' }) => {
-  const colors = {
-    bomba: 'bg-bomba-900/60 text-red-300 border border-bomba-700/40',
-    amber: 'bg-amber-900/60 text-amber-300 border border-amber-700/40',
-    gold: 'bg-yellow-900/40 text-yellow-300 border border-yellow-700/40',
+StatusBadge.displayName = 'StatusBadge';
+
+const FilterBadge = memo(({ label, onRemove, type = 'default' }) => {
+  const typeStyles = {
+    default: { bg: '#e3f2fd', text: '#1565c0', border: '#90caf9' },
+    amber: { bg: '#fff8e1', text: '#f57f17', border: '#ffe082' },
+    gold: { bg: '#fffde7', text: '#f9a825', border: '#fff59d' },
   };
+  const style = typeStyles[type] || typeStyles.default;
+
   return (
-    <span className={`text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium ${colors[color] || colors.bomba}`}>
+    <span
+      style={{
+        fontSize: '12px',
+        padding: '4px 10px',
+        borderRadius: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        fontWeight: '500',
+        backgroundColor: style.bg,
+        color: style.text,
+        border: `1px solid ${style.border}`,
+      }}
+    >
       {label}
-      <X className="w-3 h-3 cursor-pointer hover:text-white transition-colors" onClick={onRemove} />
+      <X
+        style={{ width: '12px', height: '12px', cursor: 'pointer' }}
+        onClick={onRemove}
+      />
     </span>
   );
-};
+});
 
-const PieChartCard = ({ title, data, colorMap }) => (
-  <div className="card-bomba animate-fade-in">
-    <h3 className="text-sm font-semibold text-silver-300 mb-3 text-center tracking-wide uppercase">{title}</h3>
+FilterBadge.displayName = 'FilterBadge';
+
+const PieChartCard = memo(({ title, data, colorMap }) => (
+  <div
+    style={{
+      backgroundColor: '#fff',
+      borderRadius: '16px',
+      padding: '20px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      border: '1px solid #e0e0e0',
+    }}
+  >
+    <h3
+      style={{
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#424242',
+        marginBottom: '16px',
+        textAlign: 'center',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+      }}
+    >
+      {title}
+    </h3>
     <ResponsiveContainer width="100%" height={220}>
       <RePieChart>
-        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40} paddingAngle={4}>
-          {data.map((_, idx) => <Cell key={idx} fill={colorMap?.[data[idx].name] || PIE_COLORS[idx % PIE_COLORS.length]} stroke="transparent" />)}
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          outerRadius={80}
+          innerRadius={40}
+          paddingAngle={4}
+        >
+          {data.map((_, idx) => (
+            <Cell
+              key={idx}
+              fill={
+                colorMap?.[data[idx].name] ||
+                PIE_COLORS[idx % PIE_COLORS.length]
+              }
+              stroke="transparent"
+            />
+          ))}
         </Pie>
-        <Tooltip contentStyle={{ background: '#0D1B3E', border: '1px solid #CC000050', borderRadius: '12px', color: '#fff', fontFamily: 'Inter, sans-serif' }} />
+        <Tooltip
+          contentStyle={{
+            background: '#fff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            color: '#333',
+            fontFamily: 'Inter, sans-serif',
+          }}
+        />
       </RePieChart>
     </ResponsiveContainer>
-    <div className="flex flex-wrap gap-2 justify-center mt-3">
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px',
+        justifyContent: 'center',
+        marginTop: '12px',
+      }}
+    >
       {data.slice(0, 5).map((e, i) => (
-        <span key={i} className="text-xs text-silver-500 flex items-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-full ring-1 ring-white/10" style={{ background: colorMap?.[e.name] || PIE_COLORS[i] }} />
-          {e.name}: <span className="font-semibold text-silver-300">{e.value}</span>
+        <span
+          key={i}
+          style={{
+            fontSize: '12px',
+            color: '#757575',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: colorMap?.[e.name] || PIE_COLORS[i],
+            }}
+          />
+          {e.name}:{' '}
+          <span style={{ fontWeight: '600', color: '#424242' }}>{e.value}</span>
         </span>
       ))}
     </div>
   </div>
-);
+));
+
+PieChartCard.displayName = 'PieChartCard';
 
 // ============================================
 // MULTI-SELECT DROPDOWN COMPONENT
 // ============================================
-const MultiSelectDropdown = ({ options, selected, onChange, placeholder, searchPlaceholder, disabled }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const dropdownRef = React.useRef(null);
+const MultiSelectDropdown = memo(
+  ({
+    options,
+    selected,
+    onChange,
+    placeholder,
+    searchPlaceholder,
+    disabled,
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const dropdownRef = React.useRef(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-        setSearch('');
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target)
+        ) {
+          setIsOpen(false);
+          setSearch('');
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-  const filteredOptions = options.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
-  const toggleOption = (option) => {
-    if (selected.includes(option)) onChange(selected.filter(s => s !== option));
-    else onChange([...selected, option]);
-  };
-  const selectAll = () => onChange([...options]);
-  const deselectAll = () => onChange([]);
+    const filteredOptions = useMemo(
+      () =>
+        options.filter((opt) =>
+          opt.toLowerCase().includes(search.toLowerCase())
+        ),
+      [options, search]
+    );
 
-  return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
-      <button type="button" onClick={() => !disabled && setIsOpen(!isOpen)} disabled={disabled}
-        className="filter-select w-full text-left flex items-center justify-between"
-        style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}>
-        <span className={selected.length === 0 ? 'text-[#666]' : 'text-white'}>
-          {selected.length === 0 ? placeholder : `${selected.length} dipilih`}
-        </span>
-        <ChevronDown className={`w-4 h-4 text-[#666] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      {isOpen && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999, marginTop: '4px', background: '#1E1E1E', border: '1px solid #333', borderRadius: '12px', maxHeight: '300px', overflow: 'hidden', boxShadow: '0 16px 48px rgba(0,0,0,0.6)' }}>
-          <div style={{ padding: '8px', borderBottom: '1px solid #2A2A2A' }}>
-            <div style={{ position: 'relative' }}>
-              <Search className="w-3.5 h-3.5 text-[#666] absolute left-3 top-1/2 -translate-y-1/2" />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={searchPlaceholder}
-                className="filter-input pl-9" style={{ border: 'none', borderRadius: '8px' }} onClick={e => e.stopPropagation()} />
+    const toggleOption = useCallback(
+      (option) => {
+        if (selected.includes(option)) {
+          onChange(selected.filter((s) => s !== option));
+        } else {
+          onChange([...selected, option]);
+        }
+      },
+      [selected, onChange]
+    );
+
+    const selectAll = useCallback(
+      () => onChange([...options]),
+      [options, onChange]
+    );
+    const deselectAll = useCallback(() => onChange([]), [onChange]);
+
+    return (
+      <div ref={dropdownRef} style={{ position: 'relative' }}>
+        <button
+          type="button"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          style={{
+            width: '100%',
+            padding: '10px 14px',
+            backgroundColor: '#fff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            fontSize: '13px',
+            textAlign: 'left',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            color: selected.length === 0 ? '#999' : '#333',
+            transition: 'border-color 0.2s',
+          }}
+        >
+          <span>
+            {selected.length === 0 ? placeholder : `${selected.length} dipilih`}
+          </span>
+          <ChevronDown
+            style={{
+              width: '16px',
+              height: '16px',
+              color: '#999',
+              transform: isOpen ? 'rotate(180deg)' : 'none',
+              transition: 'transform 0.2s',
+            }}
+          />
+        </button>
+
+        {isOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              zIndex: 9999,
+              marginTop: '4px',
+              backgroundColor: '#fff',
+              border: '1px solid #e0e0e0',
+              borderRadius: '12px',
+              maxHeight: '300px',
+              overflow: 'hidden',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            }}
+          >
+            <div style={{ padding: '8px', borderBottom: '1px solid #f0f0f0' }}>
+              <div style={{ position: 'relative' }}>
+                <Search
+                  style={{
+                    width: '14px',
+                    height: '14px',
+                    color: '#999',
+                    position: 'absolute',
+                    left: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                  }}
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  style={{
+                    width: '100%',
+                    padding: '8px 8px 8px 32px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: '4px',
+                padding: '6px 8px',
+                borderBottom: '1px solid #f0f0f0',
+              }}
+            >
+              <button
+                onClick={selectAll}
+                style={{
+                  fontSize: '12px',
+                  color: '#1976d2',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                }}
+              >
+                Pilih Semua
+              </button>
+              <button
+                onClick={deselectAll}
+                style={{
+                  fontSize: '12px',
+                  color: '#999',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                }}
+              >
+                Reset
+              </button>
+            </div>
+            <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+              {filteredOptions.length === 0 ? (
+                <div
+                  style={{
+                    padding: '16px',
+                    textAlign: 'center',
+                    color: '#999',
+                    fontSize: '13px',
+                  }}
+                >
+                  Tiada dijumpai
+                </div>
+              ) : (
+                filteredOptions.map((option) => (
+                  <label
+                    key={option}
+                    onClick={() => toggleOption(option)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      cursor: 'pointer',
+                      color: selected.includes(option) ? '#1976d2' : '#666',
+                      backgroundColor: selected.includes(option)
+                        ? '#f5f5f5'
+                        : 'transparent',
+                      fontSize: '13px',
+                      fontWeight: selected.includes(option) ? '600' : '400',
+                      transition: 'background-color 0.15s',
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = '#fafafa')
+                    }
+                    onMouseLeave={(e) => {
+                      if (!selected.includes(option)) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      } else {
+                        e.currentTarget.style.backgroundColor = '#f5f5f5';
+                      }
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(option)}
+                      onChange={() => {}}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        accentColor: '#1976d2',
+                      }}
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))
+              )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '4px', padding: '6px 8px', borderBottom: '1px solid #2A2A2A' }}>
-            <button onClick={selectAll} className="text-xs text-[#CC0000] hover:text-white px-2 py-1 rounded transition-colors">Pilih Semua</button>
-            <button onClick={deselectAll} className="text-xs text-[#666] hover:text-white px-2 py-1 rounded transition-colors">Reset</button>
-          </div>
-          <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-            {filteredOptions.length === 0 ? (
-              <div style={{ padding: '16px', textAlign: 'center', color: '#666', fontSize: '13px' }}>Tiada dijumpai</div>
-            ) : (
-              filteredOptions.map(option => (
-                <label key={option} onClick={() => toggleOption(option)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', cursor: 'pointer', transition: 'background 0.15s', color: selected.includes(option) ? '#FFF' : '#999' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#2A2A2A'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <input type="checkbox" checked={selected.includes(option)} onChange={() => {}} className="w-4 h-4 rounded" style={{ accentColor: '#CC0000' }} />
-                  <span style={{ fontSize: '13px', fontWeight: selected.includes(option) ? '600' : '400' }}>{option}</span>
-                </label>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+      </div>
+    );
+  }
+);
+
+MultiSelectDropdown.displayName = 'MultiSelectDropdown';
 
 // ============================================
 // MAIN APP
@@ -213,57 +618,113 @@ export default function App() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [error, setError] = useState(null);
 
-  // SEMUA FILTER MULTI-SELECT
+  // SEMUA FILTER DALAM SATU LAYER
   const [filterZon, setFilterZon] = useState([]);
   const [filterBalai, setFilterBalai] = useState([]);
   const [filterJenisTerminal, setFilterJenisTerminal] = useState([]);
-  const [filterTahunIsytihar, setFilterTahunIsytihar] = useState([]);
   const [filterStatusSemasa, setFilterStatusSemasa] = useState([]);
   const [filterTanggungjawab, setFilterTanggungjawab] = useState([]);
   const [filterFinding, setFilterFinding] = useState([]);
-  const [searchText, setSearchText] = useState('');
-
-  // 🆕 FILTER BULAN MULTI-SELECT
   const [filterBulanDipilih, setFilterBulanDipilih] = useState([]);
   const [filterKerosakanSahaja, setFilterKerosakanSahaja] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const [showFilters, setShowFilters] = useState(true);
-  const [showBulanFilters, setShowBulanFilters] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  // Cari header TARIKH PENGUJIAN (handle line break)
+  const tarikhUjianHeader = useMemo(() => {
+    return headers.find((h) =>
+      h.replace(/\s+/g, ' ').trim().toUpperCase().includes('TARIKH PENGUJIAN')
+    );
+  }, [headers]);
+
+  // Fetch data function
   const fetchData = useCallback(async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       const res = await fetch(CSV_URL, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       Papa.parse(text, {
-        header: true, skipEmptyLines: true,
-        complete: (r) => { setHeaders(r.meta.fields || []); setRawData(r.data || []); setLastUpdate(new Date()); setLoading(false); toast.success(`${r.data.length} rekod berjaya dimuatkan`, { icon: '✅' }); },
-        error: (e) => { throw new Error(e.message); },
+        header: true,
+        skipEmptyLines: true,
+        complete: (r) => {
+          setHeaders(r.meta.fields || []);
+          setRawData(r.data || []);
+          setLastUpdate(new Date());
+          setLoading(false);
+          toast.success(`${r.data.length} rekod berjaya dimuatkan`, {
+            icon: '✅',
+          });
+        },
+        error: (e) => {
+          throw new Error(e.message);
+        },
       });
-    } catch (err) { setError(err.message); setLoading(false); toast.error(`Gagal: ${err.message}`, { icon: '❌' }); }
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+      toast.error(`Gagal: ${err.message}`, { icon: '❌' });
+    }
   }, []);
 
-  useEffect(() => { fetchData(); const i = setInterval(fetchData, AUTO_REFRESH_INTERVAL); return () => clearInterval(i); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+    const i = setInterval(fetchData, AUTO_REFRESH_INTERVAL);
+    return () => clearInterval(i);
+  }, [fetchData]);
 
-  const monthlyColumns = useMemo(() => extractMonthlyColumns(headers), [headers]);
-  const monthOptions = useMemo(() => monthlyColumns.map(mc => mc.label), [monthlyColumns]);
+  // Extract monthly columns
+  const monthlyColumns = useMemo(
+    () => extractMonthlyColumns(headers),
+    [headers]
+  );
+
+  // Month options for filter
+  const monthOptions = useMemo(
+    () => monthlyColumns.map((mc) => mc.label),
+    [monthlyColumns]
+  );
+
+  // Unique values for all filters
   const uniqueValues = useMemo(() => {
-    const g = (k) => [...new Set(rawData.map(d => d[k]?.toString().trim()).filter(v => v))].sort();
-    return { zon: g('ZON'), balai: g('BALAI'), jenisTerminal: g('JENIS TERMINAL'), tahunIsytihar: g('TAHUN ISYTIHAR'), tanggungjawab: g('TANGGUNGJAWAB PENGUJIAN'), finding: g('FINDING VS SPA') };
+    const g = (k) =>
+      [
+        ...new Set(
+          rawData.map((d) => d[k]?.toString().trim()).filter((v) => v)
+        ),
+      ].sort();
+    return {
+      zon: g('ZON'),
+      balai: g('BALAI'),
+      jenisTerminal: g('JENIS TERMINAL'),
+      tanggungjawab: g('TANGGUNGJAWAB PENGUJIAN'),
+      finding: g('FINDING VS SPA'),
+    };
   }, [rawData]);
-  const statusSemasaCol = useMemo(() => headers.find(h => h.toUpperCase().includes('STATUS SEMASA 2026') && !h.toUpperCase().includes('VT')), [headers]);
 
-  // 🆕 Dapatkan column untuk bulan yang dipilih
+  // Status semasa column
+  const statusSemasaCol = useMemo(
+    () =>
+      headers.find(
+        (h) =>
+          h.toUpperCase().includes('STATUS SEMASA 2026') &&
+          !h.toUpperCase().includes('VT')
+      ),
+    [headers]
+  );
+
+  // Get columns for selected months
   const selectedMonthColumns = useMemo(() => {
-    if (filterBulanDipilih.length === 0) return monthlyColumns.slice(0, 6); // default 6 bulan terkini
-    return monthlyColumns.filter(mc => filterBulanDipilih.includes(mc.label));
+    if (filterBulanDipilih.length === 0) return [];
+    return monthlyColumns.filter((mc) => filterBulanDipilih.includes(mc.label));
   }, [filterBulanDipilih, monthlyColumns]);
 
-  // 🆕 Dapatkan column status pertama dari bulan dipilih (untuk pie chart)
+  // Active status column
   const activeStatusCol = useMemo(() => {
     if (filterBulanDipilih.length > 0 && selectedMonthColumns.length > 0) {
       return selectedMonthColumns[0].status;
@@ -271,280 +732,1786 @@ export default function App() {
     return statusSemasaCol;
   }, [filterBulanDipilih, selectedMonthColumns, statusSemasaCol]);
 
-  const filteredData = useMemo(() => rawData.filter(d => {
-    if (filterZon.length > 0 && !filterZon.includes(d['ZON']?.trim())) return false;
-    if (filterBalai.length > 0 && !filterBalai.includes(d['BALAI']?.trim())) return false;
-    if (filterJenisTerminal.length > 0 && !filterJenisTerminal.includes(d['JENIS TERMINAL']?.trim())) return false;
-    if (filterTahunIsytihar.length > 0 && !filterTahunIsytihar.includes(d['TAHUN ISYTIHAR']?.trim())) return false;
-    if (filterStatusSemasa.length > 0 && statusSemasaCol && !filterStatusSemasa.includes(normalizeStatus(d[statusSemasaCol]))) return false;
-    if (filterTanggungjawab.length > 0 && !filterTanggungjawab.includes(d['TANGGUNGJAWAB PENGUJIAN']?.trim())) return false;
-    if (filterFinding.length > 0 && !filterFinding.includes(d['FINDING VS SPA']?.trim())) return false;
+  // All possible statuses for dropdown
+  const allStatusOptions = useMemo(
+    () => [...Object.keys(STATUS_COLORS)].sort(),
+    []
+  );
 
-    // 🆕 FILTER BULAN
+  // SINGLE FILTER - ALL IN ONE
+  const filteredData = useMemo(() => {
+    let data = rawData;
+
+    // Filter bulan
     if (filterBulanDipilih.length > 0) {
-      let match = false, rosak = false;
-      selectedMonthColumns.forEach(mc => {
-        if (mc.status && d[mc.status]) {
-          const st = normalizeStatus(d[mc.status]);
-          if (st !== 'TIADA DATA') { match = true; if (isKerosakan(st)) rosak = true; }
+      data = data.filter((d) => {
+        let hasData = false;
+        let isRusak = false;
+
+        for (const mc of selectedMonthColumns) {
+          if (mc.status && d[mc.status]) {
+            const status = normalizeStatus(d[mc.status]);
+            if (status !== 'TIADA DATA') {
+              hasData = true;
+              if (isKerosakan(status)) isRusak = true;
+            }
+          }
         }
+
+        if (!hasData) return false;
+        if (filterKerosakanSahaja && !isRusak) return false;
+        return true;
       });
-      if (!match) return false;
-      if (filterKerosakanSahaja && !rosak) return false;
     }
 
-    if (searchText) {
-      const sl = searchText.toLowerCase();
-      if (!['NO. SIRI','NO. ISSI TETRA','SUBSCRIBER','NO. TEI','VEHICLE REG NO.'].some(f => d[f]?.toLowerCase().includes(sl))) return false;
-    }
-    return true;
-  }), [rawData, filterZon, filterBalai, filterJenisTerminal, filterTahunIsytihar, filterStatusSemasa, filterTanggungjawab, filterFinding, searchText, statusSemasaCol, filterBulanDipilih, selectedMonthColumns, filterKerosakanSahaja]);
+    // Filter umum
+    return data.filter((d) => {
+      if (filterZon.length > 0 && !filterZon.includes(d['ZON']?.trim()))
+        return false;
+      if (filterBalai.length > 0 && !filterBalai.includes(d['BALAI']?.trim()))
+        return false;
+      if (
+        filterJenisTerminal.length > 0 &&
+        !filterJenisTerminal.includes(d['JENIS TERMINAL']?.trim())
+      )
+        return false;
 
-  const statusDistribution = useMemo(() => { const c = {}; filteredData.forEach(d => { const s = normalizeStatus(d[activeStatusCol]); c[s] = (c[s]||0)+1; }); return Object.entries(c).map(([n,v]) => ({name:n,value:v})); }, [filteredData, activeStatusCol]);
-  const zonDistribution = useMemo(() => { const c = {}; filteredData.forEach(d => { const z = d['ZON']?.trim()||'TIADA ZON'; c[z]=(c[z]||0)+1; }); return Object.entries(c).map(([n,v])=>({name:n,value:v})); }, [filteredData]);
-  const balaiDistribution = useMemo(() => { const c = {}; filteredData.forEach(d => { const b = d['BALAI']?.trim()||'TIADA BALAI'; c[b]=(c[b]||0)+1; }); return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,v])=>({name:n,value:v})); }, [filteredData]);
-  const terminalDistribution = useMemo(() => { const c = {}; filteredData.forEach(d => { const t = d['JENIS TERMINAL']?.trim()||'TIADA DATA'; c[t]=(c[t]||0)+1; }); return Object.entries(c).map(([n,v])=>({name:n,value:v})); }, [filteredData]);
+      if (filterStatusSemasa.length > 0) {
+        const colToUse = activeStatusCol || statusSemasaCol;
+        if (colToUse && d[colToUse]) {
+          const normalizedValue = normalizeStatus(d[colToUse]);
+          if (!filterStatusSemasa.includes(normalizedValue)) return false;
+        } else {
+          if (!filterStatusSemasa.includes('TIADA DATA')) return false;
+        }
+      }
+
+      if (
+        filterTanggungjawab.length > 0 &&
+        !filterTanggungjawab.includes(d['TANGGUNGJAWAB PENGUJIAN']?.trim())
+      )
+        return false;
+      if (
+        filterFinding.length > 0 &&
+        !filterFinding.includes(d['FINDING VS SPA']?.trim())
+      )
+        return false;
+
+      if (searchText) {
+        const sl = searchText.toLowerCase();
+        if (
+          ![
+            'NO. SIRI',
+            'NO. ISSI TETRA',
+            'SUBSCRIBER',
+            'NO. TEI',
+            'VEHICLE REG NO.',
+          ].some((f) => d[f]?.toLowerCase().includes(sl))
+        )
+          return false;
+      }
+      return true;
+    });
+  }, [
+    rawData,
+    filterZon,
+    filterBalai,
+    filterJenisTerminal,
+    filterStatusSemasa,
+    filterTanggungjawab,
+    filterFinding,
+    filterBulanDipilih,
+    filterKerosakanSahaja,
+    searchText,
+    selectedMonthColumns,
+    activeStatusCol,
+    statusSemasaCol,
+  ]);
+
+  // Compute statistics and distributions
+  const statusDistribution = useMemo(() => {
+    const c = {};
+    filteredData.forEach((d) => {
+      const s = normalizeStatus(d[activeStatusCol]);
+      c[s] = (c[s] || 0) + 1;
+    });
+    return Object.entries(c).map(([n, v]) => ({ name: n, value: v }));
+  }, [filteredData, activeStatusCol]);
+
+  const zonDistribution = useMemo(() => {
+    const c = {};
+    filteredData.forEach((d) => {
+      const z = d['ZON']?.trim() || 'TIADA ZON';
+      c[z] = (c[z] || 0) + 1;
+    });
+    return Object.entries(c).map(([n, v]) => ({ name: n, value: v }));
+  }, [filteredData]);
+
+  const balaiDistribution = useMemo(() => {
+    const c = {};
+    filteredData.forEach((d) => {
+      const b = d['BALAI']?.trim() || 'TIADA BALAI';
+      c[b] = (c[b] || 0) + 1;
+    });
+    return Object.entries(c)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([n, v]) => ({ name: n, value: v }));
+  }, [filteredData]);
+
+  const terminalDistribution = useMemo(() => {
+    const c = {};
+    filteredData.forEach((d) => {
+      const t = d['JENIS TERMINAL']?.trim() || 'TIADA DATA';
+      c[t] = (c[t] || 0) + 1;
+    });
+    return Object.entries(c).map(([n, v]) => ({ name: n, value: v }));
+  }, [filteredData]);
 
   const monthlyTrend = useMemo(() => {
+    if (selectedMonthColumns.length === 0) return [];
     const cols = [...selectedMonthColumns].reverse();
-    return cols.map(mc => { const cnt = { month: mc.label, BAIK:0, ROSAK:0, LAIN:0 }; filteredData.forEach(d => { if(mc.status&&d[mc.status]){ const s=normalizeStatus(d[mc.status]); if(s==='BAIK')cnt.BAIK++; else if(s==='ROSAK')cnt.ROSAK++; else cnt.LAIN++; } }); return cnt; });
-  }, [filteredData, selectedMonthColumns]);
-
-  const ticketTrend = useMemo(() => {
-    const cols = [...selectedMonthColumns].reverse();
-    return cols.map(mc => ({ month: mc.label, tiket: filteredData.filter(d => mc.tt && d[mc.tt]?.trim()).length }));
+    return cols.map((mc) => {
+      const cnt = { month: mc.label, BAIK: 0, ROSAK: 0, LAIN: 0 };
+      filteredData.forEach((d) => {
+        if (mc.status && d[mc.status]) {
+          const s = normalizeStatus(d[mc.status]);
+          if (s === 'BAIK') cnt.BAIK++;
+          else if (s === 'ROSAK') cnt.ROSAK++;
+          else cnt.LAIN++;
+        }
+      });
+      return cnt;
+    });
   }, [filteredData, selectedMonthColumns]);
 
   const stats = useMemo(() => {
-    let baik=0, rosak=0, tiket=0;
-    filteredData.forEach(d => { const s=normalizeStatus(d[activeStatusCol]); if(s==='BAIK')baik++; if(s==='ROSAK')rosak++; });
-    selectedMonthColumns.forEach(mc => { if(mc.tt) filteredData.forEach(d => { if(d[mc.tt]?.trim()) tiket++; }); });
-    return { total: filteredData.length, baik, rosak, totalTiket: tiket };
-  }, [filteredData, activeStatusCol, selectedMonthColumns]);
+    let baik = 0,
+      rosak = 0;
+    filteredData.forEach((d) => {
+      const s = normalizeStatus(d[activeStatusCol]);
+      if (s === 'BAIK') baik++;
+      if (s === 'ROSAK') rosak++;
+    });
+    return { total: filteredData.length, baik, rosak };
+  }, [filteredData, activeStatusCol]);
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const paginatedData = filteredData.slice((currentPage-1)*rowsPerPage, currentPage*rowsPerPage);
-  useEffect(() => { setCurrentPage(1); }, [filterZon, filterBalai, filterStatusSemasa, searchText, filterBulanDipilih, filterKerosakanSahaja]);
+  const paginatedData = useMemo(
+    () =>
+      filteredData.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      ),
+    [filteredData, currentPage, rowsPerPage]
+  );
 
-  const getBulanLabel = () => {
-    if (filterBulanDipilih.length === 0) return '6 Bulan Terkini (Default)';
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    filterZon,
+    filterBalai,
+    filterJenisTerminal,
+    filterStatusSemasa,
+    filterTanggungjawab,
+    filterFinding,
+    searchText,
+    filterBulanDipilih,
+    filterKerosakanSahaja,
+  ]);
+
+  const getBulanLabel = useCallback(() => {
+    if (filterBulanDipilih.length === 0) return 'Semua rekod';
     if (filterBulanDipilih.length <= 3) return filterBulanDipilih.join(', ');
     return `${filterBulanDipilih.length} bulan dipilih`;
-  };
+  }, [filterBulanDipilih]);
 
-  const resetAll = () => {
-    setFilterZon([]); setFilterBalai([]); setFilterJenisTerminal([]);
-    setFilterTahunIsytihar([]); setFilterStatusSemasa([]);
-    setFilterTanggungjawab([]); setFilterFinding([]);
+  const resetAll = useCallback(() => {
+    setFilterZon([]);
+    setFilterBalai([]);
+    setFilterJenisTerminal([]);
+    setFilterStatusSemasa([]);
+    setFilterTanggungjawab([]);
+    setFilterFinding([]);
     setSearchText('');
-    setFilterBulanDipilih([]); setFilterKerosakanSahaja(false);
-  };
+    setFilterBulanDipilih([]);
+    setFilterKerosakanSahaja(false);
+  }, []);
 
-  const exportCSV = () => {
-    if (!filteredData.length) return toast.error('Tiada data untuk dieksport');
-    const csv = Papa.unparse(filteredData);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `jbpm-export-${new Date().toISOString().slice(0,10)}.csv`; a.click();
-    toast.success('Data berjaya dieksport!');
-  };
+  // ============================================
+  // EXPORT CSV FUNCTION
+  // ============================================
+  const exportCSV = useCallback(() => {
+    if (!filteredData.length) {
+      toast.error('Tiada data untuk dieksport');
+      return;
+    }
 
-  const hasActiveFilters = filterZon.length > 0 || filterBalai.length > 0 || filterJenisTerminal.length > 0 || filterTahunIsytihar.length > 0 || filterStatusSemasa.length > 0 || filterTanggungjawab.length > 0 || filterFinding.length > 0 || filterBulanDipilih.length > 0 || searchText;
+    let exportData = filteredData;
+    let exportHeaders = [];
+
+    if (filterBulanDipilih.length > 0) {
+      const FIXED_GENERAL_HEADERS = [
+        'NO. SIRI',
+        'NO. ISSI TETRA',
+        'NO. TEI',
+        'SUBSCRIBER',
+        'VEHICLE REG NO.',
+        'ZON',
+        'BALAI',
+        'JENIS TERMINAL',
+        'TANGGUNGJAWAB PENGUJIAN',
+        'FINDING VS SPA',
+        'STATUS SEMASA 2026',
+        'TAHUN DIBEKAL',
+        'TAHUN DIPASANG',
+        'KUMPULAN',
+        'JENIS JENTERA',
+      ];
+
+      // Tambah TARIKH PENGUJIAN kalau wujud
+      if (tarikhUjianHeader) {
+        FIXED_GENERAL_HEADERS.push(tarikhUjianHeader);
+      }
+
+      const allHeaders = Object.keys(filteredData[0]);
+      const existingGeneralHeaders = FIXED_GENERAL_HEADERS.filter((h) =>
+        allHeaders.includes(h)
+      );
+
+      const monthSpecificHeaders = [];
+      selectedMonthColumns.forEach((mc) => {
+        if (mc.status) monthSpecificHeaders.push(mc.status);
+        if (mc.tt) monthSpecificHeaders.push(mc.tt);
+      });
+
+      const allUniqueHeaders = [
+        ...new Set([...existingGeneralHeaders, ...monthSpecificHeaders]),
+      ];
+      const generalHeadersSorted = allUniqueHeaders.filter((h) =>
+        FIXED_GENERAL_HEADERS.includes(h)
+      );
+      const monthHeadersSorted = allUniqueHeaders.filter(
+        (h) => !FIXED_GENERAL_HEADERS.includes(h)
+      );
+
+      const sortedMonthHeaders = [];
+      selectedMonthColumns.forEach((mc) => {
+        if (mc.status && monthHeadersSorted.includes(mc.status))
+          sortedMonthHeaders.push(mc.status);
+        if (mc.tt && monthHeadersSorted.includes(mc.tt))
+          sortedMonthHeaders.push(mc.tt);
+      });
+
+      exportHeaders = [...generalHeadersSorted, ...sortedMonthHeaders];
+
+      exportData = filteredData.map((row) => {
+        const newRow = {};
+        exportHeaders.forEach((header) => {
+          newRow[header] = row[header] || '';
+        });
+        return newRow;
+      });
+    } else {
+      exportHeaders = Object.keys(filteredData[0]);
+    }
+
+    const csv = Papa.unparse(exportData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().slice(0, 10);
+
+    let bulanInfo;
+    if (filterBulanDipilih.length === 0) {
+      bulanInfo = 'semua-bulan';
+    } else if (filterBulanDipilih.length === 1) {
+      bulanInfo = filterBulanDipilih[0].replace(/\s+/g, '-').toLowerCase();
+    } else if (filterBulanDipilih.length === 2) {
+      bulanInfo = filterBulanDipilih
+        .map((b) => b.replace(/\s+/g, '-').toLowerCase())
+        .join('_');
+    } else {
+      bulanInfo =
+        filterBulanDipilih
+          .slice(0, 3)
+          .map((b) => b.replace(/\s+/g, '-').toLowerCase())
+          .join('_') + `_dan-${filterBulanDipilih.length - 3}-lagi`;
+    }
+
+    a.download = `jbpm-${bulanInfo}-${timestamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast.success(
+      `✅ ${exportData.length} rekod × ${exportHeaders.length} kolum berjaya dieksport!`,
+      { duration: 3000 }
+    );
+  }, [
+    filteredData,
+    filterBulanDipilih,
+    selectedMonthColumns,
+    tarikhUjianHeader,
+  ]);
+
+  const hasActiveFilters =
+    filterZon.length > 0 ||
+    filterBalai.length > 0 ||
+    filterJenisTerminal.length > 0 ||
+    filterStatusSemasa.length > 0 ||
+    filterTanggungjawab.length > 0 ||
+    filterFinding.length > 0 ||
+    filterBulanDipilih.length > 0 ||
+    searchText;
 
   // ============================================
   // RENDER
   // ============================================
   return (
-    <div className="min-h-screen bg-navy-950">
-      {/* HEADER */}
-      <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-bomba-900 via-bomba-800 to-bomba-900" />
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-bomba-600 via-gold-600 to-bomba-600" />
-        <div className="absolute inset-0 bg-hex-pattern opacity-10" />
-        <div className="relative max-w-[1800px] mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="bg-navy-950/60 backdrop-blur p-2.5 rounded-xl border border-bomba-500/30 animate-fire-glow">
-                <Flame className="w-7 h-7 text-gold-500 animate-fire-flicker" />
-              </div>
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+        fontFamily: 'Inter, system-ui, sans-serif',
+      }}
+    >
+      {/* HEADER - SIMPLE & CENTERED */}
+      <header
+        style={{
+          backgroundColor: '#fff',
+          borderBottom: '1px solid #e0e0e0',
+          padding: '24px 16px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '1800px',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
+          }}
+        >
+          {/* Logo & Title */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+            }}
+          >
+            {/* Icon */}
+            <div
+              style={{
+                backgroundColor: '#1976d2',
+                padding: '12px',
+                borderRadius: '16px',
+                color: '#fff',
+              }}
+            >
+              <Flame style={{ width: '32px', height: '32px' }} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-extrabold text-white tracking-tight">DASHBOARD <span className="text-gold-500">JBPM</span></h1>
-                <span className="text-xs bg-bomba-600/60 text-white px-2 py-0.5 rounded-full font-medium uppercase tracking-wider border border-bomba-500/40">Aset Radio</span>
-              </div>
-              <p className="text-xs text-red-200/70 font-medium">{lastUpdate ? `🕒 Kemaskini: ${lastUpdate.toLocaleString('ms-MY')}` : 'Memuatkan data...'}</p>
+
+            {/* Title & Badge */}
+            <div style={{ textAlign: 'center' }}>
+              <h1
+                style={{
+                  fontSize: '28px',
+                  fontWeight: '800',
+                  color: '#212121',
+                  margin: 0,
+                }}
+              >
+                DASHBOARD PENGURUSAN ASET GIRN{' '}
+                <span style={{ color: '#1976d2' }}>JBPM NEGERI JOHOR</span>
+              </h1>
             </div>
+
+            {/* Update Time */}
+            <p
+              style={{
+                fontSize: '13px',
+                color: '#757575',
+                fontWeight: '500',
+                margin: 0,
+              }}
+            >
+              {lastUpdate
+                ? `🕒 Kemaskini: ${lastUpdate.toLocaleString('ms-MY')}`
+                : 'Memuatkan data...'}
+            </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={() => setActiveTab(t => t==='dashboard'?'table':'dashboard')} className="btn-outline text-sm">{activeTab==='dashboard'?<><Table2 className="w-4 h-4"/> Jadual</>:<><BarChart3 className="w-4 h-4"/> Dashboard</>}</button>
-            <button onClick={exportCSV} className="btn-outline text-sm"><Download className="w-4 h-4"/> Eksport</button>
-            <button onClick={fetchData} disabled={loading} className="btn-bomba text-sm"><RefreshCw className={`w-4 h-4 ${loading?'animate-spin':''}`}/> Refresh</button>
+
+          {/* Buttons */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+          >
+            {/* Toggle Dashboard/Table */}
+            <button
+              onClick={() =>
+                setActiveTab((t) => (t === 'dashboard' ? 'table' : 'dashboard'))
+              }
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                backgroundColor: '#fff',
+                color: '#424242',
+                border: '1px solid #e0e0e0',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                e.currentTarget.style.borderColor = '#bdbdbd';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.borderColor = '#e0e0e0';
+              }}
+            >
+              {activeTab === 'dashboard' ? (
+                <>
+                  <Table2 style={{ width: '16px', height: '16px' }} /> Jadual
+                </>
+              ) : (
+                <>
+                  <BarChart3 style={{ width: '16px', height: '16px' }} />{' '}
+                  Dashboard
+                </>
+              )}
+            </button>
+
+            {/* Export Button */}
+            <button
+              onClick={exportCSV}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                backgroundColor: '#fff',
+                color: '#424242',
+                border: '1px solid #e0e0e0',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                e.currentTarget.style.borderColor = '#bdbdbd';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.borderColor = '#e0e0e0';
+              }}
+            >
+              <Download style={{ width: '16px', height: '16px' }} /> Eksport
+            </button>
+
+            {/* Refresh Button */}
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                backgroundColor: '#1976d2',
+                color: '#fff',
+                border: '1px solid #1565c0',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#1565c0';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#1976d2';
+                }
+              }}
+            >
+              <RefreshCw
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  animation: loading ? 'spin 1s linear infinite' : 'none',
+                }}
+              />
+              Refresh
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1800px] mx-auto p-4 space-y-4">
-        <div className="flex items-center gap-2 text-xs text-silver-600 bg-navy-900/50 backdrop-blur rounded-xl px-3 py-1.5 w-fit border border-gray-700/30">
-          <Clock className="w-3 h-3"/> Auto-refresh setiap 6 jam | Jabatan Bomba & Penyelamat Malaysia
+      <main style={{ maxWidth: '1800px', margin: '0 auto', padding: '20px' }}>
+        {/* Auto-refresh info */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            color: '#9e9e9e',
+            backgroundColor: '#fff',
+            borderRadius: '10px',
+            padding: '8px 12px',
+            marginBottom: '16px',
+            border: '1px solid #e0e0e0',
+          }}
+        >
+          <Clock style={{ width: '12px', height: '12px' }} />
+          Auto-refresh setiap 6 jam | Jabatan Bomba & Penyelamat Malaysia Negeri
+          Johor
         </div>
-        {error && <div className="bg-red-950/50 border border-red-700/50 rounded-2xl p-4 flex items-center gap-3 backdrop-blur"><Siren className="w-5 h-5 text-red-400"/><p className="text-red-300 font-medium">{error}</p></div>}
 
-        {/* 🆕 FILTER BULAN - MULTI-SELECT */}
-        <div className="card-bomba">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-bomba-600/20 p-1.5 rounded-lg"><Calendar className="w-5 h-5 text-bomba-400"/></div>
-              <h2 className="text-lg font-bold text-white">Filter Bulan</h2>
-              {filterBulanDipilih.length > 0 && (
-                <span className="bg-gradient-to-r from-bomba-600 to-bomba-500 text-white text-xs px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                  {filterBulanDipilih.length} dipilih
-                </span>
+        {/* Error Message */}
+        {error && (
+          <div
+            style={{
+              backgroundColor: '#ffebee',
+              border: '1px solid #ef9a9a',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px',
+            }}
+          >
+            <Siren
+              style={{ width: '20px', height: '20px', color: '#c62828' }}
+            />
+            <p style={{ color: '#c62828', fontWeight: '500', margin: 0 }}>
+              {error}
+            </p>
+          </div>
+        )}
+
+        {/* FILTER PANEL */}
+        <div
+          style={{
+            backgroundColor: '#fff',
+            borderRadius: '16px',
+            padding: '20px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: '1px solid #e0e0e0',
+            marginBottom: '20px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: showFilters ? '16px' : '0',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  backgroundColor: '#e3f2fd',
+                  padding: '6px',
+                  borderRadius: '8px',
+                }}
+              >
+                <Filter
+                  style={{ width: '20px', height: '20px', color: '#1976d2' }}
+                />
+              </div>
+              <h2
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: '#212121',
+                  margin: 0,
+                }}
+              >
+                Tapisan
+              </h2>
+              <span style={{ fontSize: '12px', color: '#999' }}>
+                ({filteredData.length} rekod)
+              </span>
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#757575',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '8px',
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = '#f5f5f5')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = 'transparent')
+              }
+            >
+              {showFilters ? (
+                <ChevronUp style={{ width: '20px', height: '20px' }} />
+              ) : (
+                <ChevronDown style={{ width: '20px', height: '20px' }} />
               )}
-              <span className="text-xs text-[#666]">{getBulanLabel()}</span>
-            </div>
-            <button onClick={() => setShowBulanFilters(!showBulanFilters)} className="text-silver-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5">{showBulanFilters ? <ChevronUp className="w-5 h-5"/> : <ChevronDown className="w-5 h-5"/>}</button>
+            </button>
           </div>
-          {showBulanFilters && (
-            <div className="space-y-3 pt-3 border-t border-[#2A2A2A]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-silver-400 mb-1.5 font-medium">
-                    📅 Pilih Bulan
-                    {filterBulanDipilih.length > 0 && <span className="text-[#CC0000] ml-1">({filterBulanDipilih.length})</span>}
-                  </label>
-                  <MultiSelectDropdown 
-                    options={monthOptions} 
-                    selected={filterBulanDipilih} 
-                    onChange={setFilterBulanDipilih} 
-                    placeholder="Pilih bulan..." 
-                    searchPlaceholder="Cari bulan..." 
-                    disabled={false} 
-                  />
-                </div>
-                <div className="flex flex-col justify-end gap-2">
-                  <label className="flex items-center gap-3 cursor-pointer bg-[#1E1E1E] rounded-xl px-4 py-2.5 border border-[#2A2A2A] hover:border-[#444] transition-all">
-                    <input type="checkbox" checked={filterKerosakanSahaja} onChange={e => setFilterKerosakanSahaja(e.target.checked)} className="w-4 h-4 rounded accent-[#CC0000]"/>
-                    <div><span className="text-sm text-white font-semibold flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-400"/> Kerosakan Sahaja</span><span className="text-xs text-[#888] block">Hanya rekod bermasalah</span></div>
-                  </label>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#2A2A2A]">
-                <span className="text-xs text-[#888] mr-2 font-medium">⚡ Pantas:</span>
-                {[
-                  ['6 Bulan Terkini', () => { const last6 = monthlyColumns.slice(0, 6).map(mc => mc.label); setFilterBulanDipilih(last6); setFilterKerosakanSahaja(false); }],
-                  ['Tahun 2026', () => { const t2026 = monthlyColumns.filter(mc => mc.label.includes('2026')).map(mc => mc.label); setFilterBulanDipilih(t2026); setFilterKerosakanSahaja(false); }],
-                  ['Tahun 2025', () => { const t2025 = monthlyColumns.filter(mc => mc.label.includes('2025')).map(mc => mc.label); setFilterBulanDipilih(t2025); setFilterKerosakanSahaja(false); }],
-                  ['Semua 2024', () => { const t2024 = monthlyColumns.filter(mc => mc.label.includes('2024')).map(mc => mc.label); setFilterBulanDipilih(t2024); setFilterKerosakanSahaja(false); }],
-                  ['🔥 Kerosakan 2026', () => { const t2026 = monthlyColumns.filter(mc => mc.label.includes('2026')).map(mc => mc.label); setFilterBulanDipilih(t2026); setFilterKerosakanSahaja(true); }],
-                  ['Reset', () => { setFilterBulanDipilih([]); setFilterKerosakanSahaja(false); }],
-                ].map(([label, action]) => <button key={label} onClick={action} className="text-xs bg-[#1E1E1E] hover:bg-[#2A2A2A] text-[#999] hover:text-white px-3 py-1.5 rounded-full transition-all border border-[#2A2A2A] hover:border-[#444] font-medium">{label}</button>)}
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* FILTER UMUM - SEMUA MULTI-SELECT */}
-        <div className="card-bomba">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-bomba-600/20 p-1.5 rounded-lg"><Filter className="w-5 h-5 text-bomba-400"/></div>
-              <h2 className="text-lg font-bold text-white">Tapisan Umum</h2>
-              <span className="text-xs text-[#666] ml-2">({filteredData.length} rekod)</span>
-            </div>
-            <button onClick={() => setShowFilters(!showFilters)} className="text-silver-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5">{showFilters ? <ChevronUp className="w-5 h-5"/> : <ChevronDown className="w-5 h-5"/>}</button>
-          </div>
           {showFilters && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            <div>
+              {/* Filter Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                  gap: '12px',
+                  marginBottom: '16px',
+                }}
+              >
                 {[
-                  ['📍 ZON', filterZon, setFilterZon, uniqueValues.zon, 'Pilih ZON...', 'Cari ZON...'],
-                  ['🏢 BALAI', filterBalai, setFilterBalai, uniqueValues.balai, 'Pilih BALAI...', 'Cari BALAI...'],
-                  ['📡 TERMINAL', filterJenisTerminal, setFilterJenisTerminal, uniqueValues.jenisTerminal, 'Pilih TERMINAL...', 'Cari TERMINAL...'],
-                  ['📅 TAHUN', filterTahunIsytihar, setFilterTahunIsytihar, uniqueValues.tahunIsytihar, 'Pilih TAHUN...', 'Cari TAHUN...'],
-                  ['📊 STATUS', filterStatusSemasa, setFilterStatusSemasa, Object.keys(STATUS_COLORS), 'Pilih STATUS...', 'Cari STATUS...'],
-                  ['👤 T.JAWAB', filterTanggungjawab, setFilterTanggungjawab, uniqueValues.tanggungjawab, 'Pilih...', 'Cari...'],
-                  ['🔍 FINDING', filterFinding, setFilterFinding, uniqueValues.finding, 'Pilih FINDING...', 'Cari FINDING...'],
-                ].map(([label, val, setter, options, placeholder, searchPlaceholder]) => (
-                  <div key={label}>
-                    <label className="block text-xs text-silver-400 mb-1.5 font-medium">
-                      {label}
-                      {val.length > 0 && <span className="text-[#CC0000] ml-1">({val.length})</span>}
-                    </label>
-                    <MultiSelectDropdown options={options} selected={val} onChange={setter} placeholder={placeholder} searchPlaceholder={searchPlaceholder} disabled={false} />
-                  </div>
-                ))}
+                  [
+                    '📅 BULAN',
+                    filterBulanDipilih,
+                    setFilterBulanDipilih,
+                    monthOptions,
+                    'Pilih bulan...',
+                    'Cari bulan...',
+                  ],
+                  [
+                    '📍 ZON',
+                    filterZon,
+                    setFilterZon,
+                    uniqueValues.zon,
+                    'Pilih ZON...',
+                    'Cari ZON...',
+                  ],
+                  [
+                    '🏢 BALAI',
+                    filterBalai,
+                    setFilterBalai,
+                    uniqueValues.balai,
+                    'Pilih BALAI...',
+                    'Cari BALAI...',
+                  ],
+                  [
+                    '📡 TERMINAL',
+                    filterJenisTerminal,
+                    setFilterJenisTerminal,
+                    uniqueValues.jenisTerminal,
+                    'Pilih TERMINAL...',
+                    'Cari TERMINAL...',
+                  ],
+                  [
+                    '📊 STATUS',
+                    filterStatusSemasa,
+                    setFilterStatusSemasa,
+                    allStatusOptions,
+                    'Pilih STATUS...',
+                    'Cari STATUS...',
+                  ],
+                  [
+                    '👤 T.JAWAB',
+                    filterTanggungjawab,
+                    setFilterTanggungjawab,
+                    uniqueValues.tanggungjawab,
+                    'Pilih...',
+                    'Cari...',
+                  ],
+                  [
+                    '🔍 FINDING',
+                    filterFinding,
+                    setFilterFinding,
+                    uniqueValues.finding,
+                    'Pilih FINDING...',
+                    'Cari FINDING...',
+                  ],
+                ].map(
+                  ([
+                    label,
+                    val,
+                    setter,
+                    options,
+                    placeholder,
+                    searchPlaceholder,
+                  ]) => (
+                    <div key={label}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          color: '#757575',
+                          marginBottom: '6px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        {label}
+                        {val.length > 0 && (
+                          <span style={{ color: '#1976d2', marginLeft: '4px' }}>
+                            ({val.length})
+                          </span>
+                        )}
+                      </label>
+                      <MultiSelectDropdown
+                        options={options}
+                        selected={val}
+                        onChange={setter}
+                        placeholder={placeholder}
+                        searchPlaceholder={searchPlaceholder}
+                        disabled={false}
+                      />
+                    </div>
+                  )
+                )}
               </div>
-              <div>
-                <label className="block text-xs text-silver-400 mb-1.5 font-medium">🔎 CARIAN (NO. SIRI / ISSI / SUBSCRIBER)</label>
-                <div className="relative">
-                  <Search className="w-4 h-4 text-silver-500 absolute left-3 top-1/2 -translate-y-1/2"/>
-                  <input value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="Taip untuk mencari..." className="filter-input pl-10"/>
-                  {searchText && <X className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-silver-500 cursor-pointer hover:text-white" onClick={() => setSearchText('')}/>}
+
+              {/* Kerosakan Checkbox */}
+              <div style={{ marginBottom: '12px' }}>
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    backgroundColor: '#fff',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '10px',
+                    padding: '10px 16px',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor = '#bdbdbd')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor = '#e0e0e0')
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    checked={filterKerosakanSahaja}
+                    onChange={(e) => setFilterKerosakanSahaja(e.target.checked)}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      accentColor: '#f57c00',
+                    }}
+                  />
+                  <div>
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        color: '#212121',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <AlertTriangle
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          color: '#f57c00',
+                        }}
+                      />{' '}
+                      Kerosakan Sahaja
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '12px',
+                        color: '#999',
+                        display: 'block',
+                      }}
+                    >
+                      Hanya rekod bermasalah
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Search Text */}
+              <div style={{ marginBottom: '12px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    color: '#757575',
+                    marginBottom: '6px',
+                    fontWeight: '500',
+                  }}
+                >
+                  🔎 CARIAN (NO. SIRI / ISSI / SUBSCRIBER)
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Search
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      color: '#9e9e9e',
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                    }}
+                  />
+                  <input
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Taip untuk mencari..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 10px 10px 40px',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#1976d2')}
+                    onBlur={(e) => (e.target.style.borderColor = '#e0e0e0')}
+                  />
+                  {searchText && (
+                    <X
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#9e9e9e',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => setSearchText('')}
+                    />
+                  )}
                 </div>
               </div>
+
+              {/* Active Filters */}
               {hasActiveFilters && (
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-700/30 items-center">
-                  <span className="text-xs text-silver-500 font-medium">🏷️ Aktif:</span>
-                  {filterZon.length > 0 && <FilterBadge label={`ZON: ${filterZon.length}`} onRemove={()=>setFilterZon([])}/>}
-                  {filterBalai.length > 0 && <FilterBadge label={`BALAI: ${filterBalai.length}`} onRemove={()=>setFilterBalai([])}/>}
-                  {filterJenisTerminal.length > 0 && <FilterBadge label={`TERMINAL: ${filterJenisTerminal.length}`} onRemove={()=>setFilterJenisTerminal([])}/>}
-                  {filterTahunIsytihar.length > 0 && <FilterBadge label={`TAHUN: ${filterTahunIsytihar.length}`} onRemove={()=>setFilterTahunIsytihar([])} color="gold"/>}
-                  {filterStatusSemasa.length > 0 && <FilterBadge label={`STATUS: ${filterStatusSemasa.length}`} onRemove={()=>setFilterStatusSemasa([])} color="amber"/>}
-                  {filterTanggungjawab.length > 0 && <FilterBadge label={`T.JAWAB: ${filterTanggungjawab.length}`} onRemove={()=>setFilterTanggungjawab([])}/>}
-                  {filterFinding.length > 0 && <FilterBadge label={`FINDING: ${filterFinding.length}`} onRemove={()=>setFilterFinding([])}/>}
-                  {filterBulanDipilih.length > 0 && <FilterBadge label={`BULAN: ${filterBulanDipilih.length}`} color="gold" onRemove={()=>{setFilterBulanDipilih([]); setFilterKerosakanSahaja(false);}}/>}
-                  {filterKerosakanSahaja && <FilterBadge label="⚠️ KEROSAKAN" color="amber" onRemove={()=>setFilterKerosakanSahaja(false)}/>}
-                  <button onClick={resetAll} className="text-xs text-red-400 hover:text-red-300 underline font-semibold ml-2">Reset Semua</button>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid #e0e0e0',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: '#757575',
+                      fontWeight: '500',
+                    }}
+                  >
+                    🏷️ Aktif:
+                  </span>
+                  {filterBulanDipilih.length > 0 && (
+                    <FilterBadge
+                      label={`BULAN: ${filterBulanDipilih.length}`}
+                      type="gold"
+                      onRemove={() => {
+                        setFilterBulanDipilih([]);
+                        setFilterKerosakanSahaja(false);
+                      }}
+                    />
+                  )}
+                  {filterZon.length > 0 && (
+                    <FilterBadge
+                      label={`ZON: ${filterZon.length}`}
+                      onRemove={() => setFilterZon([])}
+                    />
+                  )}
+                  {filterBalai.length > 0 && (
+                    <FilterBadge
+                      label={`BALAI: ${filterBalai.length}`}
+                      onRemove={() => setFilterBalai([])}
+                    />
+                  )}
+                  {filterJenisTerminal.length > 0 && (
+                    <FilterBadge
+                      label={`TERMINAL: ${filterJenisTerminal.length}`}
+                      onRemove={() => setFilterJenisTerminal([])}
+                    />
+                  )}
+                  {filterStatusSemasa.length > 0 && (
+                    <FilterBadge
+                      label={`STATUS: ${filterStatusSemasa.length}`}
+                      type="amber"
+                      onRemove={() => setFilterStatusSemasa([])}
+                    />
+                  )}
+                  {filterTanggungjawab.length > 0 && (
+                    <FilterBadge
+                      label={`T.JAWAB: ${filterTanggungjawab.length}`}
+                      onRemove={() => setFilterTanggungjawab([])}
+                    />
+                  )}
+                  {filterFinding.length > 0 && (
+                    <FilterBadge
+                      label={`FINDING: ${filterFinding.length}`}
+                      onRemove={() => setFilterFinding([])}
+                    />
+                  )}
+                  {filterKerosakanSahaja && (
+                    <FilterBadge
+                      label="⚠️ KEROSAKAN"
+                      type="amber"
+                      onRemove={() => setFilterKerosakanSahaja(false)}
+                    />
+                  )}
+                  <button
+                    onClick={resetAll}
+                    style={{
+                      fontSize: '12px',
+                      color: '#c62828',
+                      background: 'none',
+                      border: 'none',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      marginLeft: '8px',
+                    }}
+                  >
+                    Reset Semua
+                  </button>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* LOADING */}
-        {loading && <div className="flex justify-center py-32"><div className="text-center space-y-4"><div className="relative"><Flame className="w-16 h-16 text-bomba-500 animate-pulse mx-auto"/><RefreshCw className="w-8 h-8 text-gold-500 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"/></div><p className="text-silver-400 font-medium">Memuatkan data dari Google Sheets...</p></div></div>}
+        {/* LOADING STATE */}
+        {loading && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '80px 0',
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <Flame
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    color: '#1976d2',
+                    animation: 'pulse 2s ease-in-out infinite',
+                  }}
+                />
+                <RefreshCw
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    color: '#ff9800',
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+              </div>
+              <p
+                style={{
+                  color: '#757575',
+                  fontWeight: '500',
+                  marginTop: '16px',
+                }}
+              >
+                Memuatkan data dari Google Sheets...
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* CONTENT */}
-        {!loading && (activeTab==='dashboard' ? (
-          <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-slide-up">
-              <div className="stat-card"><div className="flex items-center gap-2 text-silver-400 mb-3"><div className="bg-bomba-600/20 p-2 rounded-lg"><Flame className="w-5 h-5 text-bomba-400"/></div><span className="text-sm font-semibold uppercase tracking-wider">Jumlah Aset</span></div><p className="text-4xl font-extrabold text-white">{stats.total}</p><p className="text-xs text-silver-500 mt-1.5 font-medium">{filteredData.length !== rawData.length ? `Ditapis dari ${rawData.length} rekod` : 'Keseluruhan rekod'}</p></div>
-              <div className="stat-card stat-card-baik"><div className="flex items-center gap-2 text-green-400 mb-3"><div className="bg-green-900/30 p-2 rounded-lg"><BadgeCheck className="w-5 h-5 text-green-400"/></div><span className="text-sm font-semibold uppercase tracking-wider">Operasi</span></div><p className="text-4xl font-extrabold text-green-400">{stats.baik}</p><p className="text-xs text-green-600/70 mt-1.5 font-medium">{stats.total>0?((stats.baik/stats.total)*100).toFixed(1):0}% | {getBulanLabel()}</p></div>
-              <div className="stat-card stat-card-rosak"><div className="flex items-center gap-2 text-red-400 mb-3"><div className="bg-red-900/30 p-2 rounded-lg"><Siren className="w-5 h-5 text-red-400"/></div><span className="text-sm font-semibold uppercase tracking-wider">Kerosakan</span></div><p className="text-4xl font-extrabold text-red-400">{stats.rosak}</p><p className="text-xs text-red-600/70 mt-1.5 font-medium">{stats.total>0?((stats.rosak/stats.total)*100).toFixed(1):0}% | {getBulanLabel()}</p></div>
-              <div className="stat-card stat-card-tiket"><div className="flex items-center gap-2 text-amber-400 mb-3"><div className="bg-amber-900/30 p-2 rounded-lg"><Ticket className="w-5 h-5 text-amber-400"/></div><span className="text-sm font-semibold uppercase tracking-wider">Tiket (TT)</span></div><p className="text-4xl font-extrabold text-amber-400">{stats.totalTiket}</p><p className="text-xs text-amber-600/70 mt-1.5 font-medium">{getBulanLabel()}</p></div>
+        {!loading &&
+          (activeTab === 'dashboard' ? (
+            <>
+              {/* STATS CARDS */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '16px',
+                  marginBottom: '20px',
+                }}
+              >
+                {/* Total Aset */}
+                <div
+                  style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: '#757575',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        backgroundColor: '#e3f2fd',
+                        padding: '8px',
+                        borderRadius: '8px',
+                      }}
+                    >
+                      <Flame
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          color: '#1976d2',
+                        }}
+                      />
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Jumlah Aset
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: '36px',
+                      fontWeight: '800',
+                      color: '#212121',
+                      margin: '0 0 4px 0',
+                    }}
+                  >
+                    {stats.total}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: '#9e9e9e',
+                      fontWeight: '500',
+                      margin: 0,
+                    }}
+                  >
+                    {filteredData.length !== rawData.length
+                      ? `Ditapis dari ${rawData.length} rekod`
+                      : 'Keseluruhan rekod'}
+                  </p>
+                </div>
+
+                {/* Operasi (Baik) */}
+                <div
+                  style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: '#2e7d32',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        backgroundColor: '#e8f5e9',
+                        padding: '8px',
+                        borderRadius: '8px',
+                      }}
+                    >
+                      <BadgeCheck
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          color: '#2e7d32',
+                        }}
+                      />
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Operasi
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: '36px',
+                      fontWeight: '800',
+                      color: '#2e7d32',
+                      margin: '0 0 4px 0',
+                    }}
+                  >
+                    {stats.baik}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: '#66bb6a',
+                      fontWeight: '500',
+                      margin: 0,
+                    }}
+                  >
+                    {stats.total > 0
+                      ? ((stats.baik / stats.total) * 100).toFixed(1)
+                      : 0}
+                    % | {getBulanLabel()}
+                  </p>
+                </div>
+
+                {/* Kerosakan */}
+                <div
+                  style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: '#c62828',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        backgroundColor: '#ffebee',
+                        padding: '8px',
+                        borderRadius: '8px',
+                      }}
+                    >
+                      <Siren
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          color: '#c62828',
+                        }}
+                      />
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Kerosakan
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: '36px',
+                      fontWeight: '800',
+                      color: '#c62828',
+                      margin: '0 0 4px 0',
+                    }}
+                  >
+                    {stats.rosak}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: '#ef5350',
+                      fontWeight: '500',
+                      margin: 0,
+                    }}
+                  >
+                    {stats.total > 0
+                      ? ((stats.rosak / stats.total) * 100).toFixed(1)
+                      : 0}
+                    % | {getBulanLabel()}
+                  </p>
+                </div>
+              </div>
+
+              {/* CHARTS ROW - Trend Kerosakan Sahaja */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr',
+                  gap: '16px',
+                  marginBottom: '20px',
+                }}
+              >
+                {/* Trend Kerosakan */}
+                <div
+                  style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#424242',
+                      marginBottom: '16px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <BarChart3
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        color: '#1976d2',
+                      }}
+                    />
+                    Trend Kerosakan ({getBulanLabel()})
+                  </h3>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart data={monthlyTrend} barGap={6}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="month" stroke="#9e9e9e" fontSize={11} />
+                      <YAxis stroke="#9e9e9e" fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                          color: '#333',
+                        }}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="BAIK"
+                        fill="#4caf50"
+                        name="✅ Baik"
+                        radius={[6, 6, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="ROSAK"
+                        fill="#f44336"
+                        name="🔥 Rosak"
+                        radius={[6, 6, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="LAIN"
+                        fill="#ff9800"
+                        name="⚠️ Lain"
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* PIE CHARTS */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '16px',
+                }}
+              >
+                <PieChartCard
+                  title={`Status (${getBulanLabel()})`}
+                  data={statusDistribution}
+                  colorMap={STATUS_COLORS}
+                />
+                <PieChartCard title="Pecahan ZON" data={zonDistribution} />
+                <PieChartCard title="Top 10 BALAI" data={balaiDistribution} />
+                <PieChartCard
+                  title="Jenis Terminal"
+                  data={terminalDistribution}
+                />
+              </div>
+            </>
+          ) : (
+            /* TABLE VIEW */
+            <div
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: '16px',
+                padding: '20px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                border: '1px solid #e0e0e0',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '16px',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#424242',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    margin: 0,
+                  }}
+                >
+                  <Table2
+                    style={{ width: '16px', height: '16px', color: '#1976d2' }}
+                  />
+                  Data Peranti —{' '}
+                  <span style={{ color: '#212121' }}>
+                    {filteredData.length} rekod
+                  </span>
+                </h3>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => setRowsPerPage(+e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    backgroundColor: '#fff',
+                    color: '#424242',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value={10}>10 baris</option>
+                  <option value={25}>25 baris</option>
+                  <option value={50}>50 baris</option>
+                  <option value={100}>100 baris</option>
+                  <option value={200}>200 baris</option>
+                  <option value={300}>300 baris</option>
+                </select>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table
+                  style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontSize: '13px',
+                  }}
+                >
+                  <thead>
+                    <tr
+                      style={{
+                        backgroundColor: '#f5f5f5',
+                        borderBottom: '2px solid #e0e0e0',
+                      }}
+                    >
+                      {[
+                        '#',
+                        'NO. SIRI',
+                        'ZON',
+                        'BALAI',
+                        'TERMINAL',
+                        'SUBSCRIBER',
+                        'STATUS',
+                        'TARIKH UJIAN',
+                        'REG NO.',
+                        'T.JAWAB',
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: '12px',
+                            textAlign: 'left',
+                            fontWeight: '600',
+                            color: '#616161',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedData.map((d, i) => (
+                      <tr
+                        key={i}
+                        style={{ borderBottom: '1px solid #f0f0f0' }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = '#fafafa')
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            'transparent')
+                        }
+                      >
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: '#9e9e9e',
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                          }}
+                        >
+                          {(currentPage - 1) * rowsPerPage + i + 1}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: '#212121',
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                          }}
+                        >
+                          {d['NO. SIRI'] || '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: '#616161',
+                            fontWeight: '500',
+                          }}
+                        >
+                          {d['ZON'] || '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: '#616161' }}>
+                          {d['BALAI'] || '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: '#616161' }}>
+                          {d['JENIS TERMINAL'] || '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: '#616161' }}>
+                          {d['SUBSCRIBER'] || '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <StatusBadge
+                            status={
+                              activeStatusCol
+                                ? normalizeStatus(d[activeStatusCol])
+                                : 'TIADA DATA'
+                            }
+                          />
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: '#616161',
+                            fontSize: '12px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {(tarikhUjianHeader && d[tarikhUjianHeader]) || '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: '#616161',
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                          }}
+                        >
+                          {d['VEHICLE REG NO.'] || '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: '#616161',
+                            fontSize: '12px',
+                          }}
+                        >
+                          {d['TANGGUNGJAWAB PENGUJIAN'] || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                    {!paginatedData.length && (
+                      <tr>
+                        <td
+                          colSpan={10}
+                          style={{
+                            textAlign: 'center',
+                            padding: '64px 0',
+                            color: '#bdbdbd',
+                          }}
+                        >
+                          <HelpCircle
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              margin: '0 auto 12px',
+                              opacity: 0.3,
+                              display: 'block',
+                            }}
+                          />
+                          Tiada data sepadan dengan tapisan
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* PAGINATION */}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginTop: '16px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid #e0e0e0',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: '#9e9e9e',
+                      fontWeight: '500',
+                    }}
+                  >
+                    Halaman {currentPage} / {totalPages}
+                  </span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      style={{
+                        padding: '6px 10px',
+                        fontSize: '12px',
+                        backgroundColor: '#fff',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        color: currentPage === 1 ? '#bdbdbd' : '#616161',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      ««
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        backgroundColor: '#fff',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        color: currentPage === 1 ? '#bdbdbd' : '#616161',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      «
+                    </button>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let p;
+                      if (totalPages <= 5) p = i + 1;
+                      else if (currentPage <= 3) p = i + 1;
+                      else if (currentPage >= totalPages - 2)
+                        p = totalPages - 4 + i;
+                      else p = currentPage - 2 + i;
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => setCurrentPage(p)}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            backgroundColor:
+                              currentPage === p ? '#1976d2' : '#fff',
+                            color: currentPage === p ? '#fff' : '#616161',
+                            border:
+                              currentPage === p
+                                ? '1px solid #1565c0'
+                                : '1px solid #e0e0e0',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow:
+                              currentPage === p
+                                ? '0 2px 8px rgba(25,118,210,0.3)'
+                                : 'none',
+                          }}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        backgroundColor: '#fff',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        color:
+                          currentPage === totalPages ? '#bdbdbd' : '#616161',
+                        cursor:
+                          currentPage === totalPages
+                            ? 'not-allowed'
+                            : 'pointer',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      »
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        padding: '6px 10px',
+                        fontSize: '12px',
+                        backgroundColor: '#fff',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        color:
+                          currentPage === totalPages ? '#bdbdbd' : '#616161',
+                        cursor:
+                          currentPage === totalPages
+                            ? 'not-allowed'
+                            : 'pointer',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      »»
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="card-bomba animate-fade-in"><h3 className="text-sm font-bold text-silver-300 mb-4 uppercase tracking-wider flex items-center gap-2"><BarChart3 className="w-4 h-4 text-bomba-400"/> Trend Kerosakan ({getBulanLabel()})</h3><ResponsiveContainer width="100%" height={300}><BarChart data={monthlyTrend} barGap={6}><CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/><XAxis dataKey="month" stroke="#9E9E9E" fontSize={11} tick={{fill:'#BDBDBD'}}/><YAxis stroke="#9E9E9E" fontSize={11} tick={{fill:'#BDBDBD'}}/><Tooltip contentStyle={{background:'#0D1B3E',border:'1px solid #CC000040',borderRadius:'12px',color:'#fff',fontFamily:'Inter, sans-serif'}}/><Legend wrapperStyle={{color:'#BDBDBD'}}/><Bar dataKey="BAIK" fill="#00C853" name="✅ Baik" radius={[6,6,0,0]}/><Bar dataKey="ROSAK" fill="#FF1744" name="🔥 Rosak" radius={[6,6,0,0]}/><Bar dataKey="LAIN" fill="#FFC107" name="⚠️ Lain" radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div>
-              <div className="card-bomba animate-fade-in"><h3 className="text-sm font-bold text-silver-300 mb-4 uppercase tracking-wider flex items-center gap-2"><Ticket className="w-4 h-4 text-amber-400"/> Trend Tiket (TT)</h3><ResponsiveContainer width="100%" height={300}><LineChart data={ticketTrend}><CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/><XAxis dataKey="month" stroke="#9E9E9E" fontSize={11} tick={{fill:'#BDBDBD'}}/><YAxis stroke="#9E9E9E" fontSize={11} tick={{fill:'#BDBDBD'}}/><Tooltip contentStyle={{background:'#0D1B3E',border:'1px solid #CC000040',borderRadius:'12px',color:'#fff',fontFamily:'Inter, sans-serif'}}/><Line type="monotone" dataKey="tiket" stroke="#FFC107" strokeWidth={3} dot={{fill:'#FFC107',r:5,strokeWidth:2,stroke:'#0D1B3E'}} name="🎫 Tiket"/></LineChart></ResponsiveContainer></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <PieChartCard title={`Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS}/>
-              <PieChartCard title="Pecahan ZON" data={zonDistribution}/>
-              <PieChartCard title="Top 10 BALAI" data={balaiDistribution}/>
-              <PieChartCard title="Jenis Terminal" data={terminalDistribution}/>
-            </div>
-          </>
-        ) : (
-          <div className="card-bomba animate-fade-in">
-            <div className="flex justify-between mb-4 flex-wrap gap-3">
-              <h3 className="text-sm font-bold text-silver-300 uppercase tracking-wider flex items-center gap-2"><Table2 className="w-4 h-4 text-bomba-400"/> Data Peranti — <span className="text-white">{filteredData.length} rekod</span></h3>
-              <select value={rowsPerPage} onChange={e => setRowsPerPage(+e.target.value)} className="filter-select"><option value={10}>10 baris</option><option value={25}>25 baris</option><option value={50}>50 baris</option><option value={100}>100 baris</option></select>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="table-header">{['#','NO. SIRI','ZON','BALAI','TERMINAL','SUBSCRIBER','STATUS','REG NO.','T.JAWAB'].map(h => <th key={h} className="px-3 py-3 text-left">{h}</th>)}</tr></thead>
-                <tbody>
-                  {paginatedData.map((d,i) => <tr key={i} className="border-b border-gray-700/20 hover:bg-bomba-900/10 transition-colors"><td className="px-3 py-2.5 text-silver-500 font-mono text-xs">{(currentPage-1)*rowsPerPage+i+1}</td><td className="px-3 py-2.5 text-white font-mono text-xs font-semibold">{d['NO. SIRI']||'—'}</td><td className="px-3 py-2.5 text-silver-300 font-medium">{d['ZON']||'—'}</td><td className="px-3 py-2.5 text-silver-300">{d['BALAI']||'—'}</td><td className="px-3 py-2.5 text-silver-300">{d['JENIS TERMINAL']||'—'}</td><td className="px-3 py-2.5 text-silver-300">{d['SUBSCRIBER']||'—'}</td><td className="px-3 py-2.5"><StatusBadge status={activeStatusCol?normalizeStatus(d[activeStatusCol]):'TIADA DATA'}/></td><td className="px-3 py-2.5 text-silver-300 font-mono text-xs">{d['VEHICLE REG NO.']||'—'}</td><td className="px-3 py-2.5 text-silver-300 text-xs">{d['TANGGUNGJAWAB PENGUJIAN']||'—'}</td></tr>)}
-                  {!paginatedData.length && <tr><td colSpan={9} className="text-center py-16 text-silver-500"><HelpCircle className="w-10 h-10 mx-auto mb-3 opacity-30"/>Tiada data sepadan dengan tapisan</td></tr>}
-                </tbody>
-              </table>
-            </div>
-            {totalPages>1 && <div className="flex justify-between mt-4 pt-3 border-t border-gray-700/30 items-center"><span className="text-xs text-silver-500 font-medium">Halaman {currentPage} / {totalPages}</span><div className="flex gap-1"><button onClick={()=>setCurrentPage(1)} disabled={currentPage===1} className="px-2.5 py-1.5 text-xs bg-navy-800 rounded-lg hover:bg-navy-700 disabled:opacity-30 text-silver-400 font-semibold transition-all">««</button><button onClick={()=>setCurrentPage(p=>Math.max(1,p-1))} disabled={currentPage===1} className="px-3 py-1.5 text-xs bg-navy-800 rounded-lg hover:bg-navy-700 disabled:opacity-30 text-silver-400 font-semibold transition-all">«</button>{Array.from({length:Math.min(5,totalPages)},(_,i)=>{let p;if(totalPages<=5)p=i+1;else if(currentPage<=3)p=i+1;else if(currentPage>=totalPages-2)p=totalPages-4+i;else p=currentPage-2+i;return <button key={p} onClick={()=>setCurrentPage(p)} className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition-all ${currentPage===p?'bg-bomba-600 text-white shadow-lg shadow-bomba-600/30':'bg-navy-800 text-silver-400 hover:bg-navy-700'}`}>{p}</button>})}<button onClick={()=>setCurrentPage(p=>Math.min(totalPages,p+1))} disabled={currentPage===totalPages} className="px-3 py-1.5 text-xs bg-navy-800 rounded-lg hover:bg-navy-700 disabled:opacity-30 text-silver-400 font-semibold transition-all">»</button><button onClick={()=>setCurrentPage(totalPages)} disabled={currentPage===totalPages} className="px-2.5 py-1.5 text-xs bg-navy-800 rounded-lg hover:bg-navy-700 disabled:opacity-30 text-silver-400 font-semibold transition-all">»»</button></div></div>}
-          </div>
-        ))}
+          ))}
       </main>
-      <footer className="bg-navy-900/80 backdrop-blur border-t border-gray-700/30 py-4 text-center text-xs text-silver-600 font-medium">🚒 Dashboard Pengurusan Aset Radio &copy; {new Date().getFullYear()} | <span className="text-bomba-400 font-bold">Jabatan Bomba & Penyelamat Malaysia</span> | Auto-refresh: setiap 6 jam{filterBulanDipilih.length > 0 && <span className="ml-2 text-gold-500">| Bulan: {getBulanLabel()}</span>}</footer>
+
+      {/* FOOTER DENGAN WATERMARK */}
+      <footer
+        style={{
+          backgroundColor: '#fff',
+          borderTop: '1px solid #e0e0e0',
+          padding: '20px 16px',
+          textAlign: 'center',
+        }}
+      >
+        {/* Info Utama */}
+        <div
+          style={{
+            fontSize: '12px',
+            color: '#9e9e9e',
+            fontWeight: '500',
+            marginBottom: '12px',
+          }}
+        >
+          🚒 Data Pengurusan Aset GIRN{' '}
+          <span style={{ color: '#1976d2', fontWeight: '700' }}>
+            Jabatan Bomba & Penyelamat Malaysia Negeri Johor
+          </span>{' '}
+          | Auto-refresh: setiap 6 jam
+          {filterBulanDipilih.length > 0 && (
+            <span style={{ marginLeft: '8px', color: '#f57c00' }}>
+              | Bulan: {getBulanLabel()}
+            </span>
+          )}
+        </div>
+
+        {/* Garis Pemisah */}
+        <div
+          style={{
+            width: '60px',
+            height: '1px',
+            backgroundColor: '#e0e0e0',
+            margin: '0 auto 12px',
+          }}
+        />
+
+        {/* Watermark - Pembangun */}
+        <div
+          style={{
+            fontSize: '11px',
+            color: '#bdbdbd',
+            lineHeight: '1.8',
+          }}
+        >
+          <div style={{ marginBottom: '2px' }}>
+            Dibangunkan oleh:{' '}
+            <span style={{ fontWeight: '600', color: '#1976d2' }}>
+              PB Mohamad Aidil
+            </span>
+          </div>
+          <div style={{ marginBottom: '2px' }}>
+            Unit:{' '}
+            <span style={{ fontWeight: '600', color: '#616161' }}>
+              PGO Johor
+            </span>
+          </div>
+          <div>
+            Hak Cipta &copy; 2026{' '}
+            <span style={{ fontWeight: '600', color: '#616161' }}></span> |
+            Semua Hak Terpelihara
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
