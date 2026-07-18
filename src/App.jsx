@@ -6,11 +6,9 @@ import {
   AlertCircle,
   CheckCircle2,
   HelpCircle,
-  Ticket,
   Search,
   X,
   Filter,
-  Zap,
   Clock,
   BarChart3,
   PieChart,
@@ -18,7 +16,6 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
-  Calendar,
   AlertTriangle,
   Flame,
   Shield,
@@ -40,8 +37,6 @@ import {
   PieChart as RePieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
 } from 'recharts';
 
 // ============================================
@@ -91,69 +86,111 @@ const STATUS_ICONS = {
 // ============================================
 // HELPERS
 // ============================================
+
+/**
+ * Helper untuk bersihkan header dari whitespace/line break
+ */
+const cleanHeader = (h) => h.replace(/\s+/g, ' ').trim().toUpperCase();
+
+/**
+ * Ekstrak monthly columns berdasarkan header CSV yang anda beri:
+ * Format: KEROSAKAN [BULAN] [TAHUN] | TT YANG DIBUKA [BULAN] [TAHUN] | 
+ *          TARIKH PENGUJIAN [BULAN] [TAHUN] | STATUS [BULAN] [TAHUN]
+ */
 const extractMonthlyColumns = (headers) => {
+  // 🔥 Senarai bulan ikut header anda - susun dari TERKINI ke TERLAMA
   const monthNames = [
     'JUN 2026',
     'MEI 2026',
     'APRIL 2026',
     'MAC 2026',
-    'FEB 2026',
-    'JAN 2026',
-    'DIS 2025',
+    'FEBRUARI 2026',
+    'JANUARI 2026',
+    'DISEMBER 2025',
     'NOVEMBER 2025',
-    'OKT 2025',
-    'SEPT 2025',
+    'OKTOBER 2025',
+    'SEPTEMBER 2025',
     'OGOS 2025',
     'JULAI 2025',
     'JUN 2025',
     'MEI 2025',
-    'APR 2025',
+    'APRIL 2025',
     'MAC 2025',
-    'FEB 2025',
-    'JAN 2025',
+    'FEBRUARI 2025',
+    'JANUARI 2025',
     'DISEMBER 2024',
-    'NOV 2024',
-    'OKT 2024',
-    'SEPT 2024',
+    'NOVEMBER 2024',
+    'OKTOBER 2024',
+    'SEPTEMBER 2024',
     'OGOS 2024',
-    'JUL 2024',
+    'JULAI 2024',
     'JUN 2024',
     'MEI 2024',
-    'APR 2024',
+    'APRIL 2024',
     'MAC 2024',
-    'FEB 2024',
-    'JAN 2024',
-    'DISEMBER',
-    'NOVEMBER',
-    'OKTOBER',
-    'SEPTEMBER',
-    'OGOS',
-    'JUL',
-    'JUN',
-    'MEI',
-    'APRIL',
-    'MAC',
-    'FEB',
-    'JAN',
+    'FEBRUARI 2024',
+    'JANUARI 2024',
+    'DISEMBER 2023',
+    'NOVEMBER 2023',
+    'OKTOBER 2023',
+    'SEPTEMBER 2023',
+    'OGOS 2023',
+    'JULAI 2023',
+    'JUN 2023',
+    'MEI 2023',
+    'APRIL 2023',
+    'MAC 2023',
+    'FEBRUARI 2023',
+    'JANUARI 2023',
+    'DISEMBER 2022',
+    'NOVEMBER 2022',
+    'OKTOBER 2022',
+    'SEPTEMBER 2022',
   ];
+
   return monthNames
     .map((mn) => {
-      const statusCol = headers.find(
-        (h) =>
-          h.toUpperCase().includes('STATUS') &&
-          h.toUpperCase().includes(mn) &&
-          !h.toUpperCase().includes('VT') &&
-          !h.toUpperCase().includes('SEMASA')
-      );
-      const ttCol = headers.find(
-        (h) =>
-          h.toUpperCase().includes('TT') &&
-          h.toUpperCase().includes(mn) &&
-          !h.toUpperCase().includes('TIDAK') &&
-          !h.toUpperCase().includes('TINDAKAN')
-      );
+      // 🔥 Cari STATUS column - gunakan cleanHeader untuk handle line break
+      const statusCol = headers.find((h) => {
+        const ch = cleanHeader(h);
+        return (
+          ch.includes('STATUS') &&
+          ch.includes(mn) &&
+          !ch.includes('VT') &&
+          !ch.includes('SEMASA') &&
+          !ch.includes('TINDAKAN PAN') &&
+          !ch.includes('TINDAKAN PAN/KEJ')
+        );
+      });
+
+      // 🔥 Cari TT column - gunakan cleanHeader
+      const ttCol = headers.find((h) => {
+        const ch = cleanHeader(h);
+        return (
+          ch.includes('TT') &&
+          ch.includes(mn) &&
+          !ch.includes('TIDAK') &&
+          !ch.includes('TINDAKAN')
+        );
+      });
+
+      // 🔥 Cari TARIKH PENGUJIAN column - gunakan cleanHeader
+      const tarikhCol = headers.find((h) => {
+        const ch = cleanHeader(h);
+        return (
+          ch.includes('TARIKH') &&
+          ch.includes('PENGUJIAN') &&
+          ch.includes(mn)
+        );
+      });
+
       return statusCol
-        ? { label: mn, status: statusCol, tt: ttCol || null }
+        ? {
+            label: mn,
+            status: statusCol,
+            tt: ttCol || null,
+            tarikh: tarikhCol || null,
+          }
         : null;
     })
     .filter(Boolean);
@@ -634,13 +671,6 @@ export default function App() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Cari header TARIKH PENGUJIAN (handle line break)
-  const tarikhUjianHeader = useMemo(() => {
-    return headers.find((h) =>
-      h.replace(/\s+/g, ' ').trim().toUpperCase().includes('TARIKH PENGUJIAN')
-    );
-  }, [headers]);
-
   // Fetch data function
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -684,13 +714,13 @@ export default function App() {
     [headers]
   );
 
-  // Month options for filter
+  // Month options untuk filter
   const monthOptions = useMemo(
     () => monthlyColumns.map((mc) => mc.label),
     [monthlyColumns]
   );
 
-  // Unique values for all filters
+  // Unique values untuk semua filter
   const uniqueValues = useMemo(() => {
     const g = (k) =>
       [
@@ -710,11 +740,10 @@ export default function App() {
   // Status semasa column
   const statusSemasaCol = useMemo(
     () =>
-      headers.find(
-        (h) =>
-          h.toUpperCase().includes('STATUS SEMASA 2026') &&
-          !h.toUpperCase().includes('VT')
-      ),
+      headers.find((h) => {
+        const ch = cleanHeader(h);
+        return ch.includes('STATUS SEMASA 2026') && !ch.includes('VT');
+      }),
     [headers]
   );
 
@@ -724,7 +753,7 @@ export default function App() {
     return monthlyColumns.filter((mc) => filterBulanDipilih.includes(mc.label));
   }, [filterBulanDipilih, monthlyColumns]);
 
-  // Active status column
+  // Active status column (guna bulan paling terkini dalam pilihan)
   const activeStatusCol = useMemo(() => {
     if (filterBulanDipilih.length > 0 && selectedMonthColumns.length > 0) {
       return selectedMonthColumns[0].status;
@@ -732,7 +761,15 @@ export default function App() {
     return statusSemasaCol;
   }, [filterBulanDipilih, selectedMonthColumns, statusSemasaCol]);
 
-  // All possible statuses for dropdown
+  // Active TARIKH PENGUJIAN column (guna bulan paling terkini)
+  const activeTarikhUjianCol = useMemo(() => {
+    if (filterBulanDipilih.length > 0 && selectedMonthColumns.length > 0) {
+      return selectedMonthColumns[0].tarikh;
+    }
+    return null;
+  }, [filterBulanDipilih, selectedMonthColumns]);
+
+  // All possible statuses untuk dropdown
   const allStatusOptions = useMemo(
     () => [...Object.keys(STATUS_COLORS)].sort(),
     []
@@ -969,11 +1006,6 @@ export default function App() {
         'JENIS JENTERA',
       ];
 
-      // Tambah TARIKH PENGUJIAN kalau wujud
-      if (tarikhUjianHeader) {
-        FIXED_GENERAL_HEADERS.push(tarikhUjianHeader);
-      }
-
       const allHeaders = Object.keys(filteredData[0]);
       const existingGeneralHeaders = FIXED_GENERAL_HEADERS.filter((h) =>
         allHeaders.includes(h)
@@ -983,6 +1015,7 @@ export default function App() {
       selectedMonthColumns.forEach((mc) => {
         if (mc.status) monthSpecificHeaders.push(mc.status);
         if (mc.tt) monthSpecificHeaders.push(mc.tt);
+        if (mc.tarikh) monthSpecificHeaders.push(mc.tarikh);
       });
 
       const allUniqueHeaders = [
@@ -1001,6 +1034,8 @@ export default function App() {
           sortedMonthHeaders.push(mc.status);
         if (mc.tt && monthHeadersSorted.includes(mc.tt))
           sortedMonthHeaders.push(mc.tt);
+        if (mc.tarikh && monthHeadersSorted.includes(mc.tarikh))
+          sortedMonthHeaders.push(mc.tarikh);
       });
 
       exportHeaders = [...generalHeadersSorted, ...sortedMonthHeaders];
@@ -1046,12 +1081,7 @@ export default function App() {
       `✅ ${exportData.length} rekod × ${exportHeaders.length} kolum berjaya dieksport!`,
       { duration: 3000 }
     );
-  }, [
-    filteredData,
-    filterBulanDipilih,
-    selectedMonthColumns,
-    tarikhUjianHeader,
-  ]);
+  }, [filteredData, filterBulanDipilih, selectedMonthColumns]);
 
   const hasActiveFilters =
     filterZon.length > 0 ||
@@ -1074,7 +1104,7 @@ export default function App() {
         fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      {/* HEADER - SIMPLE & CENTERED */}
+      {/* HEADER */}
       <header
         style={{
           backgroundColor: '#fff',
@@ -1114,7 +1144,7 @@ export default function App() {
               <Flame style={{ width: '32px', height: '32px' }} />
             </div>
 
-            {/* Title & Badge */}
+            {/* Title */}
             <div style={{ textAlign: 'center' }}>
               <h1
                 style={{
@@ -1154,7 +1184,6 @@ export default function App() {
               gap: '8px',
             }}
           >
-            {/* Toggle Dashboard/Table */}
             <button
               onClick={() =>
                 setActiveTab((t) => (t === 'dashboard' ? 'table' : 'dashboard'))
@@ -1195,7 +1224,6 @@ export default function App() {
               )}
             </button>
 
-            {/* Export Button */}
             <button
               onClick={exportCSV}
               style={{
@@ -1225,7 +1253,6 @@ export default function App() {
               <Download style={{ width: '16px', height: '16px' }} /> Eksport
             </button>
 
-            {/* Refresh Button */}
             <button
               onClick={fetchData}
               disabled={loading}
@@ -1979,7 +2006,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* CHARTS ROW - Trend Kerosakan Sahaja */}
+              {/* CHARTS ROW */}
               <div
                 style={{
                   display: 'grid',
@@ -1988,7 +2015,6 @@ export default function App() {
                   marginBottom: '20px',
                 }}
               >
-                {/* Trend Kerosakan */}
                 <div
                   style={{
                     backgroundColor: '#fff',
@@ -2079,10 +2105,7 @@ export default function App() {
               </div>
             </>
           ) : (
-            /* ============================================ */
-            /* TABLE VIEW - SUSUNAN BARU                     */
-            /* # | NO. SIRI | TERMINAL | ISSI | SUBSCRIBER | ZON | BALAI | T.JAWAB | STATUS | TARIKH UJIAN | REG NO. */
-            /* ============================================ */
+            /* TABLE VIEW */
             <div
               style={{
                 backgroundColor: '#fff',
@@ -2276,7 +2299,9 @@ export default function App() {
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {(tarikhUjianHeader && d[tarikhUjianHeader]) || '—'}
+                          {(activeTarikhUjianCol &&
+                            d[activeTarikhUjianCol]) ||
+                            '—'}
                         </td>
                         <td
                           style={{
@@ -2459,7 +2484,7 @@ export default function App() {
           ))}
       </main>
 
-      {/* FOOTER DENGAN WATERMARK */}
+      {/* FOOTER */}
       <footer
         style={{
           backgroundColor: '#fff',
@@ -2468,7 +2493,6 @@ export default function App() {
           textAlign: 'center',
         }}
       >
-        {/* Info Utama */}
         <div
           style={{
             fontSize: '12px',
@@ -2488,8 +2512,6 @@ export default function App() {
             </span>
           )}
         </div>
-
-        {/* Garis Pemisah */}
         <div
           style={{
             width: '60px',
@@ -2498,8 +2520,6 @@ export default function App() {
             margin: '0 auto 12px',
           }}
         />
-
-        {/* Watermark - Pembangun */}
         <div
           style={{
             fontSize: '11px',
