@@ -93,12 +93,9 @@ const STATUS_ICONS = {
 const cleanHeader = (h) => h.replace(/\s+/g, ' ').trim().toUpperCase();
 
 /**
- * Ekstrak monthly columns berdasarkan header CSV yang anda beri:
- * Format: KEROSAKAN [BULAN] [TAHUN] | TT YANG DIBUKA [BULAN] [TAHUN] | 
- *          TARIKH PENGUJIAN [BULAN] [TAHUN] | STATUS [BULAN] [TAHUN]
+ * Ekstrak monthly columns berdasarkan header CSV
  */
 const extractMonthlyColumns = (headers) => {
-  // 🔥 Senarai bulan ikut header anda - susun dari TERKINI ke TERLAMA
   const monthNames = [
     'JUN 2026',
     'MEI 2026',
@@ -150,7 +147,7 @@ const extractMonthlyColumns = (headers) => {
 
   return monthNames
     .map((mn) => {
-      // 🔥 Cari STATUS column - gunakan cleanHeader untuk handle line break
+      // Cari STATUS column
       const statusCol = headers.find((h) => {
         const ch = cleanHeader(h);
         return (
@@ -158,12 +155,11 @@ const extractMonthlyColumns = (headers) => {
           ch.includes(mn) &&
           !ch.includes('VT') &&
           !ch.includes('SEMASA') &&
-          !ch.includes('TINDAKAN PAN') &&
-          !ch.includes('TINDAKAN PAN/KEJ')
+          !ch.includes('TINDAKAN PAN')
         );
       });
 
-      // 🔥 Cari TT column - gunakan cleanHeader
+      // Cari TT column
       const ttCol = headers.find((h) => {
         const ch = cleanHeader(h);
         return (
@@ -174,7 +170,7 @@ const extractMonthlyColumns = (headers) => {
         );
       });
 
-      // 🔥 Cari TARIKH PENGUJIAN column - gunakan cleanHeader
+      // Cari TARIKH PENGUJIAN column
       const tarikhCol = headers.find((h) => {
         const ch = cleanHeader(h);
         return (
@@ -2105,7 +2101,9 @@ export default function App() {
               </div>
             </>
           ) : (
+            /* ============================================ */
             /* TABLE VIEW */
+            /* ============================================ */
             <div
               style={{
                 backgroundColor: '#fff',
@@ -2183,19 +2181,34 @@ export default function App() {
                         borderBottom: '2px solid #e0e0e0',
                       }}
                     >
-                      {[
-                        '#',
-                        'NO. SIRI',
-                        'TERMINAL',
-                        'ISSI',
-                        'SUBSCRIBER',
-                        'ZON',
-                        'BALAI',
-                        'T.JAWAB',
-                        'STATUS',
-                        'TARIKH UJIAN',
-                        'REG NO.',
-                      ].map((h) => (
+                      {(() => {
+                        const baseHeaders = [
+                          '#',
+                          'NO. SIRI',
+                          'TERMINAL',
+                          'ISSI',
+                          'SUBSCRIBER',
+                          'ZON',
+                          'BALAI',
+                          'T.JAWAB',
+                        ];
+
+                        // Dynamic headers: STATUS + TARIKH untuk setiap bulan
+                        const monthHeaders = [];
+                        if (filterBulanDipilih.length > 0) {
+                          selectedMonthColumns.forEach((mc) => {
+                            monthHeaders.push(`STATUS ${mc.label}`);
+                            monthHeaders.push(`TARIKH ${mc.label}`);
+                          });
+                        } else {
+                          monthHeaders.push('STATUS');
+                          monthHeaders.push('TARIKH UJIAN');
+                        }
+
+                        const endHeaders = ['REG NO.'];
+
+                        return [...baseHeaders, ...monthHeaders, ...endHeaders];
+                      })().map((h) => (
                         <th
                           key={h}
                           style={{
@@ -2224,6 +2237,7 @@ export default function App() {
                             'transparent')
                         }
                       >
+                        {/* # */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2234,6 +2248,8 @@ export default function App() {
                         >
                           {(currentPage - 1) * rowsPerPage + i + 1}
                         </td>
+
+                        {/* NO. SIRI */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2245,9 +2261,13 @@ export default function App() {
                         >
                           {d['NO. SIRI'] || '—'}
                         </td>
+
+                        {/* TERMINAL */}
                         <td style={{ padding: '10px 12px', color: '#616161' }}>
                           {d['JENIS TERMINAL'] || '—'}
                         </td>
+
+                        {/* ISSI */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2258,9 +2278,13 @@ export default function App() {
                         >
                           {d['NO. ISSI TETRA'] || '—'}
                         </td>
+
+                        {/* SUBSCRIBER */}
                         <td style={{ padding: '10px 12px', color: '#616161' }}>
                           {d['SUBSCRIBER'] || '—'}
                         </td>
+
+                        {/* ZON */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2270,9 +2294,13 @@ export default function App() {
                         >
                           {d['ZON'] || '—'}
                         </td>
+
+                        {/* BALAI */}
                         <td style={{ padding: '10px 12px', color: '#616161' }}>
                           {d['BALAI'] || '—'}
                         </td>
+
+                        {/* T.JAWAB */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2282,27 +2310,63 @@ export default function App() {
                         >
                           {d['TANGGUNGJAWAB PENGUJIAN'] || '—'}
                         </td>
-                        <td style={{ padding: '10px 12px' }}>
-                          <StatusBadge
-                            status={
-                              activeStatusCol
-                                ? normalizeStatus(d[activeStatusCol])
-                                : 'TIADA DATA'
-                            }
-                          />
-                        </td>
-                        <td
-                          style={{
-                            padding: '10px 12px',
-                            color: '#616161',
-                            fontSize: '12px',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {(activeTarikhUjianCol &&
-                            d[activeTarikhUjianCol]) ||
-                            '—'}
-                        </td>
+
+                        {/* 🔥 DYNAMIC: STATUS + TARIKH untuk SETIAP bulan */}
+                        {filterBulanDipilih.length > 0 ? (
+                          selectedMonthColumns.map((mc) => (
+                            <React.Fragment key={mc.label}>
+                              {/* STATUS */}
+                              <td style={{ padding: '10px 12px' }}>
+                                <StatusBadge
+                                  status={
+                                    mc.status && d[mc.status]
+                                      ? normalizeStatus(d[mc.status])
+                                      : 'TIADA DATA'
+                                  }
+                                />
+                              </td>
+                              {/* TARIKH */}
+                              <td
+                                style={{
+                                  padding: '10px 12px',
+                                  color: '#616161',
+                                  fontSize: '12px',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {(mc.tarikh && d[mc.tarikh]) || '—'}
+                              </td>
+                            </React.Fragment>
+                          ))
+                        ) : (
+                          <>
+                            {/* STATUS (fallback) */}
+                            <td style={{ padding: '10px 12px' }}>
+                              <StatusBadge
+                                status={
+                                  activeStatusCol
+                                    ? normalizeStatus(d[activeStatusCol])
+                                    : 'TIADA DATA'
+                                }
+                              />
+                            </td>
+                            {/* TARIKH (fallback) */}
+                            <td
+                              style={{
+                                padding: '10px 12px',
+                                color: '#616161',
+                                fontSize: '12px',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {(activeTarikhUjianCol &&
+                                d[activeTarikhUjianCol]) ||
+                                '—'}
+                            </td>
+                          </>
+                        )}
+
+                        {/* REG NO. */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2318,7 +2382,13 @@ export default function App() {
                     {!paginatedData.length && (
                       <tr>
                         <td
-                          colSpan={11}
+                          colSpan={
+                            8 +
+                            (filterBulanDipilih.length > 0
+                              ? selectedMonthColumns.length * 2
+                              : 2) +
+                            1
+                          }
                           style={{
                             textAlign: 'center',
                             padding: '64px 0',
