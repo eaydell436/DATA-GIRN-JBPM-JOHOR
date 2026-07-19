@@ -72,6 +72,22 @@ const PIE_COLORS = [
   '#78909C',
 ];
 
+// 🔥 Warna untuk Jenis Terminal
+const TERMINAL_COLORS = [
+  '#1976d2', // Biru
+  '#e53935', // Merah
+  '#43a047', // Hijau
+  '#fb8c00', // Oren
+  '#8e24aa', // Ungu
+  '#00acc1', // Cyan
+  '#d81b60', // Pink
+  '#6d4c41', // Coklat
+  '#546e7a', // Biru Kelabu
+  '#fdd835', // Kuning
+  '#5e35b1', // Ungu Tua
+  '#00897b', // Teal
+];
+
 const STATUS_ICONS = {
   BAIK: CheckCircle2,
   ROSAK: AlertCircle,
@@ -901,22 +917,72 @@ export default function App() {
     return Object.entries(c).map(([n, v]) => ({ name: n, value: v }));
   }, [filteredData]);
 
+  // 🔥 Senarai unik jenis terminal dari data
+  const terminalTypes = useMemo(() => {
+    const types = new Set();
+    filteredData.forEach((d) => {
+      const t = d['JENIS TERMINAL']?.trim();
+      if (t) types.add(t);
+    });
+    return [...types].sort();
+  }, [filteredData]);
+
+  // 🔥 Trend Kerosakan (Semua Status Spesifik)
   const monthlyTrend = useMemo(() => {
     if (selectedMonthColumns.length === 0) return [];
     const cols = [...selectedMonthColumns].reverse();
     return cols.map((mc) => {
-      const cnt = { month: mc.label, BAIK: 0, ROSAK: 0, LAIN: 0 };
+      const cnt = {
+        month: mc.label,
+        BAIK: 0,
+        ROSAK: 0,
+        'TIDAK DIJUMPAI': 0,
+        'TIDAK DAPAT DIUJI': 0,
+        'BER - TINDAKAN SAPURA': 0,
+        'BER - TINDAKAN JABATAN': 0,
+        'BER - SELESAI PROSES PELUPUSAN': 0,
+        'TIADA DATA': 0,
+      };
+
       filteredData.forEach((d) => {
         if (mc.status && d[mc.status]) {
           const s = normalizeStatus(d[mc.status]);
-          if (s === 'BAIK') cnt.BAIK++;
-          else if (s === 'ROSAK') cnt.ROSAK++;
-          else cnt.LAIN++;
+          if (cnt.hasOwnProperty(s)) {
+            cnt[s]++;
+          }
         }
       });
       return cnt;
     });
   }, [filteredData, selectedMonthColumns]);
+
+  // 🔥 Trend Mengikut Jenis Terminal
+  const monthlyTerminalTrend = useMemo(() => {
+    if (selectedMonthColumns.length === 0) return [];
+    const cols = [...selectedMonthColumns].reverse();
+    return cols.map((mc) => {
+      const cnt = { month: mc.label };
+
+      // Inisialkan semua jenis terminal dengan 0
+      terminalTypes.forEach((type) => {
+        cnt[type] = 0;
+      });
+
+      filteredData.forEach((d) => {
+        if (mc.status && d[mc.status]) {
+          const status = normalizeStatus(d[mc.status]);
+          // Hanya kira jika ada data (bukan TIADA DATA)
+          if (status !== 'TIADA DATA') {
+            const terminalType = d['JENIS TERMINAL']?.trim();
+            if (terminalType && cnt.hasOwnProperty(terminalType)) {
+              cnt[terminalType]++;
+            }
+          }
+        }
+      });
+      return cnt;
+    });
+  }, [filteredData, selectedMonthColumns, terminalTypes]);
 
   const stats = useMemo(() => {
     let baik = 0,
@@ -2011,6 +2077,7 @@ export default function App() {
                   marginBottom: '20px',
                 }}
               >
+                {/* 🔥 CHART 1: Trend Kerosakan (Semua Status Spesifik) */}
                 <div
                   style={{
                     backgroundColor: '#fff',
@@ -2043,7 +2110,7 @@ export default function App() {
                     Trend Kerosakan ({getBulanLabel()})
                   </h3>
                   <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={monthlyTrend} barGap={6}>
+                    <BarChart data={monthlyTrend} barGap={2}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="month" stroke="#9e9e9e" fontSize={11} />
                       <YAxis stroke="#9e9e9e" fontSize={11} />
@@ -2056,24 +2123,80 @@ export default function App() {
                         }}
                       />
                       <Legend />
-                      <Bar
-                        dataKey="BAIK"
-                        fill="#4caf50"
-                        name="✅ Baik"
-                        radius={[6, 6, 0, 0]}
+                      <Bar dataKey="BAIK" fill="#4caf50" name="✅ BAIK" radius={[6, 6, 0, 0]} stackId="stack" />
+                      <Bar dataKey="ROSAK" fill="#f44336" name="🔥 ROSAK" radius={[0, 0, 0, 0]} stackId="stack" />
+                      <Bar dataKey="TIDAK DIJUMPAI" fill="#FFC107" name="❓ TIDAK DIJUMPAI" radius={[0, 0, 0, 0]} stackId="stack" />
+                      <Bar dataKey="TIDAK DAPAT DIUJI" fill="#7C4DFF" name="🔧 TIDAK DAPAT DIUJI" radius={[0, 0, 0, 0]} stackId="stack" />
+                      <Bar dataKey="BER - TINDAKAN SAPURA" fill="#448AFF" name="🚛 BER - TINDAKAN SAPURA" radius={[0, 0, 0, 0]} stackId="stack" />
+                      <Bar dataKey="BER - TINDAKAN JABATAN" fill="#00B8D4" name="🛡️ BER - TINDAKAN JABATAN" radius={[0, 0, 0, 0]} stackId="stack" />
+                      <Bar dataKey="BER - SELESAI PROSES PELUPUSAN" fill="#9E9E9E" name="🗑️ BER - SELESAI PELUPUSAN" radius={[0, 0, 0, 0]} stackId="stack" />
+                      <Bar dataKey="TIADA DATA" fill="#607D8B" name="📭 TIADA DATA" radius={[0, 0, 0, 6]} stackId="stack" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* 🔥 CHART 2: Trend Mengikut Jenis Terminal */}
+                <div
+                  style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#424242',
+                      marginBottom: '16px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <BarChart3
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        color: '#ff6d00',
+                      }}
+                    />
+                    Trend Mengikut Jenis Terminal ({getBulanLabel()})
+                  </h3>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart data={monthlyTerminalTrend} barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="month" stroke="#9e9e9e" fontSize={11} />
+                      <YAxis stroke="#9e9e9e" fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                          color: '#333',
+                        }}
                       />
-                      <Bar
-                        dataKey="ROSAK"
-                        fill="#f44336"
-                        name="🔥 Rosak"
-                        radius={[6, 6, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="LAIN"
-                        fill="#ff9800"
-                        name="⚠️ Lain"
-                        radius={[6, 6, 0, 0]}
-                      />
+                      <Legend />
+                      {terminalTypes.map((type, idx) => (
+                        <Bar
+                          key={type}
+                          dataKey={type}
+                          fill={TERMINAL_COLORS[idx % TERMINAL_COLORS.length]}
+                          name={type}
+                          radius={
+                            idx === 0
+                              ? [6, 6, 0, 0]
+                              : idx === terminalTypes.length - 1
+                              ? [0, 0, 6, 6]
+                              : [0, 0, 0, 0]
+                          }
+                          stackId="terminalStack"
+                        />
+                      ))}
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -2193,7 +2316,6 @@ export default function App() {
                           'T.JAWAB',
                         ];
 
-                        // Dynamic headers: STATUS + TARIKH untuk setiap bulan
                         const monthHeaders = [];
                         if (filterBulanDipilih.length > 0) {
                           selectedMonthColumns.forEach((mc) => {
@@ -2237,7 +2359,6 @@ export default function App() {
                             'transparent')
                         }
                       >
-                        {/* # */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2248,8 +2369,6 @@ export default function App() {
                         >
                           {(currentPage - 1) * rowsPerPage + i + 1}
                         </td>
-
-                        {/* NO. SIRI */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2261,13 +2380,9 @@ export default function App() {
                         >
                           {d['NO. SIRI'] || '—'}
                         </td>
-
-                        {/* TERMINAL */}
                         <td style={{ padding: '10px 12px', color: '#616161' }}>
                           {d['JENIS TERMINAL'] || '—'}
                         </td>
-
-                        {/* ISSI */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2278,13 +2393,9 @@ export default function App() {
                         >
                           {d['NO. ISSI TETRA'] || '—'}
                         </td>
-
-                        {/* SUBSCRIBER */}
                         <td style={{ padding: '10px 12px', color: '#616161' }}>
                           {d['SUBSCRIBER'] || '—'}
                         </td>
-
-                        {/* ZON */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2294,13 +2405,9 @@ export default function App() {
                         >
                           {d['ZON'] || '—'}
                         </td>
-
-                        {/* BALAI */}
                         <td style={{ padding: '10px 12px', color: '#616161' }}>
                           {d['BALAI'] || '—'}
                         </td>
-
-                        {/* T.JAWAB */}
                         <td
                           style={{
                             padding: '10px 12px',
@@ -2310,12 +2417,9 @@ export default function App() {
                         >
                           {d['TANGGUNGJAWAB PENGUJIAN'] || '—'}
                         </td>
-
-                        {/* 🔥 DYNAMIC: STATUS + TARIKH untuk SETIAP bulan */}
                         {filterBulanDipilih.length > 0 ? (
                           selectedMonthColumns.map((mc) => (
                             <React.Fragment key={mc.label}>
-                              {/* STATUS */}
                               <td style={{ padding: '10px 12px' }}>
                                 <StatusBadge
                                   status={
@@ -2325,7 +2429,6 @@ export default function App() {
                                   }
                                 />
                               </td>
-                              {/* TARIKH */}
                               <td
                                 style={{
                                   padding: '10px 12px',
@@ -2340,7 +2443,6 @@ export default function App() {
                           ))
                         ) : (
                           <>
-                            {/* STATUS (fallback) */}
                             <td style={{ padding: '10px 12px' }}>
                               <StatusBadge
                                 status={
@@ -2350,7 +2452,6 @@ export default function App() {
                                 }
                               />
                             </td>
-                            {/* TARIKH (fallback) */}
                             <td
                               style={{
                                 padding: '10px 12px',
@@ -2365,8 +2466,6 @@ export default function App() {
                             </td>
                           </>
                         )}
-
-                        {/* REG NO. */}
                         <td
                           style={{
                             padding: '10px 12px',
