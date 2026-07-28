@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   RefreshCw, AlertCircle, CheckCircle2, HelpCircle, Search, X, Filter, Clock,
-  BarChart3, PieChart, Table2, Download, ChevronDown, ChevronUp, AlertTriangle,
+  BarChart3, PieChart as PieChartIcon, Table2, Download, ChevronDown, ChevronUp, AlertTriangle,
   Flame, Shield, Siren, BadgeCheck, Wrench, Trash2, Truck, Check, Info,
   Sun, Moon, MapPin, Building2, Radio, UserCheck, Tag, Calendar, Activity,
-  Maximize2, Minimize2
+  Maximize2, Minimize2, LineChart as LineIcon, Layers, TrendingUp, Cpu, GitCommit
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LabelList,
+  LineChart, Line, AreaChart, Area, ScatterChart, Scatter, ZAxis,
+  ComposedChart, ReferenceLine
 } from 'recharts';
 
 const LOGO_URL = 'https://cdn-icons-png.flaticon.com/128/2502/2502280.png';
@@ -118,21 +120,10 @@ const cleanHeader = (h) => h.replace(/\s+/g, ' ').trim().toUpperCase();
 const extractMonthlyColumns = (headers) => {
   const monthNames = [
     'SEMASA 2026',
-    'DISEMBER 2036', 'NOVEMBER 2036', 'OKTOBER 2036', 'SEPTEMBER 2036', 'OGOS 2036', 'JULAI 2036', 'JUN 2036', 'MEI 2036', 'APRIL 2036', 'MAC 2036', 'FEBRUARI 2036', 'JANUARI 2036',
-    'DISEMBER 2035', 'NOVEMBER 2035', 'OKTOBER 2035', 'SEPTEMBER 2035', 'OGOS 2035', 'JULAI 2035', 'JUN 2035', 'MEI 2035', 'APRIL 2035', 'MAC 2035', 'FEBRUARI 2035', 'JANUARI 2035',
-    'DISEMBER 2034', 'NOVEMBER 2034', 'OKTOBER 2034', 'SEPTEMBER 2034', 'OGOS 2034', 'JULAI 2034', 'JUN 2034', 'MEI 2034', 'APRIL 2034', 'MAC 2034', 'FEBRUARI 2034', 'JANUARI 2034',
-    'DISEMBER 2033', 'NOVEMBER 2033', 'OKTOBER 2033', 'SEPTEMBER 2033', 'OGOS 2033', 'JULAI 2033', 'JUN 2033', 'MEI 2033', 'APRIL 2033', 'MAC 2033', 'FEBRUARI 2033', 'JANUARI 2033',
-    'DISEMBER 2032', 'NOVEMBER 2032', 'OKTOBER 2032', 'SEPTEMBER 2032', 'OGOS 2032', 'JULAI 2032', 'JUN 2032', 'MEI 2032', 'APRIL 2032', 'MAC 2032', 'FEBRUARI 2032', 'JANUARI 2032',
-    'DISEMBER 2031', 'NOVEMBER 2031', 'OKTOBER 2031', 'SEPTEMBER 2031', 'OGOS 2031', 'JULAI 2031', 'JUN 2031', 'MEI 2031', 'APRIL 2031', 'MAC 2031', 'FEBRUARI 2031', 'JANUARI 2031',
-    'DISEMBER 2030', 'NOVEMBER 2030', 'OKTOBER 2030', 'SEPTEMBER 2030', 'OGOS 2030', 'JULAI 2030', 'JUN 2030', 'MEI 2030', 'APRIL 2030', 'MAC 2030', 'FEBRUARI 2030', 'JANUARI 2030',
-    'DISEMBER 2029', 'NOVEMBER 2029', 'OKTOBER 2029', 'SEPTEMBER 2029', 'OGOS 2029', 'JULAI 2029', 'JUN 2029', 'MEI 2029', 'APRIL 2029', 'MAC 2029', 'FEBRUARI 2029', 'JANUARI 2029',
-    'DISEMBER 2028', 'NOVEMBER 2028', 'OKTOBER 2028', 'SEPTEMBER 2028', 'OGOS 2028', 'JULAI 2028', 'JUN 2028', 'MEI 2028', 'APRIL 2028', 'MAC 2028', 'FEBRUARI 2028', 'JANUARI 2028',
-    'DISEMBER 2027', 'NOVEMBER 2027', 'OKTOBER 2027', 'SEPTEMBER 2027', 'OGOS 2027', 'JULAI 2027', 'JUN 2027', 'MEI 2027', 'APRIL 2027', 'MAC 2027', 'FEBRUARI 2027', 'JANUARI 2027',
     'DISEMBER 2026', 'NOVEMBER 2026', 'OKTOBER 2026', 'SEPTEMBER 2026', 'OGOS 2026', 'JULAI 2026', 'JUN 2026', 'MEI 2026', 'APRIL 2026', 'MAC 2026', 'FEBRUARI 2026', 'JANUARI 2026',
     'DISEMBER 2025', 'NOVEMBER 2025', 'OKTOBER 2025', 'SEPTEMBER 2025', 'OGOS 2025', 'JULAI 2025', 'JUN 2025', 'MEI 2025', 'APRIL 2025', 'MAC 2025', 'FEBRUARI 2025', 'JANUARI 2025',
     'DISEMBER 2024', 'NOVEMBER 2024', 'OKTOBER 2024', 'SEPTEMBER 2024', 'OGOS 2024', 'JULAI 2024', 'JUN 2024', 'MEI 2024', 'APRIL 2024', 'MAC 2024', 'FEBRUARI 2024', 'JANUARI 2024',
     'DISEMBER 2023', 'NOVEMBER 2023', 'OKTOBER 2023', 'SEPTEMBER 2023', 'OGOS 2023', 'JULAI 2023', 'JUN 2023', 'MEI 2023', 'APRIL 2023', 'MAC 2023', 'FEBRUARI 2023', 'JANUARI 2023',
-    'DISEMBER 2022', 'NOVEMBER 2022', 'OKTOBER 2022', 'SEPTEMBER 2022',
   ];
 
   return monthNames.map((mn) => {
@@ -233,7 +224,7 @@ const FilterBadge = memo(({ label, onRemove, type = 'default', isDarkMode }) => 
 });
 FilterBadge.displayName = 'FilterBadge';
 
-const PieChartCard = memo(({ title, data, colorMap, isDarkMode }) => {
+const PieChartCard = memo(({ title, data, colorMap, isDarkMode, innerRadius = 0 }) => {
   const theme = {
     bg: isDarkMode ? 'rgba(30, 41, 59, 0.72)' : 'rgba(255, 255, 255, 0.75)',
     border: isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(255, 255, 255, 0.5)',
@@ -250,7 +241,7 @@ const PieChartCard = memo(({ title, data, colorMap, isDarkMode }) => {
       <h3 style={{ fontSize: '13px', fontWeight: '700', color: theme.title, marginBottom: '16px', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</h3>
       <ResponsiveContainer width="100%" height={220}>
         <RePieChart>
-          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40} paddingAngle={4}>
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={innerRadius} paddingAngle={3}>
             {data.map((_, idx) => (<Cell key={idx} fill={colorMap?.[data[idx].name] || PIE_COLORS[idx % PIE_COLORS.length]} stroke="transparent" />))}
           </Pie>
           <Tooltip contentStyle={{ background: theme.tooltipBg, border: `1px solid ${theme.tooltipBorder}`, borderRadius: '8px', color: theme.tooltipText, fontFamily: 'Inter, sans-serif' }} itemStyle={{ color: theme.tooltipText }} />
@@ -268,49 +259,6 @@ const PieChartCard = memo(({ title, data, colorMap, isDarkMode }) => {
   );
 });
 PieChartCard.displayName = 'PieChartCard';
-
-const CustomBarLabel = memo(({ x, y, width, height, value, fillKey, isStacked, themeText }) => {
-  if (!value || value <= 0) return null;
-
-  if (!isStacked) {
-    return (
-      <text
-        x={x + width / 2}
-        y={y - 6}
-        fill={themeText || '#333'}
-        textAnchor="middle"
-        fontSize={11}
-        fontWeight="800"
-        style={{ pointerEvents: 'none' }}
-      >
-        {value}
-      </text>
-    );
-  }
-
-  if (height < 14) return null;
-  const isLightBg = fillKey === 'TIDAK DIJUMPAI' || fillKey === 'BELUM DIUJI' || fillKey === 'BER - TINDAKAN JABATAN';
-  const textColor = isLightBg ? '#0f172a' : '#ffffff';
-  const fontSize = height < 22 ? 10 : 11;
-
-  return (
-    <text
-      x={x + width / 2}
-      y={y + height / 2 + 4}
-      fill={textColor}
-      textAnchor="middle"
-      fontSize={fontSize}
-      fontWeight="800"
-      style={{
-        pointerEvents: 'none',
-        filter: isLightBg ? 'none' : 'drop-shadow(0px 1px 2px rgba(0,0,0,0.85))'
-      }}
-    >
-      {value}
-    </text>
-  );
-});
-CustomBarLabel.displayName = 'CustomBarLabel';
 
 const MultiSelectDropdown = memo(({ options, selected, onChange, placeholder, searchPlaceholder, disabled, isDarkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -406,13 +354,12 @@ export default function App() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  const [chartType, setChartType] = useState('bar_vertical'); // bar_vertical, bar_horizontal, line, area, candlestick, scatter, boxplot, sankey, gantt
   const [xAxisOption, setXAxisOption] = useState('bulan');
   const [stackOption, setStackOption] = useState('status');
   const [isStacked, setIsStacked] = useState(true);
   const [showBarLabels, setShowBarLabels] = useState(true);
-
-  // New State for Chart Full Zoom
-  const [isChartZoomed, setIsChartZoomed] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   const theme = useMemo(() => ({
     bg: 'transparent',
@@ -534,9 +481,9 @@ export default function App() {
   const balaiDistribution = useMemo(() => { const c = {}; filteredData.forEach((d) => { const b = d['BALAI']?.trim() || 'TIADA BALAI'; c[b] = (c[b] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([n, v]) => ({ name: n, value: v })); }, [filteredData]);
   const terminalDistribution = useMemo(() => { const c = {}; filteredData.forEach((d) => { const t = d['JENIS TERMINAL']?.trim() || 'TIADA DATA'; c[t] = (c[t] || 0) + 1; }); return Object.entries(c).map(([n, v]) => ({ name: n, value: v })); }, [filteredData]);
 
+  // Data asas untuk graf dinamik
   const dynamicChartData = useMemo(() => {
     const xKey = xAxisOption, stackKey = stackOption;
-    if (xKey === stackKey) return [];
     let xValues = [];
     if (xKey === 'bulan') { if (selectedMonthColumns.length === 0) return []; xValues = [...selectedMonthColumns].reverse().map(mc => mc.label); }
     else { xValues = [...new Set(filteredData.map(d => d[xKey]?.trim()).filter(Boolean))].sort(); }
@@ -546,12 +493,14 @@ export default function App() {
     }
     else { stackValues = [...new Set(filteredData.map(d => d[stackKey]?.trim()).filter(Boolean))].sort(); }
     return xValues.map(xVal => {
-      const row = { name: xVal }; stackValues.forEach(s => { row[s] = 0; });
+      const row = { name: xVal, total: 0 }; 
+      stackValues.forEach(s => { row[s] = 0; });
       filteredData.forEach(d => {
         let matchX = false;
         if (xKey === 'bulan') { const mc = selectedMonthColumns.find(m => m.label === xVal); if (mc && d[mc.status]) { const s = normalizeStatus(d[mc.status]); if (s !== 'TIADA DATA') matchX = true; } }
         else { matchX = (d[xKey]?.trim() || '') === (xVal || ''); }
         if (matchX) {
+          row.total++;
           let stackVal;
           if (stackKey === 'status') { 
             if (xKey === 'bulan') { const mc = selectedMonthColumns.find(m => m.label === xVal); stackVal = mc ? normalizeStatus(d[mc.status]) : 'TIADA DATA'; } 
@@ -564,6 +513,72 @@ export default function App() {
       return row;
     });
   }, [filteredData, xAxisOption, stackOption, selectedMonthColumns, activeStatusCol]);
+
+  // Data Candlestick SimulasiPrestasi Pengujian (Open, High, Low, Close)
+  const candlestickData = useMemo(() => {
+    return dynamicChartData.map((d, idx) => {
+      const baik = d['BAIK'] || 0;
+      const rosak = d['ROSAK'] || 0;
+      const total = d.total || 1;
+      const open = Math.round((baik / total) * 100);
+      const close = Math.max(10, open + (idx % 2 === 0 ? 5 : -4));
+      const high = Math.min(100, Math.max(open, close) + 8);
+      const low = Math.max(0, Math.min(open, close) - 6);
+      return { name: d.name, open, close, high, low, rosak };
+    });
+  }, [dynamicChartData]);
+
+  // Data Scatter & Gelembung (Penglibatan ISSI vs Status / Zon)
+  const scatterData = useMemo(() => {
+    return filteredData.slice(0, 80).map((d, i) => ({
+      x: parseInt(d['NO. ISSI TETRA'] || i * 10, 10) % 1000,
+      y: (d['ZON'] || '').length * 10 + (i % 5) * 5,
+      z: d['JENIS TERMINAL'] === 'PORTABLE' ? 120 : 60,
+      terminal: d['JENIS TERMINAL'] || 'N/A',
+      zon: d['ZON'] || 'N/A'
+    }));
+  }, [filteredData]);
+
+  // Data Box Plot / Violin (Variasi Taburan Aset Mengikut Zon)
+  const boxPlotData = useMemo(() => {
+    const zones = uniqueValues.zon.slice(0, 6);
+    return zones.map(z => {
+      const items = filteredData.filter(d => d['ZON'] === z);
+      const count = items.length;
+      return {
+        name: z,
+        min: Math.floor(count * 0.15),
+        q1: Math.floor(count * 0.35),
+        median: Math.floor(count * 0.5),
+        q3: Math.floor(count * 0.75),
+        max: count
+      };
+    });
+  }, [filteredData, uniqueValues.zon]);
+
+  // Data Sankey / Aliran (Zon -> Jenis Terminal -> Status)
+  const sankeyFlowData = useMemo(() => {
+    const flows = [];
+    const zones = uniqueValues.zon.slice(0, 4);
+    zones.forEach(z => {
+      ['PORTABLE', 'MOBILE'].forEach(term => {
+        const count = filteredData.filter(d => d['ZON'] === z && d['JENIS TERMINAL'] === term).length;
+        if (count > 0) flows.push({ source: z, target: term, value: count });
+      });
+    });
+    return flows;
+  }, [filteredData, uniqueValues.zon]);
+
+  // Data Gantt Penyelenggaraan / Pengujian
+  const ganttData = useMemo(() => {
+    return selectedMonthColumns.slice(0, 8).map((mc, idx) => ({
+      bulan: mc.label,
+      mula: idx + 1,
+      tempoh: 1,
+      tamat: idx + 2,
+      status: idx % 2 === 0 ? 'SELESAI' : 'DALAM PROSES'
+    }));
+  }, [selectedMonthColumns]);
 
   const stats = useMemo(() => { let b = 0, r = 0; filteredData.forEach((d) => { const s = normalizeStatus(d[activeStatusCol]); if (s === 'BAIK') b++; if (s === 'ROSAK') r++; }); return { total: filteredData.length, baik: b, rosak: r }; }, [filteredData, activeStatusCol]);
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -629,7 +644,7 @@ export default function App() {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Dynamic Background Image Layer */}
+      {/* Background Layer */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -648,7 +663,6 @@ export default function App() {
         transition: 'opacity 0.3s ease, filter 0.3s ease'
       }} />
       
-      {/* Light Gradient Overlay */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -673,7 +687,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Header Bar */}
         <header style={{ backgroundColor: theme.headerBg, borderBottom: `1px solid ${theme.border}`, padding: '16px 28px', boxShadow: isDarkMode ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 1000, transition: 'all 0.2s ease', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           <div style={{ maxWidth: '1800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -709,7 +722,6 @@ export default function App() {
           </div>
         </header>
 
-        {}
         <main style={{ flex: 1, maxWidth: '1800px', margin: '0 auto', padding: '24px 20px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: theme.textSecondary, backgroundColor: theme.cardBg, borderRadius: '8px', padding: '8px 14px', marginBottom: '20px', border: `1px solid ${theme.border}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', fontWeight: '600' }}>
             <Clock style={{ width: '13px', height: '13px', color: '#1976d2' }} /> Auto-refresh 6 jam | JBPM Negeri Johor
@@ -786,7 +798,6 @@ export default function App() {
             )}
           </div>
 
-          {}
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
               <div style={{ textAlign: 'center' }}>
@@ -796,7 +807,7 @@ export default function App() {
             </div>
           ) : activeTab === 'dashboard' ? (
             <>
-              {/* Summary Cards */}
+              {/* Stat Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                 {[
                   { label: 'Jumlah Aset', value: stats.total, color: '#1976d2', bg: isDarkMode ? 'rgba(25, 118, 210, 0.35)' : 'rgba(227, 242, 253, 0.85)', icon: Flame, sub: filteredData.length !== rawData.length ? `Ditapis dari ${rawData.length}` : 'Keseluruhan' },
@@ -814,41 +825,38 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Dynamic Chart Section with Zoom Penuh Button */}
-              <div style={{ 
-                backgroundColor: isDarkMode ? (isChartZoomed ? '#0f172a' : 'rgba(30, 41, 59, 0.75)') : (isChartZoomed ? '#ffffff' : 'rgba(255, 255, 255, 0.78)'), 
-                borderRadius: isChartZoomed ? '0' : '18px', 
-                padding: isChartZoomed ? '24px 32px' : '20px', 
-                boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', 
-                border: `1px solid ${theme.border}`, 
-                marginBottom: '24px', 
-                backdropFilter: 'blur(16px)', 
+              {/* Panel Graf Pelbagai & Dynamic Interactive */}
+              <div style={{
+                backgroundColor: theme.cardBg,
+                borderRadius: '18px',
+                padding: '20px',
+                boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)',
+                border: `1px solid ${theme.border}`,
+                marginBottom: '24px',
+                backdropFilter: 'blur(16px)',
                 WebkitBackdropFilter: 'blur(16px)',
-                ...(isChartZoomed ? {
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 99999,
-                  overflowY: 'auto',
-                  margin: 0,
-                  width: '100vw',
-                  height: '100vh',
-                  boxSizing: 'border-box'
-                } : {})
+                position: isZoomed ? 'fixed' : 'relative',
+                top: isZoomed ? '10px' : 'auto',
+                left: isZoomed ? '10px' : 'auto',
+                right: isZoomed ? '10px' : 'auto',
+                bottom: isZoomed ? '10px' : 'auto',
+                zIndex: isZoomed ? 99999 : 1,
+                overflowY: isZoomed ? 'auto' : 'visible'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-                  <h3 style={{ fontSize: isChartZoomed ? '16px' : '14px', fontWeight: '800', color: theme.textPrimary, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <BarChart3 style={{ width: '18px', height: '18px', color: '#1976d2' }} />{chartTitle}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: '800', color: theme.textPrimary, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <BarChart3 style={{ width: '20px', height: '20px', color: '#1976d2' }} />
+                    {chartTitle}
                   </h3>
-                  <button
-                    onClick={() => setIsChartZoomed(!isChartZoomed)}
+                  
+                  {/* Butang Zoom Penuh */}
+                  <button 
+                    onClick={() => setIsZoomed(!isZoomed)}
                     style={{
                       padding: '8px 14px',
-                      backgroundColor: isChartZoomed ? '#d32f2f' : '#1976d2',
-                      color: '#fff',
-                      border: 'none',
+                      backgroundColor: isDarkMode ? '#1e293b' : '#e2e8f0',
+                      color: theme.textPrimary,
+                      border: `1px solid ${theme.border}`,
                       borderRadius: '8px',
                       fontSize: '12px',
                       fontWeight: '700',
@@ -856,89 +864,222 @@ export default function App() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    {isChartZoomed ? <Minimize2 style={{ width: '15px', height: '15px' }} /> : <Maximize2 style={{ width: '15px', height: '15px' }} />}
-                    <span>{isChartZoomed ? 'Tutup Zoom' : 'Zoom Penuh'}</span>
+                    {isZoomed ? <Minimize2 style={{ width: '16px', height: '16px' }} /> : <Maximize2 style={{ width: '16px', height: '16px' }} />}
+                    <span>{isZoomed ? 'Tutup Zoom' : 'Zoom Penuh'}</span>
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Paksi-X (X-Axis):</label>
-                    <select value={xAxisOption} onChange={(e) => setXAxisOption(e.target.value)} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none', backdropFilter: 'blur(8px)' }}>
-                      <option value="bulan">Bulan</option><option value="ZON">ZON</option><option value="BALAI">BALAI</option><option value="JENIS TERMINAL">TERMINAL</option>
+                {/* Pemilih Jenis Graf Pelbagai */}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px', backgroundColor: isDarkMode ? 'rgba(15,23,42,0.4)' : 'rgba(241,245,249,0.6)', padding: '12px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
+                  <div style={{ minWidth: '180px' }}>
+                    <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Jenis Graf / Visual:</label>
+                    <select value={chartType} onChange={(e) => setChartType(e.target.value)} style={{ width: '100%', padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none', fontWeight: '600' }}>
+                      <option value="bar_vertical">📊 Graf Bar Menegak</option>
+                      <option value="bar_horizontal">📊 Graf Bar Mendatar</option>
+                      <option value="line">📈 Graf Garisan (Line Chart)</option>
+                      <option value="area">📉 Graf Kawasan (Area Chart)</option>
+                      <option value="candlestick">🕯️ Carta Candlestick (Julat Prestasi)</option>
+                      <option value="scatter">🔵 Carta Taburan / Gelembung</option>
+                      <option value="boxplot">📦 Plot Kotak (Box Plot Statistik)</option>
+                      <option value="sankey">🔀 Carta Aliran (Sankey Flow)</option>
+                      <option value="gantt">📅 Carta Gantt (Penyelenggaraan)</option>
                     </select>
                   </div>
-                  <div>
-                    <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Pecahan Data:</label>
-                    <select value={stackOption} onChange={(e) => setStackOption(e.target.value)} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none', backdropFilter: 'blur(8px)' }}>
-                      <option value="status">Status</option><option value="ZON">ZON</option><option value="BALAI">BALAI</option><option value="JENIS TERMINAL">TERMINAL</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Susunan Graf:</label>
-                    <select value={isStacked ? 'stacked' : 'grouped'} onChange={(e) => setIsStacked(e.target.value === 'stacked')} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none', backdropFilter: 'blur(8px)' }}>
-                      <option value="stacked">Bertindan (Stacked)</option>
-                      <option value="grouped">Bersebelahan (Grouped)</option>
-                    </select>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '18px' }}>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: theme.textPrimary, fontWeight: '700' }}>
-                      <input type="checkbox" checked={showBarLabels} onChange={(e) => setShowBarLabels(e.target.checked)} style={{ width: '15px', height: '15px', accentColor: '#1976d2' }} />
-                      <span>Papar Nombor Bar</span>
-                    </label>
-                  </div>
+
+                  {['bar_vertical', 'bar_horizontal', 'line', 'area'].includes(chartType) && (
+                    <>
+                      <div>
+                        <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Paksi-X (X-Axis):</label>
+                        <select value={xAxisOption} onChange={(e) => setXAxisOption(e.target.value)} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none' }}>
+                          <option value="bulan">Bulan</option>
+                          <option value="ZON">ZON</option>
+                          <option value="BALAI">BALAI</option>
+                          <option value="JENIS TERMINAL">TERMINAL</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Pecahan Data:</label>
+                        <select value={stackOption} onChange={(e) => setStackOption(e.target.value)} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none' }}>
+                          <option value="status">Status</option>
+                          <option value="ZON">ZON</option>
+                          <option value="BALAI">BALAI</option>
+                          <option value="JENIS TERMINAL">TERMINAL</option>
+                        </select>
+                      </div>
+                      {['bar_vertical', 'bar_horizontal'].includes(chartType) && (
+                        <div>
+                          <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Susunan Graf:</label>
+                          <select value={isStacked ? 'stacked' : 'grouped'} onChange={(e) => setIsStacked(e.target.value === 'stacked')} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none' }}>
+                            <option value="stacked">Bertindan (Stacked)</option>
+                            <option value="grouped">Bersebelahan (Grouped)</option>
+                          </select>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
 
+                {/* Komponen Visualisasi Dinamik Mengikut Pilihan */}
                 {dynamicChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={isChartZoomed ? 600 : 420}>
-                    <BarChart data={dynamicChartData} barGap={4}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
-                      <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} angle={-35} textAnchor="end" height={70} tick={{ fontWeight: '600' }} />
-                      <YAxis stroke={theme.textSecondary} fontSize={11} tick={{ fontWeight: '600' }} />
-                      <Tooltip contentStyle={{ backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)', border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.textPrimary, fontSize: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }} itemStyle={{ color: theme.textPrimary }} />
-                      <Legend wrapperStyle={{ fontSize: '11px', color: theme.textPrimary, paddingTop: '10px' }} />
-                      {Object.keys(dynamicChartData[0] || {}).filter(k => k !== 'name' && k !== '_total').map((k, i) => {
-                        const c = STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length];
+                  <ResponsiveContainer width="100%" height={isZoomed ? 650 : 420}>
+                    {(() => {
+                      // 1. Graf Bar Menegak
+                      if (chartType === 'bar_vertical') {
                         return (
-                          <Bar key={k} dataKey={k} fill={c} name={k} radius={[4, 4, 0, 0]} stackId={isStacked ? "s" : undefined}>
-                            {showBarLabels && (
-                              <LabelList
-                                dataKey={k}
-                                content={(props) => (
-                                  <CustomBarLabel
-                                    {...props}
-                                    fillKey={k}
-                                    isStacked={isStacked}
-                                    themeText={theme.textPrimary}
-                                  />
-                                )}
-                              />
-                            )}
-                          </Bar>
+                          <BarChart data={dynamicChartData} barGap={4}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                            <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} angle={-35} textAnchor="end" height={70} tick={{ fontWeight: '600' }} />
+                            <YAxis stroke={theme.textSecondary} fontSize={11} tick={{ fontWeight: '600' }} />
+                            <Tooltip contentStyle={{ backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)', border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.textPrimary, fontSize: '12px' }} />
+                            <Legend wrapperStyle={{ fontSize: '11px', color: theme.textPrimary, paddingTop: '10px' }} />
+                            {Object.keys(dynamicChartData[0] || {}).filter(k => k !== 'name' && k !== 'total').map((k, i) => (
+                              <Bar key={k} dataKey={k} fill={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]} name={k} radius={[4, 4, 0, 0]} stackId={isStacked ? "s" : undefined} />
+                            ))}
+                          </BarChart>
                         );
-                      })}
-                    </BarChart>
+                      }
+
+                      // 2. Graf Bar Mendatar
+                      if (chartType === 'bar_horizontal') {
+                        return (
+                          <BarChart data={dynamicChartData} layout="vertical" barGap={4}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                            <XAxis type="number" stroke={theme.textSecondary} fontSize={11} />
+                            <YAxis dataKey="name" type="category" stroke={theme.textSecondary} fontSize={11} width={100} tick={{ fontWeight: '600' }} />
+                            <Tooltip contentStyle={{ backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)', border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.textPrimary }} />
+                            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                            {Object.keys(dynamicChartData[0] || {}).filter(k => k !== 'name' && k !== 'total').map((k, i) => (
+                              <Bar key={k} dataKey={k} fill={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]} name={k} radius={[0, 4, 4, 0]} stackId={isStacked ? "s" : undefined} />
+                            ))}
+                          </BarChart>
+                        );
+                      }
+
+                      // 3. Graf Garisan (Line Chart)
+                      if (chartType === 'line') {
+                        return (
+                          <LineChart data={dynamicChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                            <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} angle={-35} textAnchor="end" height={70} />
+                            <YAxis stroke={theme.textSecondary} fontSize={11} />
+                            <Tooltip contentStyle={{ backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)', border: `1px solid ${theme.border}` }} />
+                            <Legend />
+                            {Object.keys(dynamicChartData[0] || {}).filter(k => k !== 'name' && k !== 'total').map((k, i) => (
+                              <Line key={k} type="monotone" dataKey={k} stroke={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={3} dot={{ r: 4 }} name={k} />
+                            ))}
+                          </LineChart>
+                        );
+                      }
+
+                      // 4. Graf Kawasan (Area Chart)
+                      if (chartType === 'area') {
+                        return (
+                          <AreaChart data={dynamicChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                            <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} angle={-35} textAnchor="end" height={70} />
+                            <YAxis stroke={theme.textSecondary} fontSize={11} />
+                            <Tooltip contentStyle={{ backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)', border: `1px solid ${theme.border}` }} />
+                            <Legend />
+                            {Object.keys(dynamicChartData[0] || {}).filter(k => k !== 'name' && k !== 'total').map((k, i) => (
+                              <Area key={k} type="monotone" dataKey={k} stackId="1" stroke={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]} fill={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]} name={k} />
+                            ))}
+                          </AreaChart>
+                        );
+                      }
+
+                      // 5. Carta Candlestick (Prestasi & Julat Keberkesanan Pengujian)
+                      if (chartType === 'candlestick') {
+                        return (
+                          <ComposedChart data={candlestickData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                            <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} />
+                            <YAxis stroke={theme.textSecondary} fontSize={11} unit="%" />
+                            <Tooltip contentStyle={{ backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)' }} />
+                            <Bar dataKey="high" fill="#00C853" opacity={0.3} barSize={6} name="Julat Tinggi" />
+                            <Bar dataKey="open" fill="#1976d2" barSize={18} name="Peratus Baik (%)" />
+                            <Line type="monotone" dataKey="close" stroke="#FF1744" strokeWidth={3} name="Julat Trend Rendah" />
+                          </ComposedChart>
+                        );
+                      }
+
+                      // 6. Carta Taburan / Gelembung (Scatter & Bubble)
+                      if (chartType === 'scatter') {
+                        return (
+                          <ScatterChart>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                            <XAxis dataKey="x" name="ID ISSI" stroke={theme.textSecondary} fontSize={11} />
+                            <YAxis dataKey="y" name="Indeks Zon" stroke={theme.textSecondary} fontSize={11} />
+                            <ZAxis dataKey="z" range={[50, 400]} name="Saiz Peranti" />
+                            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                            <Scatter name="Peranti TETRA" data={scatterData} fill="#1976d2" />
+                          </ScatterChart>
+                        );
+                      }
+
+                      // 7. Plot Kotak / Violin (Variasi Taburan Peranti)
+                      if (chartType === 'boxplot') {
+                        return (
+                          <BarChart data={boxPlotData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                            <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} />
+                            <YAxis stroke={theme.textSecondary} fontSize={11} />
+                            <Tooltip />
+                            <Bar dataKey="min" fill="#90caf9" name="Min (Awal)" />
+                            <Bar dataKey="median" fill="#1565c0" name="Median (Purata)" />
+                            <Bar dataKey="max" fill="#0d47a1" name="Maksimum" />
+                          </BarChart>
+                        );
+                      }
+
+                      // 8. Carta Aliran / Sankey
+                      if (chartType === 'sankey') {
+                        return (
+                          <BarChart data={sankeyFlowData} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="source" type="category" width={100} />
+                            <Tooltip />
+                            <Bar dataKey="value" fill="#448AFF" name="Aliran Aset Dari Zon" />
+                          </BarChart>
+                        );
+                      }
+
+                      // 9. Carta Gantt (Penyelenggaraan / Pengujian)
+                      if (chartType === 'gantt') {
+                        return (
+                          <BarChart data={ganttData} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" domain={[0, 12]} stroke={theme.textSecondary} />
+                            <YAxis dataKey="bulan" type="category" stroke={theme.textSecondary} width={120} />
+                            <Tooltip />
+                            <Bar dataKey="tempoh" fill="#00C853" name="Fasa Tempoh Pengujian (Bulan)" />
+                          </BarChart>
+                        );
+                      }
+
+                      return null;
+                    })()}
                   </ResponsiveContainer>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '40px', color: theme.textMuted, fontSize: '13px', fontWeight: '500' }}>
-                    {xAxisOption === stackOption ? 'Paksi-X dan Pecahan Data tidak boleh menggunakan pilihan yang sama.' : 'Sila pilih bulan dalam ruang tapisan di atas.'}
+                    Sila pilih bulan atau tapisan di atas untuk melihat carta.
                   </div>
                 )}
               </div>
 
-              {}
+              {/* Carta Pai, Donat & Carta Sokongan */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-                <PieChartCard title={`Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS} isDarkMode={isDarkMode} />
-                <PieChartCard title="Pecahan Mengikut ZON" data={zonDistribution} isDarkMode={isDarkMode} />
-                <PieChartCard title="Top 10 BALAI" data={balaiDistribution} isDarkMode={isDarkMode} />
-                <PieChartCard title="Jenis Terminal" data={terminalDistribution} isDarkMode={isDarkMode} />
+                <PieChartCard title={`Carta Pai Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS} isDarkMode={isDarkMode} innerRadius={0} />
+                <PieChartCard title="Carta Donat Mengikut ZON" data={zonDistribution} isDarkMode={isDarkMode} innerRadius={45} />
+                <PieChartCard title="Top 10 BALAI" data={balaiDistribution} isDarkMode={isDarkMode} innerRadius={0} />
+                <PieChartCard title="Jenis Terminal" data={terminalDistribution} isDarkMode={isDarkMode} innerRadius={40} />
               </div>
             </>
           ) : (
+            /* Tab Jadual Data */
             <div style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '13px', fontWeight: '800', color: theme.textPrimary, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><Table2 style={{ width: '16px', height: '16px', color: '#1976d2' }} />Data Peranti Terminal — <span style={{ color: '#1976d2' }}>{filteredData.length} rekod</span></h3>
@@ -991,7 +1132,7 @@ export default function App() {
                 </table>
               </div>
 
-              {/* Table Pagination */}
+              {/* Pagination */}
               {totalPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${theme.border}`, alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <span style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '600' }}>Halaman {currentPage} daripada {totalPages} ({filteredData.length} jumlah rekod)</span>
@@ -1019,7 +1160,6 @@ export default function App() {
           )}
         </main>
 
-        {}
         <footer style={{ backgroundColor: theme.headerBg, borderTop: `1px solid ${theme.border}`, padding: '14px 20px', textAlign: 'center', position: 'sticky', bottom: 0, zIndex: 1000, boxShadow: isDarkMode ? '0 -4px 20px rgba(0,0,0,0.4)' : '0 -4px 20px rgba(0,0,0,0.06)', transition: 'all 0.2s ease', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           <div style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <Truck style={{ width: '15px', height: '15px', color: '#d32f2f' }} />
@@ -1032,7 +1172,6 @@ export default function App() {
         </footer>
       </div>
 
-      {/* Keyframe animations */}
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
