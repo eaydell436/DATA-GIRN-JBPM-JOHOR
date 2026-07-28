@@ -3,7 +3,8 @@ import {
   RefreshCw, AlertCircle, CheckCircle2, HelpCircle, Search, X, Filter, Clock,
   BarChart3, PieChart, Table2, Download, ChevronDown, ChevronUp, AlertTriangle,
   Flame, Shield, Siren, BadgeCheck, Wrench, Trash2, Truck, Check, Info,
-  Sun, Moon, MapPin, Building2, Radio, UserCheck, Tag, Calendar, Activity
+  Sun, Moon, MapPin, Building2, Radio, UserCheck, Tag, Calendar, Activity,
+  Maximize2, Minimize2
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -12,6 +13,7 @@ import {
 
 const LOGO_URL = 'https://cdn-icons-png.flaticon.com/128/2502/2502280.png';
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQGUzVyeUmHfSW65OMonkjq0VRzBs0zDqpgWDCVaN_ba07ANW34ix3M8AhCErROdQv3ixNqi8qhKgGg/pub?gid=0&single=true&output=csv';
+const BG_IMAGE_URL = 'https://raw.githubusercontent.com/eaydell436/DATA-GIRN-JBPM-JOHOR/56adeb376c2fe103fc14d0009dcac814038d0842/firetruck-BG.png';
 const AUTO_REFRESH_INTERVAL = 6 * 60 * 60 * 1000;
 
 const STATUS_COLORS = {
@@ -186,15 +188,15 @@ const StatusBadge = memo(({ status, isDarkMode }) => {
   };
 
   const colorMapDark = {
-    BAIK: { bg: 'rgba(46, 125, 50, 0.25)', text: '#81c784', border: '#2e7d32' },
-    ROSAK: { bg: 'rgba(198, 40, 40, 0.25)', text: '#e57373', border: '#c62828' },
-    'TIDAK DIJUMPAI': { bg: 'rgba(245, 127, 23, 0.25)', text: '#ffd54f', border: '#f57f17' },
-    'TIDAK DAPAT DIUJI': { bg: 'rgba(106, 27, 154, 0.25)', text: '#ba68c8', border: '#6a1b9a' },
-    'BELUM DIUJI': { bg: 'rgba(230, 81, 0, 0.25)', text: '#ffb74d', border: '#e65100' },
-    'BER - TINDAKAN SAPURA': { bg: 'rgba(21, 101, 192, 0.25)', text: '#64b5f6', border: '#1565c0' },
-    'BER - TINDAKAN JABATAN': { bg: 'rgba(0, 131, 143, 0.25)', text: '#4dd0e1', border: '#00838f' },
-    'BER - SELESAI PROSES PELUPUSAN': { bg: 'rgba(97, 97, 97, 0.25)', text: '#e0e0e0', border: '#616161' },
-    'TIADA DATA': { bg: 'rgba(84, 110, 122, 0.25)', text: '#90a4ae', border: '#546e7a' },
+    BAIK: { bg: 'rgba(46, 125, 50, 0.35)', text: '#81c784', border: '#2e7d32' },
+    ROSAK: { bg: 'rgba(198, 40, 40, 0.35)', text: '#e57373', border: '#c62828' },
+    'TIDAK DIJUMPAI': { bg: 'rgba(245, 127, 23, 0.35)', text: '#ffd54f', border: '#f57f17' },
+    'TIDAK DAPAT DIUJI': { bg: 'rgba(106, 27, 154, 0.35)', text: '#ba68c8', border: '#6a1b9a' },
+    'BELUM DIUJI': { bg: 'rgba(230, 81, 0, 0.35)', text: '#ffb74d', border: '#e65100' },
+    'BER - TINDAKAN SAPURA': { bg: 'rgba(21, 101, 192, 0.35)', text: '#64b5f6', border: '#1565c0' },
+    'BER - TINDAKAN JABATAN': { bg: 'rgba(0, 131, 143, 0.35)', text: '#4dd0e1', border: '#00838f' },
+    'BER - SELESAI PROSES PELUPUSAN': { bg: 'rgba(97, 97, 97, 0.35)', text: '#e0e0e0', border: '#616161' },
+    'TIADA DATA': { bg: 'rgba(84, 110, 122, 0.35)', text: '#90a4ae', border: '#546e7a' },
   };
 
   const map = isDarkMode ? colorMapDark : colorMapLight;
@@ -202,7 +204,7 @@ const StatusBadge = memo(({ status, isDarkMode }) => {
   const Icon = STATUS_ICONS[status] || HelpCircle;
 
   return (
-    <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', border: `1px solid ${colors.border}`, backgroundColor: colors.bg, color: colors.text, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+    <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '20px', border: `1px solid ${colors.border}`, backgroundColor: colors.bg, color: colors.text, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: '600', backdropFilter: 'blur(4px)' }}>
       <Icon style={{ width: '12px', height: '12px' }} /> {status}
     </span>
   );
@@ -211,19 +213,19 @@ StatusBadge.displayName = 'StatusBadge';
 
 const FilterBadge = memo(({ label, onRemove, type = 'default', isDarkMode }) => {
   const typeStylesLight = {
-    default: { bg: '#e3f2fd', text: '#1565c0', border: '#90caf9' },
-    amber: { bg: '#fff8e1', text: '#f57f17', border: '#ffe082' },
-    gold: { bg: '#fffde7', text: '#f9a825', border: '#fff59d' },
+    default: { bg: 'rgba(227, 242, 253, 0.85)', text: '#1565c0', border: '#90caf9' },
+    amber: { bg: 'rgba(255, 248, 225, 0.85)', text: '#f57f17', border: '#ffe082' },
+    gold: { bg: 'rgba(255, 253, 231, 0.85)', text: '#f9a825', border: '#fff59d' },
   };
   const typeStylesDark = {
-    default: { bg: 'rgba(21, 101, 192, 0.25)', text: '#90caf9', border: '#1565c0' },
-    amber: { bg: 'rgba(245, 127, 23, 0.25)', text: '#ffe082', border: '#f57f17' },
-    gold: { bg: 'rgba(249, 168, 37, 0.25)', text: '#fff59d', border: '#f9a825' },
+    default: { bg: 'rgba(21, 101, 192, 0.35)', text: '#90caf9', border: '#1565c0' },
+    amber: { bg: 'rgba(245, 127, 23, 0.35)', text: '#ffe082', border: '#f57f17' },
+    gold: { bg: 'rgba(249, 168, 37, 0.35)', text: '#fff59d', border: '#f9a825' },
   };
   const map = isDarkMode ? typeStylesDark : typeStylesLight;
   const style = map[type] || map.default;
   return (
-    <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}>
+    <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}`, backdropFilter: 'blur(4px)' }}>
       {label}
       <X style={{ width: '12px', height: '12px', cursor: 'pointer' }} onClick={onRemove} />
     </span>
@@ -233,19 +235,19 @@ FilterBadge.displayName = 'FilterBadge';
 
 const PieChartCard = memo(({ title, data, colorMap, isDarkMode }) => {
   const theme = {
-    bg: isDarkMode ? '#1e293b' : '#fff',
-    border: isDarkMode ? '#334155' : '#e0e0e0',
-    title: isDarkMode ? '#e2e8f0' : '#424242',
-    text: isDarkMode ? '#94a3b8' : '#757575',
-    valueText: isDarkMode ? '#f8fafc' : '#424242',
-    tooltipBg: isDarkMode ? '#0f172a' : '#fff',
+    bg: isDarkMode ? 'rgba(30, 41, 59, 0.72)' : 'rgba(255, 255, 255, 0.75)',
+    border: isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(255, 255, 255, 0.5)',
+    title: isDarkMode ? '#e2e8f0' : '#212121',
+    text: isDarkMode ? '#94a3b8' : '#616161',
+    valueText: isDarkMode ? '#f8fafc' : '#212121',
+    tooltipBg: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
     tooltipBorder: isDarkMode ? '#334155' : '#e0e0e0',
     tooltipText: isDarkMode ? '#f8fafc' : '#333',
   };
 
   return (
-    <div style={{ backgroundColor: theme.bg, borderRadius: '16px', padding: '20px', boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)', border: `1px solid ${theme.border}` }}>
-      <h3 style={{ fontSize: '14px', fontWeight: '600', color: theme.title, marginBottom: '16px', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</h3>
+    <div style={{ backgroundColor: theme.bg, borderRadius: '16px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.37)' : '0 8px 32px rgba(31, 38, 135, 0.08)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+      <h3 style={{ fontSize: '13px', fontWeight: '700', color: theme.title, marginBottom: '16px', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</h3>
       <ResponsiveContainer width="100%" height={220}>
         <RePieChart>
           <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40} paddingAngle={4}>
@@ -256,9 +258,9 @@ const PieChartCard = memo(({ title, data, colorMap, isDarkMode }) => {
       </ResponsiveContainer>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '12px' }}>
         {data.slice(0, 5).map((e, i) => (
-          <span key={i} style={{ fontSize: '12px', color: theme.text, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span key={i} style={{ fontSize: '11px', color: theme.text, display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: colorMap?.[e.name] || PIE_COLORS[i % PIE_COLORS.length] }} />
-            {e.name}: <span style={{ fontWeight: '600', color: theme.valueText }}>{e.value}</span>
+            {e.name}: <span style={{ fontWeight: '700', color: theme.valueText }}>{e.value}</span>
           </span>
         ))}
       </div>
@@ -316,15 +318,15 @@ const MultiSelectDropdown = memo(({ options, selected, onChange, placeholder, se
   const dropdownRef = React.useRef(null);
 
   const theme = {
-    bg: isDarkMode ? '#1e293b' : '#fff',
-    border: isDarkMode ? '#334155' : '#e0e0e0',
+    bg: isDarkMode ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+    border: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
     text: isDarkMode ? '#f8fafc' : '#333',
-    placeholder: isDarkMode ? '#64748b' : '#999',
-    dropdownBg: isDarkMode ? '#1e293b' : '#fff',
-    hoverBg: isDarkMode ? '#334155' : '#fafafa',
-    selectedBg: isDarkMode ? '#0f172a' : '#f5f5f5',
-    inputBg: isDarkMode ? '#0f172a' : '#fff',
-    inputBorder: isDarkMode ? '#475569' : '#e0e0e0',
+    placeholder: isDarkMode ? '#94a3b8' : '#757575',
+    dropdownBg: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    hoverBg: isDarkMode ? 'rgba(51, 65, 85, 0.8)' : '#f0f4f8',
+    selectedBg: isDarkMode ? 'rgba(30, 41, 59, 0.9)' : '#e3f2fd',
+    inputBg: isDarkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+    inputBorder: isDarkMode ? '#475569' : '#ccc',
   };
 
   useEffect(() => {
@@ -339,31 +341,31 @@ const MultiSelectDropdown = memo(({ options, selected, onChange, placeholder, se
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
       <button type="button" onClick={() => !disabled && setIsOpen(!isOpen)} disabled={disabled}
-        style={{ width: '100%', padding: '10px 14px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '13px', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: disabled ? 'not-allowed' : 'pointer', color: selected.length === 0 ? theme.placeholder : theme.text }}>
-        <span>{selected.length === 0 ? placeholder : `${selected.length} dipilih`}</span>
-        <ChevronDown style={{ width: '16px', height: '16px', color: theme.placeholder, transform: isOpen ? 'rotate(180deg)' : 'none' }} />
+        style={{ width: '100%', padding: '8px 12px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: disabled ? 'not-allowed' : 'pointer', color: selected.length === 0 ? theme.placeholder : theme.text, backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
+        <span style={{ fontWeight: selected.length > 0 ? '600' : '400' }}>{selected.length === 0 ? placeholder : `${selected.length} dipilih`}</span>
+        <ChevronDown style={{ width: '14px', height: '14px', color: theme.placeholder, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
       </button>
       {isOpen && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999, marginTop: '4px', backgroundColor: theme.dropdownBg, border: `1px solid ${theme.border}`, borderRadius: '12px', maxHeight: '300px', overflow: 'hidden', boxShadow: isDarkMode ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(0,0,0,0.12)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999, marginTop: '4px', backgroundColor: theme.dropdownBg, border: `1px solid ${theme.border}`, borderRadius: '12px', maxHeight: '300px', overflow: 'hidden', boxShadow: isDarkMode ? '0 12px 32px rgba(0,0,0,0.6)' : '0 12px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(16px)' }}>
           <div style={{ padding: '8px', borderBottom: `1px solid ${theme.border}` }}>
             <div style={{ position: 'relative' }}>
               <Search style={{ width: '14px', height: '14px', color: theme.placeholder, position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
               <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={searchPlaceholder}
-                style={{ width: '100%', padding: '8px 8px 8px 32px', backgroundColor: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: '8px', fontSize: '13px', color: theme.text, outline: 'none', boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()} />
+                style={{ width: '100%', padding: '6px 8px 6px 30px', backgroundColor: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: '8px', fontSize: '12px', color: theme.text, outline: 'none', boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: '4px', padding: '6px 8px', borderBottom: `1px solid ${theme.border}` }}>
-            <button onClick={() => onChange([...options])} style={{ fontSize: '12px', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}>Pilih Semua</button>
-            <button onClick={() => onChange([])} style={{ fontSize: '12px', color: theme.placeholder, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}>Reset</button>
+            <button onClick={() => onChange([...options])} style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', fontWeight: '600' }}>Pilih Semua</button>
+            <button onClick={() => onChange([])} style={{ fontSize: '11px', color: theme.placeholder, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}>Reset</button>
           </div>
           <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-            {filtered.length === 0 ? <div style={{ padding: '16px', textAlign: 'center', color: theme.placeholder, fontSize: '13px' }}>Tiada dijumpai</div> :
+            {filtered.length === 0 ? <div style={{ padding: '16px', textAlign: 'center', color: theme.placeholder, fontSize: '12px' }}>Tiada dijumpai</div> :
               filtered.map((o) => (
                 <label key={o} onClick={() => toggle(o)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', cursor: 'pointer', color: selected.includes(o) ? '#3b82f6' : theme.text, backgroundColor: selected.includes(o) ? theme.selectedBg : 'transparent', fontSize: '13px', fontWeight: selected.includes(o) ? '600' : '400' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', cursor: 'pointer', color: selected.includes(o) ? '#1976d2' : theme.text, backgroundColor: selected.includes(o) ? theme.selectedBg : 'transparent', fontSize: '12px', fontWeight: selected.includes(o) ? '600' : '400' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.hoverBg)}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = selected.includes(o) ? theme.selectedBg : 'transparent'; }}>
-                  <input type="checkbox" checked={selected.includes(o)} onChange={() => {}} style={{ width: '16px', height: '16px', accentColor: '#3b82f6' }} />
+                  <input type="checkbox" checked={selected.includes(o)} onChange={() => {}} style={{ width: '15px', height: '15px', accentColor: '#1976d2' }} />
                   <span>{o}</span>
                 </label>
               ))}
@@ -409,17 +411,20 @@ export default function App() {
   const [isStacked, setIsStacked] = useState(true);
   const [showBarLabels, setShowBarLabels] = useState(true);
 
+  // New State for Chart Full Zoom
+  const [isChartZoomed, setIsChartZoomed] = useState(false);
+
   const theme = useMemo(() => ({
-    bg: isDarkMode ? '#0f172a' : '#f5f5f5',
-    cardBg: isDarkMode ? '#1e293b' : '#ffffff',
-    headerBg: isDarkMode ? '#1e293b' : '#ffffff',
-    border: isDarkMode ? '#334155' : '#e0e0e0',
-    textPrimary: isDarkMode ? '#f8fafc' : '#212121',
-    textSecondary: isDarkMode ? '#94a3b8' : '#757575',
-    textMuted: isDarkMode ? '#64748b' : '#9e9e9e',
-    tableHeaderBg: isDarkMode ? '#0f172a' : '#f5f5f5',
-    tableRowHover: isDarkMode ? '#334155' : '#fafafa',
-    inputBg: isDarkMode ? '#0f172a' : '#ffffff',
+    bg: 'transparent',
+    cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.75)' : 'rgba(255, 255, 255, 0.78)',
+    headerBg: isDarkMode ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.88)',
+    border: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.6)',
+    textPrimary: isDarkMode ? '#f8fafc' : '#1e293b',
+    textSecondary: isDarkMode ? '#cbd5e1' : '#475569',
+    textMuted: isDarkMode ? '#94a3b8' : '#64748b',
+    tableHeaderBg: isDarkMode ? 'rgba(15, 23, 42, 0.85)' : 'rgba(241, 245, 249, 0.85)',
+    tableRowHover: isDarkMode ? 'rgba(51, 65, 85, 0.5)' : 'rgba(248, 250, 252, 0.7)',
+    inputBg: isDarkMode ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.85)',
   }), [isDarkMode]);
 
   const fetchData = useCallback(async () => {
@@ -613,324 +618,431 @@ export default function App() {
   const hasActiveFilters = filterZon.length > 0 || filterBalai.length > 0 || filterJenisTerminal.length > 0 || filterStatusSemasa.length > 0 || filterTanggungjawab.length > 0 || filterFinding.length > 0 || filterBulanDipilih.length > 0 || searchText;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: theme.bg, color: theme.textPrimary, fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', flexDirection: 'column', transition: 'background-color 0.2s ease, color 0.2s ease' }}>
-      {}
-      {toastNotice && (
-        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 10000, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 18px', borderRadius: '10px', backgroundColor: toastNotice.type === 'error' ? '#d32f2f' : '#2e7d32', color: '#fff', boxShadow: '0 4px 14px rgba(0,0,0,0.2)', fontSize: '13px', fontWeight: '500' }}>
-          {toastNotice.type === 'error' ? <AlertCircle style={{ width: '18px', height: '18px' }} /> : <Check style={{ width: '18px', height: '18px' }} />}
-          <span>{toastNotice.msg}</span>
-        </div>
-      )}
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDarkMode ? '#0b1329' : '#eef2f6', 
+      color: theme.textPrimary, 
+      fontFamily: 'Inter, system-ui, sans-serif', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      transition: 'background-color 0.2s ease, color 0.2s ease',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Dynamic Background Image Layer */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `url(${BG_IMAGE_URL})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        opacity: isDarkMode ? 0.38 : 0.32,
+        zIndex: 0,
+        pointerEvents: 'none',
+        filter: isDarkMode ? 'brightness(0.85) contrast(1.1) saturate(0.9)' : 'brightness(1.05) contrast(1.05) saturate(1.1)',
+        transition: 'opacity 0.3s ease, filter 0.3s ease'
+      }} />
+      
+      {/* Light Gradient Overlay */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: isDarkMode 
+          ? 'radial-gradient(circle at center, rgba(15, 23, 42, 0.5) 0%, rgba(11, 19, 41, 0.75) 100%)'
+          : 'radial-gradient(circle at center, rgba(255, 255, 255, 0.35) 0%, rgba(238, 242, 246, 0.6) 100%)',
+        zIndex: 1,
+        pointerEvents: 'none',
+        transition: 'background 0.3s ease'
+      }} />
 
-      {}
-      <header style={{ backgroundColor: theme.headerBg, borderBottom: `1px solid ${theme.border}`, padding: '12px 16px', boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 1000, transition: 'all 0.2s ease' }}>
-        <div style={{ maxWidth: '1800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {LOGO_URL ? (
-              <img src={LOGO_URL} alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-            ) : (
-              <div style={{ backgroundColor: '#d32f2f', padding: '8px', borderRadius: '10px', color: '#fff', display: 'flex', gap: '4px' }}>
-                <Siren style={{ width: '16px', height: '16px' }} /><Flame style={{ width: '16px', height: '16px' }} />
-              </div>
-            )}
-            <div>
-              <h1 style={{ fontSize: '18px', fontWeight: '800', color: theme.textPrimary, margin: 0 }}>DASHBOARD ASET GIRN <span style={{ color: '#1976d2' }}>JBPM NEGERI JOHOR</span></h1>
-              <p style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '500', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Clock style={{ width: '11px', height: '11px' }} /> {lastUpdate ? lastUpdate.toLocaleString('ms-MY') : 'Memuatkan...'}
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button onClick={() => setIsDarkMode(!isDarkMode)} style={{ padding: '6px 12px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-              {isDarkMode ? <Sun style={{ width: '14px', height: '14px', color: '#f59e0b' }} /> : <Moon style={{ width: '14px', height: '14px', color: '#6366f1' }} />}
-              <span>{isDarkMode ? 'Mod Siang' : 'Mod Malam'}</span>
-            </button>
-            <button onClick={() => setActiveTab(t => t === 'dashboard' ? 'table' : 'dashboard')} style={{ padding: '6px 12px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500' }}>
-              {activeTab === 'dashboard' ? <><Table2 style={{ width: '14px', height: '14px' }} /> Jadual</> : <><BarChart3 style={{ width: '14px', height: '14px' }} /> Dashboard</>}
-            </button>
-            <button onClick={exportCSV} style={{ padding: '6px 12px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500' }}>
-              <Download style={{ width: '14px', height: '14px' }} /> Eksport
-            </button>
-            <button onClick={fetchData} disabled={loading} style={{ padding: '6px 12px', backgroundColor: '#1976d2', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500' }}>
-              <RefreshCw style={{ width: '14px', height: '14px', animation: loading ? 'spin 1s linear infinite' : 'none' }} /> Refresh
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {}
-      <main style={{ flex: 1, maxWidth: '1800px', margin: '0 auto', padding: '12px', width: '100%' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: theme.textSecondary, backgroundColor: theme.cardBg, borderRadius: '6px', padding: '6px 10px', marginBottom: '10px', border: `1px solid ${theme.border}` }}>
-          <Clock style={{ width: '12px', height: '12px', color: '#1976d2' }} /> Auto-refresh 6 jam | JBPM Negeri Johor
-        </div>
-        {error && (
-          <div style={{ backgroundColor: isDarkMode ? 'rgba(211, 47, 47, 0.2)' : '#ffebee', border: '1px solid #ef9a9a', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <Siren style={{ width: '16px', height: '16px', color: '#c62828' }} /><p style={{ color: '#c62828', fontWeight: '500', margin: 0, fontSize: '12px' }}>{error}</p>
+      {/* Content Layer */}
+      <div style={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Toast Notification */}
+        {toastNotice && (
+          <div style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 10000, display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 20px', borderRadius: '12px', backgroundColor: toastNotice.type === 'error' ? 'rgba(211, 47, 47, 0.95)' : 'rgba(46, 125, 50, 0.95)', color: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.25)', fontSize: '13px', fontWeight: '600', backdropFilter: 'blur(12px)' }}>
+            {toastNotice.type === 'error' ? <AlertCircle style={{ width: '18px', height: '18px' }} /> : <Check style={{ width: '18px', height: '18px' }} />}
+            <span>{toastNotice.msg}</span>
           </div>
         )}
 
-        {}
-        <div style={{ backgroundColor: theme.cardBg, borderRadius: '14px', padding: '14px', boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${theme.border}`, marginBottom: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showFilters ? '10px' : '0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ backgroundColor: isDarkMode ? 'rgba(25, 118, 210, 0.25)' : '#e3f2fd', padding: '5px', borderRadius: '6px' }}><Filter style={{ width: '16px', height: '16px', color: '#1976d2' }} /></div>
-              <h2 style={{ fontSize: '15px', fontWeight: '700', color: theme.textPrimary, margin: 0 }}>Tapisan</h2>
-              <span style={{ fontSize: '11px', color: theme.textMuted }}>({filteredData.length} rekod)</span>
+        {/* Header Bar */}
+        <header style={{ backgroundColor: theme.headerBg, borderBottom: `1px solid ${theme.border}`, padding: '16px 28px', boxShadow: isDarkMode ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 1000, transition: 'all 0.2s ease', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div style={{ maxWidth: '1800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {LOGO_URL ? (
+                <img src={LOGO_URL} alt="Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+              ) : (
+                <div style={{ backgroundColor: '#d32f2f', padding: '8px', borderRadius: '10px', color: '#fff', display: 'flex', gap: '4px' }}>
+                  <Siren style={{ width: '18px', height: '18px' }} /><Flame style={{ width: '18px', height: '18px' }} />
+                </div>
+              )}
+              <div>
+                <h1 style={{ fontSize: '19px', fontWeight: '800', color: theme.textPrimary, margin: 0, letterSpacing: '-0.2px' }}>DASHBOARD ASET GIRN <span style={{ color: '#1976d2' }}>JBPM NEGERI JOHOR</span></h1>
+                <p style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '600', margin: '2px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Clock style={{ width: '12px', height: '12px', color: '#1976d2' }} /> Kemaskini Terakhir: {lastUpdate ? lastUpdate.toLocaleString('ms-MY') : 'Memuatkan...'}
+                </p>
+              </div>
             </div>
-            <button onClick={() => setShowFilters(!showFilters)} style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px', borderRadius: '4px' }}>
-              {showFilters ? <ChevronUp style={{ width: '16px', height: '16px' }} /> : <ChevronDown style={{ width: '16px', height: '16px' }} />}
-            </button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button onClick={() => setIsDarkMode(!isDarkMode)} style={{ padding: '8px 14px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '10px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', backdropFilter: 'blur(12px)', transition: 'transform 0.1s ease' }}>
+                {isDarkMode ? <Sun style={{ width: '15px', height: '15px', color: '#f59e0b' }} /> : <Moon style={{ width: '15px', height: '15px', color: '#6366f1' }} />}
+                <span>{isDarkMode ? 'Mod Siang' : 'Mod Malam'}</span>
+              </button>
+              <button onClick={() => setActiveTab(t => t === 'dashboard' ? 'table' : 'dashboard')} style={{ padding: '8px 14px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '10px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', backdropFilter: 'blur(12px)' }}>
+                {activeTab === 'dashboard' ? <><Table2 style={{ width: '15px', height: '15px', color: '#1976d2' }} /> Jadual</> : <><BarChart3 style={{ width: '15px', height: '15px', color: '#1976d2' }} /> Dashboard</>}
+              </button>
+              <button onClick={exportCSV} style={{ padding: '8px 14px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '10px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', backdropFilter: 'blur(12px)' }}>
+                <Download style={{ width: '15px', height: '15px', color: '#2e7d32' }} /> Eksport
+              </button>
+              <button onClick={fetchData} disabled={loading} style={{ padding: '8px 16px', backgroundColor: '#1976d2', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)' }}>
+                <RefreshCw style={{ width: '15px', height: '15px', animation: loading ? 'spin 1s linear infinite' : 'none' }} /> Refresh
+              </button>
+            </div>
           </div>
-          {showFilters && (
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px', marginBottom: '10px' }}>
+        </header>
+
+        {}
+        <main style={{ flex: 1, maxWidth: '1800px', margin: '0 auto', padding: '24px 20px', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: theme.textSecondary, backgroundColor: theme.cardBg, borderRadius: '8px', padding: '8px 14px', marginBottom: '20px', border: `1px solid ${theme.border}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', fontWeight: '600' }}>
+            <Clock style={{ width: '13px', height: '13px', color: '#1976d2' }} /> Auto-refresh 6 jam | JBPM Negeri Johor
+          </div>
+
+          {error && (
+            <div style={{ backgroundColor: isDarkMode ? 'rgba(211, 47, 47, 0.3)' : 'rgba(254, 226, 226, 0.9)', border: '1px solid #ef9a9a', borderRadius: '12px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', backdropFilter: 'blur(12px)' }}>
+              <Siren style={{ width: '18px', height: '18px', color: '#c62828' }} /><p style={{ color: '#c62828', fontWeight: '600', margin: 0, fontSize: '13px' }}>{error}</p>
+            </div>
+          )}
+
+          {/* Tapisan Filter Section */}
+          <div style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, marginBottom: '24px', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showFilters ? '16px' : '0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ backgroundColor: isDarkMode ? 'rgba(25, 118, 210, 0.3)' : '#e3f2fd', padding: '6px', borderRadius: '8px' }}><Filter style={{ width: '18px', height: '18px', color: '#1976d2' }} /></div>
+                <h2 style={{ fontSize: '16px', fontWeight: '800', color: theme.textPrimary, margin: 0 }}>Tapisan Data</h2>
+                <span style={{ fontSize: '12px', color: theme.textMuted, fontWeight: '600' }}>({filteredData.length} rekod dijumpai)</span>
+              </div>
+              <button onClick={() => setShowFilters(!showFilters)} style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600' }}>
+                {showFilters ? <>Tutup <ChevronUp style={{ width: '16px', height: '16px' }} /></> : <>Buka Tapisan <ChevronDown style={{ width: '16px', height: '16px' }} /></>}
+              </button>
+            </div>
+            {showFilters && (
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                  {[
+                    ['BULAN', filterBulanDipilih, setFilterBulanDipilih, monthOptions, 'Pilih Bulan...', 'Cari bulan...', Calendar],
+                    ['ZON', filterZon, setFilterZon, uniqueValues.zon, 'Pilih Zon...', 'Cari zon...', MapPin],
+                    ['BALAI', filterBalai, setFilterBalai, uniqueValues.balai, 'Pilih Balai...', 'Cari balai...', Building2],
+                    ['TERMINAL', filterJenisTerminal, setFilterJenisTerminal, uniqueValues.jenisTerminal, 'Pilih Terminal...', 'Cari terminal...', Radio],
+                    ['STATUS', filterStatusSemasa, setFilterStatusSemasa, allStatusOptions, 'Pilih Status...', 'Cari status...', Activity],
+                    ['T.JAWAB', filterTanggungjawab, setFilterTanggungjawab, uniqueValues.tanggungjawab, 'Pilih T.Jawab...', 'Cari t.jawab...', UserCheck],
+                    ['FINDING', filterFinding, setFilterFinding, uniqueValues.finding, 'Pilih Finding...', 'Cari finding...', Search],
+                  ].map(([label, val, setVal, options, placeholder, searchPlaceholder, IconComponent]) => (
+                    <div key={label}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: theme.textSecondary, marginBottom: '6px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        <IconComponent style={{ width: '13px', height: '13px', color: '#1976d2' }} />
+                        <span>{label}</span>
+                        {val.length > 0 && <span style={{ color: '#1976d2', marginLeft: '2px' }}>({val.length})</span>}
+                      </label>
+                      <MultiSelectDropdown options={options} selected={val} onChange={setVal} placeholder={placeholder} searchPlaceholder={searchPlaceholder} disabled={false} isDarkMode={isDarkMode} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '12px' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '8px 14px', fontSize: '12px', color: theme.textPrimary, backdropFilter: 'blur(8px)' }}>
+                    <input type="checkbox" checked={filterKerosakanSahaja} onChange={(e) => setFilterKerosakanSahaja(e.target.checked)} style={{ width: '15px', height: '15px', accentColor: '#f57c00' }} />
+                    <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }}><AlertTriangle style={{ width: '14px', height: '14px', color: '#f57c00' }} /> Kerosakan Sahaja</span>
+                  </label>
+                  <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+                    <Search style={{ width: '15px', height: '15px', color: theme.textMuted, position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Cari NO. SIRI / ISSI / SUBSCRIBER..." style={{ width: '100%', padding: '8px 12px 8px 36px', backgroundColor: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', color: theme.textPrimary, outline: 'none', boxSizing: 'border-box', backdropFilter: 'blur(8px)' }} />
+                    {searchText && <X style={{ width: '14px', height: '14px', position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: theme.textMuted, cursor: 'pointer' }} onClick={() => setSearchText('')} />}
+                  </div>
+                </div>
+                {hasActiveFilters && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '12px', borderTop: `1px solid ${theme.border}`, alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Tag style={{ width: '13px', height: '13px' }} /> Tapisan Aktif:
+                    </span>
+                    {filterBulanDipilih.length > 0 && <FilterBadge label={`BULAN: ${filterBulanDipilih.length}`} type="gold" isDarkMode={isDarkMode} onRemove={() => { setFilterBulanDipilih([]); setFilterKerosakanSahaja(false); }} />}
+                    {filterZon.length > 0 && <FilterBadge label={`ZON: ${filterZon.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterZon([])} />}
+                    {filterBalai.length > 0 && <FilterBadge label={`BALAI: ${filterBalai.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterBalai([])} />}
+                    {filterJenisTerminal.length > 0 && <FilterBadge label={`TERMINAL: ${filterJenisTerminal.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterJenisTerminal([])} />}
+                    {filterStatusSemasa.length > 0 && <FilterBadge label={`STATUS: ${filterStatusSemasa.length}`} type="amber" isDarkMode={isDarkMode} onRemove={() => setFilterStatusSemasa([])} />}
+                    {filterTanggungjawab.length > 0 && <FilterBadge label={`T.JAWAB: ${filterTanggungjawab.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterTanggungjawab([])} />}
+                    {filterFinding.length > 0 && <FilterBadge label={`FINDING: ${filterFinding.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterFinding([])} />}
+                    {filterKerosakanSahaja && <FilterBadge label="KEROSAKAN SAHAJA" type="amber" isDarkMode={isDarkMode} onRemove={() => setFilterKerosakanSahaja(false)} />}
+                    <button onClick={resetAll} style={{ fontSize: '11px', color: '#e53935', background: 'none', border: 'none', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline', marginLeft: '6px' }}>Reset Semua Tapisan</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {}
+          {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+              <div style={{ textAlign: 'center' }}>
+                <Flame style={{ width: '48px', height: '48px', color: '#1976d2', animation: 'pulse 2s ease-in-out infinite' }} />
+                <p style={{ color: theme.textSecondary, fontWeight: '600', marginTop: '12px', fontSize: '13px' }}>Memuatkan data aset GIRN JBPM...</p>
+              </div>
+            </div>
+          ) : activeTab === 'dashboard' ? (
+            <>
+              {/* Summary Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                 {[
-                  ['BULAN', filterBulanDipilih, setFilterBulanDipilih, monthOptions, 'Pilih...', 'Cari...', Calendar],
-                  ['ZON', filterZon, setFilterZon, uniqueValues.zon, 'Pilih...', 'Cari...', MapPin],
-                  ['BALAI', filterBalai, setFilterBalai, uniqueValues.balai, 'Pilih...', 'Cari...', Building2],
-                  ['TERMINAL', filterJenisTerminal, setFilterJenisTerminal, uniqueValues.jenisTerminal, 'Pilih...', 'Cari...', Radio],
-                  ['STATUS', filterStatusSemasa, setFilterStatusSemasa, allStatusOptions, 'Pilih...', 'Cari...', Activity],
-                  ['T.JAWAB', filterTanggungjawab, setFilterTanggungjawab, uniqueValues.tanggungjawab, 'Pilih...', 'Cari...', UserCheck],
-                  ['FINDING', filterFinding, setFilterFinding, uniqueValues.finding, 'Pilih...', 'Cari...', Search],
-                ].map(([label, val, setVal, options, placeholder, searchPlaceholder, IconComponent]) => (
-                  <div key={label}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: theme.textSecondary, marginBottom: '4px', fontWeight: '600' }}>
-                      <IconComponent style={{ width: '12px', height: '12px', color: '#1976d2' }} />
-                      <span>{label}</span>
-                      {val.length > 0 && <span style={{ color: '#1976d2', marginLeft: '2px' }}>({val.length})</span>}
-                    </label>
-                    <MultiSelectDropdown options={options} selected={val} onChange={setVal} placeholder={placeholder} searchPlaceholder={searchPlaceholder} disabled={false} isDarkMode={isDarkMode} />
+                  { label: 'Jumlah Aset', value: stats.total, color: '#1976d2', bg: isDarkMode ? 'rgba(25, 118, 210, 0.35)' : 'rgba(227, 242, 253, 0.85)', icon: Flame, sub: filteredData.length !== rawData.length ? `Ditapis dari ${rawData.length}` : 'Keseluruhan' },
+                  { label: 'Beroperasi (Baik)', value: stats.baik, color: '#2e7d32', bg: isDarkMode ? 'rgba(46, 125, 50, 0.35)' : 'rgba(232, 245, 233, 0.85)', icon: BadgeCheck, sub: `${stats.total > 0 ? ((stats.baik / stats.total) * 100).toFixed(1) : 0}% | ${getBulanLabel()}` },
+                  { label: 'Kerosakan', value: stats.rosak, color: '#c62828', bg: isDarkMode ? 'rgba(198, 40, 40, 0.35)' : 'rgba(255, 235, 238, 0.85)', icon: Siren, sub: `${stats.total > 0 ? ((stats.rosak / stats.total) * 100).toFixed(1) : 0}% | ${getBulanLabel()}` }
+                ].map((s, i) => (
+                  <div key={i} style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: s.color, marginBottom: '8px' }}>
+                      <div style={{ backgroundColor: s.bg, padding: '8px', borderRadius: '10px', backdropFilter: 'blur(4px)' }}><s.icon style={{ width: '20px', height: '20px', color: s.color }} /></div>
+                      <span style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</span>
+                    </div>
+                    <p style={{ fontSize: '32px', fontWeight: '900', color: theme.textPrimary, margin: '0 0 4px 0', letterSpacing: '-0.5px' }}>{s.value}</p>
+                    <p style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '600', margin: 0 }}>{s.sub}</p>
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '8px' }}>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '6px 12px', fontSize: '12px', color: theme.textPrimary }}>
-                  <input type="checkbox" checked={filterKerosakanSahaja} onChange={(e) => setFilterKerosakanSahaja(e.target.checked)} style={{ width: '14px', height: '14px', accentColor: '#f57c00' }} />
-                  <span style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertTriangle style={{ width: '13px', height: '13px', color: '#f57c00' }} /> Kerosakan Sahaja</span>
-                </label>
-                <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-                  <Search style={{ width: '14px', height: '14px', color: theme.textMuted, position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Cari NO. SIRI / ISSI / SUBSCRIBER..." style={{ width: '100%', padding: '6px 8px 6px 30px', backgroundColor: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '6px', fontSize: '12px', color: theme.textPrimary, outline: 'none', boxSizing: 'border-box' }} />
-                  {searchText && <X style={{ width: '14px', height: '14px', position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', color: theme.textMuted, cursor: 'pointer' }} onClick={() => setSearchText('')} />}
+
+              {/* Dynamic Chart Section with Zoom Penuh Button */}
+              <div style={{ 
+                backgroundColor: isDarkMode ? (isChartZoomed ? '#0f172a' : 'rgba(30, 41, 59, 0.75)') : (isChartZoomed ? '#ffffff' : 'rgba(255, 255, 255, 0.78)'), 
+                borderRadius: isChartZoomed ? '0' : '18px', 
+                padding: isChartZoomed ? '24px 32px' : '20px', 
+                boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', 
+                border: `1px solid ${theme.border}`, 
+                marginBottom: '24px', 
+                backdropFilter: 'blur(16px)', 
+                WebkitBackdropFilter: 'blur(16px)',
+                ...(isChartZoomed ? {
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 99999,
+                  overflowY: 'auto',
+                  margin: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  boxSizing: 'border-box'
+                } : {})
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                  <h3 style={{ fontSize: isChartZoomed ? '16px' : '14px', fontWeight: '800', color: theme.textPrimary, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BarChart3 style={{ width: '18px', height: '18px', color: '#1976d2' }} />{chartTitle}
+                  </h3>
+                  <button
+                    onClick={() => setIsChartZoomed(!isChartZoomed)}
+                    style={{
+                      padding: '8px 14px',
+                      backgroundColor: isChartZoomed ? '#d32f2f' : '#1976d2',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {isChartZoomed ? <Minimize2 style={{ width: '15px', height: '15px' }} /> : <Maximize2 style={{ width: '15px', height: '15px' }} />}
+                    <span>{isChartZoomed ? 'Tutup Zoom' : 'Zoom Penuh'}</span>
+                  </button>
                 </div>
+
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Paksi-X (X-Axis):</label>
+                    <select value={xAxisOption} onChange={(e) => setXAxisOption(e.target.value)} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none', backdropFilter: 'blur(8px)' }}>
+                      <option value="bulan">Bulan</option><option value="ZON">ZON</option><option value="BALAI">BALAI</option><option value="JENIS TERMINAL">TERMINAL</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Pecahan Data:</label>
+                    <select value={stackOption} onChange={(e) => setStackOption(e.target.value)} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none', backdropFilter: 'blur(8px)' }}>
+                      <option value="status">Status</option><option value="ZON">ZON</option><option value="BALAI">BALAI</option><option value="JENIS TERMINAL">TERMINAL</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '4px' }}>Susunan Graf:</label>
+                    <select value={isStacked ? 'stacked' : 'grouped'} onChange={(e) => setIsStacked(e.target.value === 'stacked')} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none', backdropFilter: 'blur(8px)' }}>
+                      <option value="stacked">Bertindan (Stacked)</option>
+                      <option value="grouped">Bersebelahan (Grouped)</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '18px' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: theme.textPrimary, fontWeight: '700' }}>
+                      <input type="checkbox" checked={showBarLabels} onChange={(e) => setShowBarLabels(e.target.checked)} style={{ width: '15px', height: '15px', accentColor: '#1976d2' }} />
+                      <span>Papar Nombor Bar</span>
+                    </label>
+                  </div>
+                </div>
+
+                {dynamicChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={isChartZoomed ? 600 : 420}>
+                    <BarChart data={dynamicChartData} barGap={4}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'} />
+                      <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} angle={-35} textAnchor="end" height={70} tick={{ fontWeight: '600' }} />
+                      <YAxis stroke={theme.textSecondary} fontSize={11} tick={{ fontWeight: '600' }} />
+                      <Tooltip contentStyle={{ backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)', border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.textPrimary, fontSize: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }} itemStyle={{ color: theme.textPrimary }} />
+                      <Legend wrapperStyle={{ fontSize: '11px', color: theme.textPrimary, paddingTop: '10px' }} />
+                      {Object.keys(dynamicChartData[0] || {}).filter(k => k !== 'name' && k !== '_total').map((k, i) => {
+                        const c = STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length];
+                        return (
+                          <Bar key={k} dataKey={k} fill={c} name={k} radius={[4, 4, 0, 0]} stackId={isStacked ? "s" : undefined}>
+                            {showBarLabels && (
+                              <LabelList
+                                dataKey={k}
+                                content={(props) => (
+                                  <CustomBarLabel
+                                    {...props}
+                                    fillKey={k}
+                                    isStacked={isStacked}
+                                    themeText={theme.textPrimary}
+                                  />
+                                )}
+                              />
+                            )}
+                          </Bar>
+                        );
+                      })}
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px', color: theme.textMuted, fontSize: '13px', fontWeight: '500' }}>
+                    {xAxisOption === stackOption ? 'Paksi-X dan Pecahan Data tidak boleh menggunakan pilihan yang sama.' : 'Sila pilih bulan dalam ruang tapisan di atas.'}
+                  </div>
+                )}
               </div>
-              {hasActiveFilters && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingTop: '8px', borderTop: `1px solid ${theme.border}`, alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Tag style={{ width: '12px', height: '12px' }} /> Aktif:
-                  </span>
-                  {filterBulanDipilih.length > 0 && <FilterBadge label={`BULAN: ${filterBulanDipilih.length}`} type="gold" isDarkMode={isDarkMode} onRemove={() => { setFilterBulanDipilih([]); setFilterKerosakanSahaja(false); }} />}
-                  {filterZon.length > 0 && <FilterBadge label={`ZON: ${filterZon.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterZon([])} />}
-                  {filterBalai.length > 0 && <FilterBadge label={`BALAI: ${filterBalai.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterBalai([])} />}
-                  {filterJenisTerminal.length > 0 && <FilterBadge label={`TERMINAL: ${filterJenisTerminal.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterJenisTerminal([])} />}
-                  {filterStatusSemasa.length > 0 && <FilterBadge label={`STATUS: ${filterStatusSemasa.length}`} type="amber" isDarkMode={isDarkMode} onRemove={() => setFilterStatusSemasa([])} />}
-                  {filterTanggungjawab.length > 0 && <FilterBadge label={`T.JAWAB: ${filterTanggungjawab.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterTanggungjawab([])} />}
-                  {filterFinding.length > 0 && <FilterBadge label={`FINDING: ${filterFinding.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterFinding([])} />}
-                  {filterKerosakanSahaja && <FilterBadge label="KEROSAKAN SAHAJA" type="amber" isDarkMode={isDarkMode} onRemove={() => setFilterKerosakanSahaja(false)} />}
-                  <button onClick={resetAll} style={{ fontSize: '11px', color: '#e53935', background: 'none', border: 'none', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline', marginLeft: '4px' }}>Reset Semua</button>
+
+              {}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                <PieChartCard title={`Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS} isDarkMode={isDarkMode} />
+                <PieChartCard title="Pecahan Mengikut ZON" data={zonDistribution} isDarkMode={isDarkMode} />
+                <PieChartCard title="Top 10 BALAI" data={balaiDistribution} isDarkMode={isDarkMode} />
+                <PieChartCard title="Jenis Terminal" data={terminalDistribution} isDarkMode={isDarkMode} />
+              </div>
+            </>
+          ) : (
+            <div style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: '800', color: theme.textPrimary, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><Table2 style={{ width: '16px', height: '16px', color: '#1976d2' }} />Data Peranti Terminal — <span style={{ color: '#1976d2' }}>{filteredData.length} rekod</span></h3>
+                <select value={rowsPerPage} onChange={(e) => setRowsPerPage(+e.target.value)} style={{ padding: '6px 12px', border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', backgroundColor: theme.inputBg, color: theme.textPrimary, outline: 'none' }}>
+                  {[10, 25, 50, 100, 200, 300].map(v => <option key={v} value={v}>{v} baris se-halaman</option>)}
+                </select>
+              </div>
+              <div style={{ overflowX: 'auto', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: `2px solid ${theme.border}` }}>
+                      {(() => {
+                        const b = ['#', 'NO. SIRI', 'TERMINAL', 'ISSI', 'SUBSCRIBER', 'ZON', 'BALAI', 'T.JAWAB'], mh = [];
+                        if (filterBulanDipilih.length > 0) selectedMonthColumns.forEach((mc) => { mh.push(`STATUS ${mc.label}`); mh.push(`TARIKH ${mc.label}`); });
+                        else { mh.push('STATUS'); mh.push('TARIKH UJIAN'); }
+                        return [...b, ...mh, 'REG NO.'];
+                      })().map((h) => (<th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '800', color: theme.textSecondary, whiteSpace: 'nowrap', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedData.map((d, i) => (
+                      <tr key={i} style={{ borderBottom: `1px solid ${theme.border}`, transition: 'background-color 0.15s ease' }} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.tableRowHover)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                        <td style={{ padding: '8px 12px', color: theme.textMuted, fontFamily: 'monospace', fontSize: '11px' }}>{(currentPage - 1) * rowsPerPage + i + 1}</td>
+                        <td style={{ padding: '8px 12px', color: theme.textPrimary, fontFamily: 'monospace', fontSize: '11px', fontWeight: '700' }}>{d['NO. SIRI'] || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', fontWeight: '500' }}>{d['JENIS TERMINAL'] || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px' }}>{d['NO. ISSI TETRA'] || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['SUBSCRIBER'] || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontWeight: '600', fontSize: '11px' }}>{d['ZON'] || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['BALAI'] || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['TANGGUNGJAWAB PENGUJIAN'] || '—'}</td>
+                        {filterBulanDipilih.length > 0 ? selectedMonthColumns.map((mc) => (
+                          <React.Fragment key={mc.label}>
+                            <td style={{ padding: '8px 12px' }}><StatusBadge status={mc.status && d[mc.status] ? normalizeStatus(d[mc.status]) : 'TIADA DATA'} isDarkMode={isDarkMode} /></td>
+                            <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>{(mc.tarikh && d[mc.tarikh]) || '—'}</td>
+                          </React.Fragment>
+                        )) : (
+                          <>
+                            <td style={{ padding: '8px 12px' }}><StatusBadge status={activeStatusCol ? normalizeStatus(d[activeStatusCol]) : 'TIADA DATA'} isDarkMode={isDarkMode} /></td>
+                            <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>{(activeTarikhUjianCol && d[activeTarikhUjianCol]) || '—'}</td>
+                          </>
+                        )}
+                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px' }}>{d['VEHICLE REG NO.'] || '—'}</td>
+                      </tr>
+                    ))}
+                    {!paginatedData.length && (
+                      <tr><td colSpan={8 + (filterBulanDipilih.length > 0 ? selectedMonthColumns.length * 2 : 2) + 1} style={{ textAlign: 'center', padding: '50px 0', color: theme.textMuted, fontSize: '12px' }}>
+                        <HelpCircle style={{ width: '32px', height: '32px', margin: '0 auto 8px', opacity: 0.4, display: 'block' }} />Tiada data dijumpai mengikut kriteria tapisan anda</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Table Pagination */}
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${theme.border}`, alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <span style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '600' }}>Halaman {currentPage} daripada {totalPages} ({filteredData.length} jumlah rekod)</span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {['««','«'].map((t, i) => (
+                      <button key={t} onClick={() => setCurrentPage(i === 0 ? 1 : (p) => Math.max(1, p - 1))} disabled={currentPage === 1}
+                        style={{ padding: '6px 10px', fontSize: '11px', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', color: currentPage === 1 ? theme.textMuted : theme.textPrimary, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: '700' }}>{t}</button>
+                    ))}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => { 
+                      let p; 
+                      if (totalPages <= 5) p = i + 1; 
+                      else if (currentPage <= 3) p = i + 1; 
+                      else if (currentPage >= totalPages - 2) p = totalPages - 4 + i; 
+                      else p = currentPage - 2 + i;
+                      return (<button key={p} onClick={() => setCurrentPage(p)} style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: currentPage === p ? '#1976d2' : theme.cardBg, color: currentPage === p ? '#fff' : theme.textPrimary, border: currentPage === p ? '1px solid #1565c0' : `1px solid ${theme.border}`, borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}>{p}</button>);
+                    })}
+                    {['»','»»'].map((t, i) => (
+                      <button key={t} onClick={() => setCurrentPage(i === 0 ? (p) => Math.min(totalPages, p + 1) : totalPages)} disabled={currentPage === totalPages}
+                        style={{ padding: '6px 10px', fontSize: '11px', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', color: currentPage === totalPages ? theme.textMuted : theme.textPrimary, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: '700' }}>{t}</button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           )}
-        </div>
+        </main>
 
         {}
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '50px 0' }}>
-            <div style={{ textAlign: 'center' }}>
-              <Flame style={{ width: '40px', height: '40px', color: '#1976d2', animation: 'pulse 2s ease-in-out infinite' }} />
-              <p style={{ color: theme.textSecondary, fontWeight: '500', marginTop: '10px', fontSize: '12px' }}>Memuatkan data...</p>
-            </div>
+        <footer style={{ backgroundColor: theme.headerBg, borderTop: `1px solid ${theme.border}`, padding: '14px 20px', textAlign: 'center', position: 'sticky', bottom: 0, zIndex: 1000, boxShadow: isDarkMode ? '0 -4px 20px rgba(0,0,0,0.4)' : '0 -4px 20px rgba(0,0,0,0.06)', transition: 'all 0.2s ease', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <Truck style={{ width: '15px', height: '15px', color: '#d32f2f' }} />
+            <span>Data Pengurusan Aset GIRN <strong style={{ color: '#1976d2' }}>Jabatan Bomba & Penyelamat Malaysia Negeri Johor</strong></span>
+            {filterBulanDipilih.length > 0 && <span style={{ color: '#f57c00' }}>| Bulan Dipilih: {getBulanLabel()}</span>}
           </div>
-        ) : activeTab === 'dashboard' ? (
-          <>
-            {}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '14px' }}>
-              {[
-                { label: 'Jumlah Aset', value: stats.total, color: '#1976d2', bg: isDarkMode ? 'rgba(25, 118, 210, 0.2)' : '#e3f2fd', icon: Flame, sub: filteredData.length !== rawData.length ? `Ditapis dari ${rawData.length}` : 'Keseluruhan' },
-                { label: 'Operasi', value: stats.baik, color: '#2e7d32', bg: isDarkMode ? 'rgba(46, 125, 50, 0.2)' : '#e8f5e9', icon: BadgeCheck, sub: `${stats.total > 0 ? ((stats.baik / stats.total) * 100).toFixed(1) : 0}% | ${getBulanLabel()}` },
-                { label: 'Kerosakan', value: stats.rosak, color: '#c62828', bg: isDarkMode ? 'rgba(198, 40, 40, 0.2)' : '#ffebee', icon: Siren, sub: `${stats.total > 0 ? ((stats.rosak / stats.total) * 100).toFixed(1) : 0}% | ${getBulanLabel()}` }
-              ].map((s, i) => (
-                <div key={i} style={{ backgroundColor: theme.cardBg, borderRadius: '14px', padding: '14px', boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${theme.border}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: s.color, marginBottom: '6px' }}>
-                    <div style={{ backgroundColor: s.bg, padding: '6px', borderRadius: '6px' }}><s.icon style={{ width: '18px', height: '18px', color: s.color }} /></div>
-                    <span style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>{s.label}</span>
-                  </div>
-                  <p style={{ fontSize: '28px', fontWeight: '800', color: theme.textPrimary, margin: '0 0 2px 0' }}>{s.value}</p>
-                  <p style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '500', margin: 0 }}>{s.sub}</p>
-                </div>
-              ))}
-            </div>
-
-            {}
-            <div style={{ backgroundColor: theme.cardBg, borderRadius: '14px', padding: '14px', boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${theme.border}`, marginBottom: '14px' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: theme.textPrimary, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <BarChart3 style={{ width: '16px', height: '16px', color: '#1976d2' }} />{chartTitle}
-              </h3>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div>
-                  <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '500', display: 'block', marginBottom: '2px' }}>X-Axis:</label>
-                  <select value={xAxisOption} onChange={(e) => setXAxisOption(e.target.value)} style={{ padding: '5px 8px', border: `1px solid ${theme.border}`, borderRadius: '6px', fontSize: '11px', backgroundColor: theme.inputBg, color: theme.textPrimary }}>
-                    <option value="bulan">Bulan</option><option value="ZON">ZON</option><option value="BALAI">BALAI</option><option value="JENIS TERMINAL">TERMINAL</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '500', display: 'block', marginBottom: '2px' }}>Pecahan:</label>
-                  <select value={stackOption} onChange={(e) => setStackOption(e.target.value)} style={{ padding: '5px 8px', border: `1px solid ${theme.border}`, borderRadius: '6px', fontSize: '11px', backgroundColor: theme.inputBg, color: theme.textPrimary }}>
-                    <option value="status">Status</option><option value="ZON">ZON</option><option value="BALAI">BALAI</option><option value="JENIS TERMINAL">TERMINAL</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '500', display: 'block', marginBottom: '2px' }}>Susunan Graf:</label>
-                  <select value={isStacked ? 'stacked' : 'grouped'} onChange={(e) => setIsStacked(e.target.value === 'stacked')} style={{ padding: '5px 8px', border: `1px solid ${theme.border}`, borderRadius: '6px', fontSize: '11px', backgroundColor: theme.inputBg, color: theme.textPrimary }}>
-                    <option value="stacked">Bertindan (Stacked)</option>
-                    <option value="grouped">Bersebelahan (Grouped)</option>
-                  </select>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px' }}>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11px', color: theme.textPrimary, fontWeight: '600' }}>
-                    <input type="checkbox" checked={showBarLabels} onChange={(e) => setShowBarLabels(e.target.checked)} style={{ width: '14px', height: '14px', accentColor: '#1976d2' }} />
-                    <span>Papar Penunjuk Nombor</span>
-                  </label>
-                </div>
-              </div>
-              {dynamicChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={420}>
-                  <BarChart data={dynamicChartData} barGap={4}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#334155' : '#f0f0f0'} />
-                    <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={10} angle={-45} textAnchor="end" height={70} />
-                    <YAxis stroke={theme.textSecondary} fontSize={10} />
-                    <Tooltip contentStyle={{ backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', color: theme.textPrimary, fontSize: '11px' }} itemStyle={{ color: theme.textPrimary }} />
-                    <Legend wrapperStyle={{ fontSize: '10px', color: theme.textPrimary }} />
-                    {Object.keys(dynamicChartData[0] || {}).filter(k => k !== 'name' && k !== '_total').map((k, i) => {
-                      const c = STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length];
-                      return (
-                        <Bar key={k} dataKey={k} fill={c} name={k} radius={[4, 4, 0, 0]} stackId={isStacked ? "s" : undefined}>
-                          {showBarLabels && (
-                            <LabelList
-                              dataKey={k}
-                              content={(props) => (
-                                <CustomBarLabel
-                                  {...props}
-                                  fillKey={k}
-                                  isStacked={isStacked}
-                                  themeText={theme.textPrimary}
-                                />
-                              )}
-                            />
-                          )}
-                        </Bar>
-                      );
-                    })}
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '30px', color: theme.textMuted, fontSize: '12px' }}>
-                  {xAxisOption === stackOption ? 'X-Axis dan Pecahan tidak boleh sama.' : 'Sila pilih bulan dalam tapisan.'}
-                </div>
-              )}
-            </div>
-
-            {}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px' }}>
-              <PieChartCard title={`Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS} isDarkMode={isDarkMode} />
-              <PieChartCard title="Pecahan ZON" data={zonDistribution} isDarkMode={isDarkMode} />
-              <PieChartCard title="Top 10 BALAI" data={balaiDistribution} isDarkMode={isDarkMode} />
-              <PieChartCard title="Jenis Terminal" data={terminalDistribution} isDarkMode={isDarkMode} />
-            </div>
-          </>
-        ) : (
-          <div style={{ backgroundColor: theme.cardBg, borderRadius: '14px', padding: '14px', boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${theme.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-              <h3 style={{ fontSize: '12px', fontWeight: '600', color: theme.textPrimary, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}><Table2 style={{ width: '14px', height: '14px', color: '#1976d2' }} />Data Peranti — <span>{filteredData.length} rekod</span></h3>
-              <select value={rowsPerPage} onChange={(e) => setRowsPerPage(+e.target.value)} style={{ padding: '5px 8px', border: `1px solid ${theme.border}`, borderRadius: '6px', fontSize: '11px', backgroundColor: theme.inputBg, color: theme.textPrimary }}>
-                {[10, 25, 50, 100, 200, 300].map(v => <option key={v} value={v}>{v} baris</option>)}
-              </select>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: `2px solid ${theme.border}` }}>
-                    {(() => {
-                      const b = ['#', 'NO. SIRI', 'TERMINAL', 'ISSI', 'SUBSCRIBER', 'ZON', 'BALAI', 'T.JAWAB'], mh = [];
-                      if (filterBulanDipilih.length > 0) selectedMonthColumns.forEach((mc) => { mh.push(`STATUS ${mc.label}`); mh.push(`TARIKH ${mc.label}`); });
-                      else { mh.push('STATUS'); mh.push('TARIKH UJIAN'); }
-                      return [...b, ...mh, 'REG NO.'];
-                    })().map((h) => (<th key={h} style={{ padding: '8px', textAlign: 'left', fontWeight: '600', color: theme.textSecondary, whiteSpace: 'nowrap', fontSize: '10px' }}>{h}</th>))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedData.map((d, i) => (
-                    <tr key={i} style={{ borderBottom: `1px solid ${theme.border}` }} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.tableRowHover)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
-                      <td style={{ padding: '6px 8px', color: theme.textMuted, fontFamily: 'monospace', fontSize: '10px' }}>{(currentPage - 1) * rowsPerPage + i + 1}</td>
-                      <td style={{ padding: '6px 8px', color: theme.textPrimary, fontFamily: 'monospace', fontSize: '10px', fontWeight: '600' }}>{d['NO. SIRI'] || '—'}</td>
-                      <td style={{ padding: '6px 8px', color: theme.textSecondary, fontSize: '10px' }}>{d['JENIS TERMINAL'] || '—'}</td>
-                      <td style={{ padding: '6px 8px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '10px' }}>{d['NO. ISSI TETRA'] || '—'}</td>
-                      <td style={{ padding: '6px 8px', color: theme.textSecondary, fontSize: '10px' }}>{d['SUBSCRIBER'] || '—'}</td>
-                      <td style={{ padding: '6px 8px', color: theme.textSecondary, fontWeight: '500', fontSize: '10px' }}>{d['ZON'] || '—'}</td>
-                      <td style={{ padding: '6px 8px', color: theme.textSecondary, fontSize: '10px' }}>{d['BALAI'] || '—'}</td>
-                      <td style={{ padding: '6px 8px', color: theme.textSecondary, fontSize: '10px' }}>{d['TANGGUNGJAWAB PENGUJIAN'] || '—'}</td>
-                      {filterBulanDipilih.length > 0 ? selectedMonthColumns.map((mc) => (
-                        <React.Fragment key={mc.label}>
-                          <td style={{ padding: '6px 8px' }}><StatusBadge status={mc.status && d[mc.status] ? normalizeStatus(d[mc.status]) : 'TIADA DATA'} isDarkMode={isDarkMode} /></td>
-                          <td style={{ padding: '6px 8px', color: theme.textSecondary, fontSize: '10px', whiteSpace: 'nowrap' }}>{(mc.tarikh && d[mc.tarikh]) || '—'}</td>
-                        </React.Fragment>
-                      )) : (
-                        <>
-                          <td style={{ padding: '6px 8px' }}><StatusBadge status={activeStatusCol ? normalizeStatus(d[activeStatusCol]) : 'TIADA DATA'} isDarkMode={isDarkMode} /></td>
-                          <td style={{ padding: '6px 8px', color: theme.textSecondary, fontSize: '10px', whiteSpace: 'nowrap' }}>{(activeTarikhUjianCol && d[activeTarikhUjianCol]) || '—'}</td>
-                        </>
-                      )}
-                      <td style={{ padding: '6px 8px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '10px' }}>{d['VEHICLE REG NO.'] || '—'}</td>
-                    </tr>
-                  ))}
-                  {!paginatedData.length && (
-                    <tr><td colSpan={8 + (filterBulanDipilih.length > 0 ? selectedMonthColumns.length * 2 : 2) + 1} style={{ textAlign: 'center', padding: '40px 0', color: theme.textMuted, fontSize: '11px' }}>
-                      <HelpCircle style={{ width: '28px', height: '28px', margin: '0 auto 6px', opacity: 0.3, display: 'block' }} />Tiada data dijumpai</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {}
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', paddingTop: '8px', borderTop: `1px solid ${theme.border}`, alignItems: 'center' }}>
-                <span style={{ fontSize: '10px', color: theme.textMuted }}>Halaman {currentPage} / {totalPages}</span>
-                <div style={{ display: 'flex', gap: '2px' }}>
-                  {['««','«'].map((t, i) => (
-                    <button key={t} onClick={() => setCurrentPage(i === 0 ? 1 : (p) => Math.max(1, p - 1))} disabled={currentPage === 1}
-                      style={{ padding: '4px 7px', fontSize: '10px', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '4px', color: currentPage === 1 ? theme.textMuted : theme.textPrimary, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: '600' }}>{t}</button>
-                  ))}
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => { 
-                    let p; 
-                    if (totalPages <= 5) p = i + 1; 
-                    else if (currentPage <= 3) p = i + 1; 
-                    else if (currentPage >= totalPages - 2) p = totalPages - 4 + i; 
-                    else p = currentPage - 2 + i;
-                    return (<button key={p} onClick={() => setCurrentPage(p)} style={{ padding: '4px 8px', fontSize: '10px', backgroundColor: currentPage === p ? '#1976d2' : theme.cardBg, color: currentPage === p ? '#fff' : theme.textPrimary, border: currentPage === p ? '1px solid #1565c0' : `1px solid ${theme.border}`, borderRadius: '4px', fontWeight: '600', cursor: 'pointer' }}>{p}</button>);
-                  })}
-                  {['»','»»'].map((t, i) => (
-                    <button key={t} onClick={() => setCurrentPage(i === 0 ? (p) => Math.min(totalPages, p + 1) : totalPages)} disabled={currentPage === totalPages}
-                      style={{ padding: '4px 7px', fontSize: '10px', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '4px', color: currentPage === totalPages ? theme.textMuted : theme.textPrimary, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: '600' }}>{t}</button>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '500' }}>
+            Dibangunkan oleh: <span style={{ fontWeight: '700', color: '#1976d2' }}>PB Mohamad Aidil</span> | Unit: <span style={{ fontWeight: '700', color: theme.textSecondary }}>PGO Johor</span> | Hak Cipta &copy; 2026
           </div>
-        )}
-      </main>
+        </footer>
+      </div>
 
-      {}
-      <footer style={{ backgroundColor: theme.headerBg, borderTop: `1px solid ${theme.border}`, padding: '10px 16px', textAlign: 'center', position: 'sticky', bottom: 0, zIndex: 1000, boxShadow: isDarkMode ? '0 -2px 8px rgba(0,0,0,0.3)' : '0 -2px 8px rgba(0,0,0,0.05)', transition: 'all 0.2s ease' }}>
-        <div style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '500', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <Truck style={{ width: '13px', height: '13px', color: '#d32f2f' }} />
-          <span>Data Pengurusan Aset GIRN <strong style={{ color: '#1976d2' }}>Jabatan Bomba & Penyelamat Malaysia Negeri Johor</strong> | Auto-refresh: 6 jam</span>
-          {filterBulanDipilih.length > 0 && <span style={{ color: '#f57c00' }}>| Bulan: {getBulanLabel()}</span>}
-        </div>
-        <div style={{ fontSize: '10px', color: theme.textMuted }}>
-          Dibangunkan oleh: <span style={{ fontWeight: '600', color: '#1976d2' }}>PB Mohamad Aidil</span> | Unit: <span style={{ fontWeight: '600', color: theme.textSecondary }}>PGO Johor</span> | Hak Cipta &copy; 2026
-        </div>
-      </footer>
+      {/* Keyframe animations */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(0.95); }
+        }
+      `}</style>
     </div>
   );
 }
