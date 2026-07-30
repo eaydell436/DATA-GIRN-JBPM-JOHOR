@@ -5,7 +5,7 @@ import {
   Flame, Shield, Siren, BadgeCheck, Wrench, Trash2, Truck, Check, Info,
   Sun, Moon, MapPin, Building2, Radio, UserCheck, Tag, Calendar, Activity,
   Maximize2, Minimize2, LineChart as LineIcon, Layers, TrendingUp, Cpu, GitCommit,
-  Eye, EyeOff, Hash
+  Eye, EyeOff, Hash, Ticket, FileText, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -145,16 +145,22 @@ const extractMonthlyColumns = (headers) => {
       if (mn === 'SEMASA 2026') return ch.includes('STATUS SEMASA 2026') && !ch.includes('VT');
       return ch.includes('STATUS') && ch.includes(mn) && !ch.includes('VT') && !ch.includes('SEMASA') && !ch.includes('TINDAKAN PAN');
     });
+
     const ttCol = headers.find((h) => {
       const ch = cleanHeader(h);
-      if (mn === 'SEMASA 2026') return null;
-      return ch.includes('TT') && ch.includes(mn) && !ch.includes('TIDAK') && !ch.includes('TINDAKAN');
+      return (ch.includes('TT') || ch.includes('TIKET')) && ch.includes(mn) && !ch.includes('TIDAK') && !ch.includes('TINDAKAN PENGUJIAN');
     });
+
     const tarikhCol = headers.find((h) => {
       const ch = cleanHeader(h);
-      if (mn === 'SEMASA 2026') return null;
+      if (mn === 'SEMASA 2026') {
+        return (ch.includes('TARIKH') && ch.includes('SEMASA')) ||
+               (ch.includes('TARIKH') && ch.includes('PENGUJIAN') && ch.includes('2026') && !ch.includes('JANUARI') && !ch.includes('FEBRUARI') && !ch.includes('MAC') && !ch.includes('APRIL') && !ch.includes('MEI') && !ch.includes('JUN') && !ch.includes('JULAI') && !ch.includes('OGOS') && !ch.includes('SEPTEMBER') && !ch.includes('OKTOBER') && !ch.includes('NOVEMBER') && !ch.includes('DISEMBER')) ||
+               (ch.includes('TARIKH') && ch.includes('PENGUJIAN') && !ch.includes('2025') && !ch.includes('2024') && !ch.includes('2023') && !ch.includes('DISEMBER') && !ch.includes('NOVEMBER') && !ch.includes('OKTOBER') && !ch.includes('SEPTEMBER') && !ch.includes('OGOS') && !ch.includes('JULAI') && !ch.includes('JUN') && !ch.includes('MEI') && !ch.includes('APRIL') && !ch.includes('MAC') && !ch.includes('FEBRUARI') && !ch.includes('JANUARI'));
+      }
       return ch.includes('TARIKH') && ch.includes('PENGUJIAN') && ch.includes(mn);
     });
+
     return statusCol ? { label: mn, status: statusCol, tt: ttCol || null, tarikh: tarikhCol || null } : null;
   }).filter(Boolean);
 };
@@ -171,11 +177,6 @@ const normalizeStatus = (raw) => {
   if (upper.includes('JABATAN')) return 'BER - TINDAKAN JABATAN';
   if (upper.includes('SELESAI') || upper.includes('PELUPUSAN')) return 'BER - SELESAI PROSES PELUPUSAN';
   return raw.toString().trim();
-};
-
-const isKerosakan = (status) => {
-  const s = status.toUpperCase();
-  return s.includes('ROSAK') || s.includes('TIDAK DIJUMPAI') || s.includes('TIDAK DAPAT DIUJI') || s.includes('BELUM DIUJI') || s.includes('SAPURA') || s.includes('JABATAN') || s.includes('PELUPUSAN');
 };
 
 const StatusBadge = memo(({ status, isDarkMode }) => {
@@ -220,11 +221,13 @@ const FilterBadge = memo(({ label, onRemove, type = 'default', isDarkMode }) => 
     default: { bg: 'rgba(227, 242, 253, 0.85)', text: '#1565c0', border: '#90caf9' },
     amber: { bg: 'rgba(255, 248, 225, 0.85)', text: '#f57f17', border: '#ffe082' },
     gold: { bg: 'rgba(255, 253, 231, 0.85)', text: '#f9a825', border: '#fff59d' },
+    purple: { bg: 'rgba(243, 229, 245, 0.85)', text: '#6a1b9a', border: '#ce93d8' }
   };
   const typeStylesDark = {
     default: { bg: 'rgba(21, 101, 192, 0.35)', text: '#90caf9', border: '#1565c0' },
     amber: { bg: 'rgba(245, 127, 23, 0.35)', text: '#ffe082', border: '#f57f17' },
     gold: { bg: 'rgba(249, 168, 37, 0.35)', text: '#fff59d', border: '#f9a825' },
+    purple: { bg: 'rgba(106, 27, 154, 0.35)', text: '#ce93d8', border: '#8e24aa' }
   };
   const map = isDarkMode ? typeStylesDark : typeStylesLight;
   const style = map[type] || map.default;
@@ -256,7 +259,7 @@ const PieChartCard = memo(({ title, data, colorMap, isDarkMode, innerRadius = 0 
         <RePieChart>
           <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={innerRadius} paddingAngle={3}>
             {data.map((_, idx) => (<Cell key={idx} fill={colorMap?.[data[idx].name] || PIE_COLORS[idx % PIE_COLORS.length]} stroke="transparent" />))}
-            <LabelList dataKey="value" position="outside" offset={10} fill={theme.textPrimary || theme.title} fontSize={10} fontWeight="700" formatter={(val) => val > 0 ? val : ''} />
+            <LabelList dataKey="value" position="outside" offset={10} fill={theme.title} fontSize={10} fontWeight="700" formatter={(val) => val > 0 ? val : ''} />
           </Pie>
           <Tooltip contentStyle={{ background: theme.tooltipBg, border: `1px solid ${theme.tooltipBorder}`, borderRadius: '8px', color: theme.tooltipText, fontFamily: 'Inter, sans-serif' }} itemStyle={{ color: theme.tooltipText }} />
         </RePieChart>
@@ -288,7 +291,7 @@ const MultiSelectDropdown = memo(({ options, selected, onChange, placeholder, se
     border: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
     text: isDarkMode ? '#f8fafc' : '#333',
     placeholder: isDarkMode ? '#94a3b8' : '#757575',
-    dropdownBg: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    dropdownBg: isDarkMode ? 'rgba(15, 23, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)',
     hoverBg: isDarkMode ? 'rgba(51, 65, 85, 0.8)' : '#f0f4f8',
     selectedBg: isDarkMode ? 'rgba(30, 41, 59, 0.9)' : '#e3f2fd',
     inputBg: isDarkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
@@ -308,7 +311,7 @@ const MultiSelectDropdown = memo(({ options, selected, onChange, placeholder, se
   }, [selected, onChange]);
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
+    <div ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 999 : 'auto' }}>
       <button type="button" onClick={() => !disabled && setIsOpen(!isOpen)} disabled={disabled}
         style={{ width: '100%', padding: '8px 12px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: disabled ? 'not-allowed' : 'pointer', color: selected.length === 0 ? theme.placeholder : theme.text, backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
         <span style={{ fontWeight: selected.length > 0 ? '600' : '400', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -317,7 +320,7 @@ const MultiSelectDropdown = memo(({ options, selected, onChange, placeholder, se
         <ChevronDown style={{ width: '14px', height: '14px', color: theme.placeholder, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', flexShrink: 0 }} />
       </button>
       {isOpen && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999, marginTop: '4px', backgroundColor: theme.dropdownBg, border: `1px solid ${theme.border}`, borderRadius: '12px', maxHeight: '300px', overflow: 'hidden', boxShadow: isDarkMode ? '0 12px 32px rgba(0,0,0,0.6)' : '0 12px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(16px)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10000, marginTop: '4px', backgroundColor: theme.dropdownBg, border: `1px solid ${theme.border}`, borderRadius: '12px', maxHeight: '300px', overflow: 'hidden', boxShadow: isDarkMode ? '0 12px 32px rgba(0,0,0,0.8)' : '0 12px 32px rgba(0,0,0,0.25)', backdropFilter: 'blur(16px)' }}>
           <div style={{ padding: '8px', borderBottom: `1px solid ${theme.border}` }}>
             <div style={{ position: 'relative' }}>
               <Search style={{ width: '14px', height: '14px', color: theme.placeholder, position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -372,7 +375,7 @@ export default function App() {
   const [filterTanggungjawab, setFilterTanggungjawab] = useState([]);
   const [filterFinding, setFilterFinding] = useState([]);
   const [filterBulanDipilih, setFilterBulanDipilih] = useState([]);
-  const [filterKerosakanSahaja, setFilterKerosakanSahaja] = useState(false);
+  const [filterTTDibukaSahaja, setFilterTTDibukaSahaja] = useState(false);
   const [searchText, setSearchText] = useState('');
 
   const [showFilters, setShowFilters] = useState(true);
@@ -380,7 +383,6 @@ export default function App() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // MODIFIED STATE: Multi-select chart types & Show/Hide Data Labels
   const [selectedChartTypes, setSelectedChartTypes] = useState(['bar_vertical']);
   const [xAxisOption, setXAxisOption] = useState('bulan');
   const [stackOption, setStackOption] = useState('status');
@@ -447,8 +449,19 @@ export default function App() {
 
   const activeTarikhUjianCol = useMemo(() => {
     if (filterBulanDipilih.length > 0 && selectedMonthColumns.length > 0) return selectedMonthColumns[0].tarikh;
-    return null;
-  }, [filterBulanDipilih, selectedMonthColumns]);
+    const semasaCol = monthlyColumns.find(mc => mc.label === 'SEMASA 2026');
+    if (semasaCol && semasaCol.tarikh) return semasaCol.tarikh;
+    const anyWithTarikh = monthlyColumns.find(mc => mc.tarikh);
+    return anyWithTarikh ? anyWithTarikh.tarikh : null;
+  }, [filterBulanDipilih, selectedMonthColumns, monthlyColumns]);
+
+  const activeTTCol = useMemo(() => {
+    if (filterBulanDipilih.length > 0 && selectedMonthColumns.length > 0) return selectedMonthColumns[0].tt;
+    const semasaCol = monthlyColumns.find(mc => mc.label === 'SEMASA 2026');
+    if (semasaCol && semasaCol.tt) return semasaCol.tt;
+    const anyWithTT = monthlyColumns.find(mc => mc.tt);
+    return anyWithTT ? anyWithTT.tt : null;
+  }, [filterBulanDipilih, selectedMonthColumns, monthlyColumns]);
 
   const allStatusOptions = useMemo(() => [...Object.keys(STATUS_COLORS)].sort(), []);
 
@@ -456,15 +469,14 @@ export default function App() {
     let data = rawData;
     if (filterBulanDipilih.length > 0) {
       data = data.filter((d) => {
-        let hasData = false, isRusak = false;
+        let hasData = false;
         for (const mc of selectedMonthColumns) {
           if (mc.status && d[mc.status]) { 
             const s = normalizeStatus(d[mc.status]); 
-            if (s !== 'TIADA DATA') { hasData = true; if (isKerosakan(s)) isRusak = true; } 
+            if (s !== 'TIADA DATA') { hasData = true; } 
           }
         }
         if (!hasData) return false;
-        if (filterKerosakanSahaja && !isRusak) return false;
         return true;
       });
     } else {
@@ -476,6 +488,7 @@ export default function App() {
         });
       }
     }
+
     return data.filter((d) => {
       if (filterZon.length > 0 && !filterZon.includes(d['ZON']?.trim())) return false;
       if (filterBalai.length > 0 && !filterBalai.includes(d['BALAI']?.trim())) return false;
@@ -487,13 +500,31 @@ export default function App() {
       }
       if (filterTanggungjawab.length > 0 && !filterTanggungjawab.includes(d['TANGGUNGJAWAB PENGUJIAN']?.trim())) return false;
       if (filterFinding.length > 0 && !filterFinding.includes(d['FINDING VS SPA']?.trim())) return false;
+      
+      if (filterTTDibukaSahaja) {
+        let hasTT = false;
+        if (filterBulanDipilih.length > 0) {
+          for (const mc of selectedMonthColumns) {
+            if (mc.tt && d[mc.tt] && d[mc.tt].trim() !== '' && d[mc.tt].trim() !== '-' && d[mc.tt].trim() !== 'TIADA') {
+              hasTT = true; break;
+            }
+          }
+        } else if (activeTTCol && d[activeTTCol] && d[activeTTCol].trim() !== '' && d[activeTTCol].trim() !== '-' && d[activeTTCol].trim() !== 'TIADA') {
+          hasTT = true;
+        }
+        if (!hasTT) return false;
+      }
+
       if (searchText) { 
         const sl = searchText.toLowerCase(); 
-        if (!['NO. SIRI', 'NO. ISSI TETRA', 'SUBSCRIBER', 'NO. TEI', 'VEHICLE REG NO.'].some((f) => d[f]?.toLowerCase().includes(sl))) return false; 
+        const activeTTVal = activeTTCol ? d[activeTTCol]?.toLowerCase() : '';
+        const matchesBasic = ['NO. SIRI', 'NO. ISSI TETRA', 'SUBSCRIBER', 'NO. TEI', 'VEHICLE REG NO.'].some((f) => d[f]?.toLowerCase().includes(sl));
+        const matchesTT = activeTTVal && activeTTVal.includes(sl);
+        if (!matchesBasic && !matchesTT) return false; 
       }
       return true;
     });
-  }, [rawData, filterZon, filterBalai, filterJenisTerminal, filterStatusSemasa, filterTanggungjawab, filterFinding, filterBulanDipilih, filterKerosakanSahaja, searchText, selectedMonthColumns, activeStatusCol, monthlyColumns]);
+  }, [rawData, filterZon, filterBalai, filterJenisTerminal, filterStatusSemasa, filterTanggungjawab, filterFinding, filterBulanDipilih, filterTTDibukaSahaja, searchText, selectedMonthColumns, activeStatusCol, activeTTCol, monthlyColumns]);
 
   const statusDistribution = useMemo(() => { 
     const c = {}; 
@@ -586,17 +617,38 @@ export default function App() {
   }, [filteredData, uniqueValues.zon]);
 
   const ganttData = useMemo(() => {
-    return selectedMonthColumns.slice(0, 8).map((mc, idx) => ({
+    return selectedMonthColumns.slice(0, 8).map((mc) => ({
       bulan: mc.label,
       tempoh: 1,
     }));
   }, [selectedMonthColumns]);
 
-  const stats = useMemo(() => { let b = 0, r = 0; filteredData.forEach((d) => { const s = normalizeStatus(d[activeStatusCol]); if (s === 'BAIK') b++; if (s === 'ROSAK') r++; }); return { total: filteredData.length, baik: b, rosak: r }; }, [filteredData, activeStatusCol]);
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const stats = useMemo(() => { 
+    let b = 0, r = 0, ttCount = 0; 
+    filteredData.forEach((d) => { 
+      const s = normalizeStatus(d[activeStatusCol]); 
+      if (s === 'BAIK') b++; 
+      if (s === 'ROSAK') r++; 
+
+      let hasTT = false;
+      if (filterBulanDipilih.length > 0) {
+        selectedMonthColumns.forEach(mc => {
+          if (mc.tt && d[mc.tt] && d[mc.tt].trim() !== '' && d[mc.tt].trim() !== '-' && d[mc.tt].trim() !== 'TIADA') {
+            hasTT = true;
+          }
+        });
+      } else if (activeTTCol && d[activeTTCol] && d[activeTTCol].trim() !== '' && d[activeTTCol].trim() !== '-' && d[activeTTCol].trim() !== 'TIADA') {
+        hasTT = true;
+      }
+      if (hasTT) ttCount++;
+    }); 
+    return { total: filteredData.length, baik: b, rosak: r, ttCount }; 
+  }, [filteredData, activeStatusCol, activeTTCol, filterBulanDipilih, selectedMonthColumns]);
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
   const paginatedData = useMemo(() => filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage), [filteredData, currentPage, rowsPerPage]);
 
-  useEffect(() => { setCurrentPage(1); }, [filterZon, filterBalai, filterJenisTerminal, filterStatusSemasa, filterTanggungjawab, filterFinding, searchText, filterBulanDipilih, filterKerosakanSahaja]);
+  useEffect(() => { setCurrentPage(1); }, [filterZon, filterBalai, filterJenisTerminal, filterStatusSemasa, filterTanggungjawab, filterFinding, searchText, filterBulanDipilih, filterTTDibukaSahaja]);
 
   const getBulanLabel = useCallback(() => {
     if (filterBulanDipilih.length === 0) return 'Semua rekod';
@@ -611,7 +663,11 @@ export default function App() {
     return `${sL[stackOption] || stackOption} Mengikut ${xL[xAxisOption] || xAxisOption} (${getBulanLabel()})`;
   }, [xAxisOption, stackOption, getBulanLabel]);
 
-  const resetAll = useCallback(() => { setFilterZon([]); setFilterBalai([]); setFilterJenisTerminal([]); setFilterStatusSemasa([]); setFilterTanggungjawab([]); setFilterFinding([]); setSearchText(''); setFilterBulanDipilih([]); setFilterKerosakanSahaja(false); }, []);
+  const resetAll = useCallback(() => { 
+    setFilterZon([]); setFilterBalai([]); setFilterJenisTerminal([]); setFilterStatusSemasa([]); 
+    setFilterTanggungjawab([]); setFilterFinding([]); setSearchText(''); setFilterBulanDipilih([]); 
+    setFilterTTDibukaSahaja(false);
+  }, []);
 
   const exportCSV = useCallback(() => {
     if (!filteredData.length) { showNotification('Tiada data untuk dieksport', 'error'); return; }
@@ -619,8 +675,18 @@ export default function App() {
     if (filterBulanDipilih.length > 0) {
       const FIXED = ['NO. SIRI', 'NO. ISSI TETRA', 'NO. TEI', 'SUBSCRIBER', 'VEHICLE REG NO.', 'ZON', 'BALAI', 'JENIS TERMINAL', 'TANGGUNGJAWAB PENGUJIAN', 'FINDING VS SPA', 'STATUS SEMASA 2026', 'TAHUN DIBEKAL', 'TAHUN DIPASANG', 'KUMPULAN', 'JENIS JENTERA'];
       const ah = Object.keys(filteredData[0]), ex = FIXED.filter((h) => ah.includes(h));
-      const mh = []; selectedMonthColumns.forEach((mc) => { if (mc.status) mh.push(mc.status); if (mc.tt) mh.push(mc.tt); if (mc.tarikh) mh.push(mc.tarikh); });
-      const sh = []; selectedMonthColumns.forEach((mc) => { if (mc.status && mh.includes(mc.status)) sh.push(mc.status); if (mc.tt && mh.includes(mc.tt)) sh.push(mc.tt); if (mc.tarikh && mh.includes(mc.tarikh)) sh.push(mc.tarikh); });
+      const mh = []; 
+      selectedMonthColumns.forEach((mc) => { 
+        if (mc.status) mh.push(mc.status); 
+        if (mc.tarikh) mh.push(mc.tarikh); 
+        if (mc.tt) mh.push(mc.tt);
+      });
+      const sh = []; 
+      selectedMonthColumns.forEach((mc) => { 
+        if (mc.status && mh.includes(mc.status)) sh.push(mc.status); 
+        if (mc.tarikh && mh.includes(mc.tarikh)) sh.push(mc.tarikh); 
+        if (mc.tt && mh.includes(mc.tt)) sh.push(mc.tt); 
+      });
       eh = [...ex, ...sh];
       ed = filteredData.map((row) => { const nr = {}; eh.forEach((h) => { nr[h] = row[h] || ''; }); return nr; });
     } else { eh = Object.keys(filteredData[0]); }
@@ -642,7 +708,7 @@ export default function App() {
     showNotification(`${ed.length} rekod × ${eh.length} kolum berjaya dieksport!`, 'success');
   }, [filteredData, filterBulanDipilih, selectedMonthColumns, showNotification]);
 
-  const hasActiveFilters = filterZon.length > 0 || filterBalai.length > 0 || filterJenisTerminal.length > 0 || filterStatusSemasa.length > 0 || filterTanggungjawab.length > 0 || filterFinding.length > 0 || filterBulanDipilih.length > 0 || searchText;
+  const hasActiveFilters = filterZon.length > 0 || filterBalai.length > 0 || filterJenisTerminal.length > 0 || filterStatusSemasa.length > 0 || filterTanggungjawab.length > 0 || filterFinding.length > 0 || filterBulanDipilih.length > 0 || filterTTDibukaSahaja || searchText;
 
   const renderSingleChart = useCallback((cType) => {
     if (cType === 'bar_vertical') {
@@ -854,7 +920,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Header Bar */}
+        {/* Header */}
         <header style={{ backgroundColor: theme.headerBg, borderBottom: `1px solid ${theme.border}`, padding: '16px 28px', boxShadow: isDarkMode ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 1000, transition: 'all 0.2s ease', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           <div style={{ maxWidth: '1800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -890,6 +956,7 @@ export default function App() {
           </div>
         </header>
 
+        {/* Main Content Area */}
         <main style={{ flex: 1, maxWidth: '1800px', margin: '0 auto', padding: '24px 20px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: theme.textSecondary, backgroundColor: theme.cardBg, borderRadius: '8px', padding: '8px 14px', marginBottom: '20px', border: `1px solid ${theme.border}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', fontWeight: '600' }}>
             <Clock style={{ width: '13px', height: '13px', color: '#1976d2' }} /> Auto-refresh 6 jam | JBPM Negeri Johor
@@ -901,8 +968,20 @@ export default function App() {
             </div>
           )}
 
-          {}
-          <div style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, marginBottom: '24px', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+          {/* Filter Bar */}
+          <div style={{ 
+            backgroundColor: theme.cardBg, 
+            borderRadius: '18px', 
+            padding: '20px', 
+            boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', 
+            border: `1px solid ${theme.border}`, 
+            marginBottom: '24px', 
+            backdropFilter: 'blur(16px)', 
+            WebkitBackdropFilter: 'blur(16px)',
+            position: 'relative',
+            zIndex: 50,
+            overflow: 'visible'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showFilters ? '16px' : '0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ backgroundColor: isDarkMode ? 'rgba(25, 118, 210, 0.3)' : '#e3f2fd', padding: '6px', borderRadius: '8px' }}><Filter style={{ width: '18px', height: '18px', color: '#1976d2' }} /></div>
@@ -915,7 +994,7 @@ export default function App() {
             </div>
             {showFilters && (
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '14px', marginBottom: '16px', position: 'relative', zIndex: 60 }}>
                   {[
                     ['BULAN', filterBulanDipilih, setFilterBulanDipilih, monthOptions, 'Pilih Bulan...', 'Cari bulan...', Calendar],
                     ['ZON', filterZon, setFilterZon, uniqueValues.zon, 'Pilih Zon...', 'Cari zon...', MapPin],
@@ -925,7 +1004,7 @@ export default function App() {
                     ['T.JAWAB', filterTanggungjawab, setFilterTanggungjawab, uniqueValues.tanggungjawab, 'Pilih T.Jawab...', 'Cari t.jawab...', UserCheck],
                     ['FINDING', filterFinding, setFilterFinding, uniqueValues.finding, 'Pilih Finding...', 'Cari finding...', Search],
                   ].map(([label, val, setVal, options, placeholder, searchPlaceholder, IconComponent]) => (
-                    <div key={label}>
+                    <div key={label} style={{ position: 'relative' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: theme.textSecondary, marginBottom: '6px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                         <IconComponent style={{ width: '13px', height: '13px', color: '#1976d2' }} />
                         <span>{label}</span>
@@ -937,28 +1016,53 @@ export default function App() {
                 </div>
                 <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '12px' }}>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '8px 14px', fontSize: '12px', color: theme.textPrimary, backdropFilter: 'blur(8px)' }}>
-                    <input type="checkbox" checked={filterKerosakanSahaja} onChange={(e) => setFilterKerosakanSahaja(e.target.checked)} style={{ width: '15px', height: '15px', accentColor: '#f57c00' }} />
-                    <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }}><AlertTriangle style={{ width: '14px', height: '14px', color: '#f57c00' }} /> Kerosakan Sahaja</span>
+                    <input type="checkbox" checked={filterTTDibukaSahaja} onChange={(e) => setFilterTTDibukaSahaja(e.target.checked)} style={{ width: '15px', height: '15px', accentColor: '#6a1b9a' }} />
+                    <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }}><Ticket style={{ width: '14px', height: '14px', color: '#6a1b9a' }} /> Ada TT Dibuka Sahaja</span>
                   </label>
-                  <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-                    <Search style={{ width: '15px', height: '15px', color: theme.textMuted, position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Cari NO. SIRI / ISSI / SUBSCRIBER..." style={{ width: '100%', padding: '8px 12px 8px 36px', backgroundColor: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', color: theme.textPrimary, outline: 'none', boxSizing: 'border-box', backdropFilter: 'blur(8px)' }} />
-                    {searchText && <X style={{ width: '14px', height: '14px', position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: theme.textMuted, cursor: 'pointer' }} onClick={() => setSearchText('')} />}
+
+                  {/* CARIAN UMUM */}
+                  <div style={{ position: 'relative', flex: 1, minWidth: '280px' }}>
+                    <Search style={{ width: '16px', height: '16px', color: '#1565c0', position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }} />
+                    <input 
+                      value={searchText} 
+                      onChange={(e) => setSearchText(e.target.value)} 
+                      placeholder="Cari NO. SIRI / ISSI / TT DIBUKA / SUBSCRIBER..." 
+                      style={{ 
+                        width: '100%', 
+                        padding: '10px 14px 10px 40px', 
+                        backgroundColor: '#FFFFFF', 
+                        border: '2px solid #1976d2', 
+                        borderRadius: '10px', 
+                        fontSize: '13px', 
+                        fontWeight: '700', 
+                        color: '#0f172a', 
+                        outline: 'none', 
+                        boxSizing: 'border-box', 
+                        boxShadow: '0 4px 14px rgba(25, 118, 210, 0.18)' 
+                      }} 
+                    />
+                    {searchText && (
+                      <X 
+                        style={{ width: '16px', height: '16px', position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569', cursor: 'pointer', zIndex: 2 }} 
+                        onClick={() => setSearchText('')} 
+                      />
+                    )}
                   </div>
                 </div>
+
                 {hasActiveFilters && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '12px', borderTop: `1px solid ${theme.border}`, alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Tag style={{ width: '13px', height: '13px' }} /> Tapisan Aktif:
                     </span>
-                    {filterBulanDipilih.length > 0 && <FilterBadge label={`BULAN: ${filterBulanDipilih.length}`} type="gold" isDarkMode={isDarkMode} onRemove={() => { setFilterBulanDipilih([]); setFilterKerosakanSahaja(false); }} />}
+                    {filterBulanDipilih.length > 0 && <FilterBadge label={`BULAN: ${filterBulanDipilih.length}`} type="gold" isDarkMode={isDarkMode} onRemove={() => setFilterBulanDipilih([])} />}
                     {filterZon.length > 0 && <FilterBadge label={`ZON: ${filterZon.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterZon([])} />}
                     {filterBalai.length > 0 && <FilterBadge label={`BALAI: ${filterBalai.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterBalai([])} />}
                     {filterJenisTerminal.length > 0 && <FilterBadge label={`TERMINAL: ${filterJenisTerminal.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterJenisTerminal([])} />}
                     {filterStatusSemasa.length > 0 && <FilterBadge label={`STATUS: ${filterStatusSemasa.length}`} type="amber" isDarkMode={isDarkMode} onRemove={() => setFilterStatusSemasa([])} />}
                     {filterTanggungjawab.length > 0 && <FilterBadge label={`T.JAWAB: ${filterTanggungjawab.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterTanggungjawab([])} />}
                     {filterFinding.length > 0 && <FilterBadge label={`FINDING: ${filterFinding.length}`} isDarkMode={isDarkMode} onRemove={() => setFilterFinding([])} />}
-                    {filterKerosakanSahaja && <FilterBadge label="KEROSAKAN SAHAJA" type="amber" isDarkMode={isDarkMode} onRemove={() => setFilterKerosakanSahaja(false)} />}
+                    {filterTTDibukaSahaja && <FilterBadge label="ADA TT DIBUKA SAHAJA" type="purple" isDarkMode={isDarkMode} onRemove={() => setFilterTTDibukaSahaja(false)} />}
                     <button onClick={resetAll} style={{ fontSize: '11px', color: '#e53935', background: 'none', border: 'none', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline', marginLeft: '6px' }}>Reset Semua Tapisan</button>
                   </div>
                 )}
@@ -975,12 +1079,20 @@ export default function App() {
             </div>
           ) : activeTab === 'dashboard' ? (
             <>
-              {/* Stat Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              {/* Summary Cards */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
+                gap: '16px', 
+                marginBottom: '24px',
+                position: 'relative',
+                zIndex: 1
+              }}>
                 {[
                   { label: 'Jumlah Aset', value: stats.total, color: '#1976d2', bg: isDarkMode ? 'rgba(25, 118, 210, 0.35)' : 'rgba(227, 242, 253, 0.85)', icon: Flame, sub: filteredData.length !== rawData.length ? `Ditapis dari ${rawData.length}` : 'Keseluruhan' },
                   { label: 'Beroperasi (Baik)', value: stats.baik, color: '#2e7d32', bg: isDarkMode ? 'rgba(46, 125, 50, 0.35)' : 'rgba(232, 245, 233, 0.85)', icon: BadgeCheck, sub: `${stats.total > 0 ? ((stats.baik / stats.total) * 100).toFixed(1) : 0}% | ${getBulanLabel()}` },
-                  { label: 'Kerosakan', value: stats.rosak, color: '#c62828', bg: isDarkMode ? 'rgba(198, 40, 40, 0.35)' : 'rgba(255, 235, 238, 0.85)', icon: Siren, sub: `${stats.total > 0 ? ((stats.rosak / stats.total) * 100).toFixed(1) : 0}% | ${getBulanLabel()}` }
+                  { label: 'Kerosakan', value: stats.rosak, color: '#c62828', bg: isDarkMode ? 'rgba(198, 40, 40, 0.35)' : 'rgba(255, 235, 238, 0.85)', icon: Siren, sub: `${stats.total > 0 ? ((stats.rosak / stats.total) * 100).toFixed(1) : 0}% | ${getBulanLabel()}` },
+                  { label: 'TT Yang Dibuka', value: stats.ttCount, color: '#6a1b9a', bg: isDarkMode ? 'rgba(106, 27, 154, 0.35)' : 'rgba(243, 229, 245, 0.85)', icon: Ticket, sub: `${stats.total > 0 ? ((stats.ttCount / stats.total) * 100).toFixed(1) : 0}% Rekod Mempunyai TT` }
                 ].map((s, i) => (
                   <div key={i} style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: s.color, marginBottom: '8px' }}>
@@ -993,7 +1105,7 @@ export default function App() {
                 ))}
               </div>
 
-              {}
+              {/* Main Dynamic Chart Section */}
               <div style={{
                 backgroundColor: theme.cardBg,
                 borderRadius: '18px',
@@ -1017,7 +1129,6 @@ export default function App() {
                     {chartTitle}
                   </h3>
                   
-                  {/* Zoom Full Screen Button */}
                   <button 
                     onClick={() => setIsZoomed(!isZoomed)}
                     style={{
@@ -1040,10 +1151,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Control Bar: Multi-Select Chart Type & Show/Hide Data Numbers */}
                 <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '20px', backgroundColor: isDarkMode ? 'rgba(15,23,42,0.4)' : 'rgba(241,245,249,0.6)', padding: '14px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-                  
-                  {/* MULTISELECT DROPDOWN UNTUK JENIS GRAF */}
                   <div style={{ minWidth: '240px', flex: 1 }}>
                     <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '6px', textTransform: 'uppercase' }}>
                       Jenis Graf (Boleh Pilih Banyak):
@@ -1059,7 +1167,6 @@ export default function App() {
                     />
                   </div>
 
-                  {/* BUTANG TUNJUK / SEMBUNYI NOMBOR */}
                   <div>
                     <label style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '700', display: 'block', marginBottom: '6px', textTransform: 'uppercase' }}>
                       Paparan Label Nombor:
@@ -1117,7 +1224,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Multi-Chart Layout Rendering */}
                 {dynamicChartData.length > 0 && selectedChartTypes.length > 0 ? (
                   <div style={{ 
                     display: 'grid', 
@@ -1153,7 +1259,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* Pie Charts */}
+              {/* Distribution Pie Charts Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
                 <PieChartCard title={`Carta Pai Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS} isDarkMode={isDarkMode} innerRadius={0} />
                 <PieChartCard title="Carta Donat Mengikut ZON" data={zonDistribution} isDarkMode={isDarkMode} innerRadius={45} />
@@ -1162,6 +1268,7 @@ export default function App() {
               </div>
             </>
           ) : (
+            /* Table Data View */
             <div style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '13px', fontWeight: '800', color: theme.textPrimary, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><Table2 style={{ width: '16px', height: '16px', color: '#1976d2' }} />Data Peranti Terminal — <span style={{ color: '#1976d2' }}>{filteredData.length} rekod</span></h3>
@@ -1174,96 +1281,108 @@ export default function App() {
                   <thead>
                     <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: `2px solid ${theme.border}` }}>
                       {(() => {
-                        const b = ['#', 'NO. SIRI', 'TERMINAL', 'ISSI', 'SUBSCRIBER', 'ZON', 'BALAI', 'T.JAWAB'], mh = [];
-                        if (filterBulanDipilih.length > 0) selectedMonthColumns.forEach((mc) => { mh.push(`STATUS ${mc.label}`); mh.push(`TARIKH ${mc.label}`); });
-                        else { mh.push('STATUS'); mh.push('TARIKH UJIAN'); }
-                        return [...b, ...mh, 'REG NO.'];
+                        const baseHeaders = ['#', 'NO. SIRI', 'TERMINAL', 'ISSI', 'SUBSCRIBER', 'ZON', 'BALAI', 'T.JAWAB'];
+                        const monthlyHeaders = [];
+                        
+                        if (filterBulanDipilih.length > 0) {
+                          selectedMonthColumns.forEach((mc) => { 
+                            monthlyHeaders.push(`STATUS ${mc.label}`); 
+                            monthlyHeaders.push(`TARIKH UJIAN ${mc.label}`); 
+                            monthlyHeaders.push(`TT DIBUKA ${mc.label}`); 
+                          });
+                        } else { 
+                          monthlyHeaders.push('STATUS'); 
+                          monthlyHeaders.push('TARIKH UJIAN'); 
+                          monthlyHeaders.push('TT YANG DIBUKA'); 
+                        }
+                        return [...baseHeaders, ...monthlyHeaders, 'REG NO.'];
                       })().map((h) => (<th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '800', color: theme.textSecondary, whiteSpace: 'nowrap', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>))}
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedData.map((d, i) => (
-                      <tr key={i} style={{ borderBottom: `1px solid ${theme.border}`, transition: 'background-color 0.15s ease' }} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.tableRowHover)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
-                        <td style={{ padding: '8px 12px', color: theme.textMuted, fontFamily: 'monospace', fontSize: '11px' }}>{(currentPage - 1) * rowsPerPage + i + 1}</td>
-                        <td style={{ padding: '8px 12px', color: theme.textPrimary, fontFamily: 'monospace', fontSize: '11px', fontWeight: '700' }}>{d['NO. SIRI'] || '—'}</td>
-                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', fontWeight: '500' }}>{d['JENIS TERMINAL'] || '—'}</td>
-                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px' }}>{d['NO. ISSI TETRA'] || '—'}</td>
-                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['SUBSCRIBER'] || '—'}</td>
-                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontWeight: '600', fontSize: '11px' }}>{d['ZON'] || '—'}</td>
-                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['BALAI'] || '—'}</td>
-                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['TANGGUNGJAWAB PENGUJIAN'] || '—'}</td>
-                        {filterBulanDipilih.length > 0 ? selectedMonthColumns.map((mc) => (
-                          <React.Fragment key={mc.label}>
-                            <td style={{ padding: '8px 12px' }}><StatusBadge status={mc.status && d[mc.status] ? normalizeStatus(d[mc.status]) : 'TIADA DATA'} isDarkMode={isDarkMode} /></td>
-                            <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>{(mc.tarikh && d[mc.tarikh]) || '—'}</td>
-                          </React.Fragment>
-                        )) : (
-                          <>
-                            <td style={{ padding: '8px 12px' }}><StatusBadge status={activeStatusCol ? normalizeStatus(d[activeStatusCol]) : 'TIADA DATA'} isDarkMode={isDarkMode} /></td>
-                            <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>{(activeTarikhUjianCol && d[activeTarikhUjianCol]) || '—'}</td>
-                          </>
-                        )}
-                        <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px' }}>{d['VEHICLE REG NO.'] || '—'}</td>
+                    {paginatedData.length === 0 ? (
+                      <tr>
+                        <td colSpan={15} style={{ padding: '32px', textAlign: 'center', color: theme.textMuted, fontSize: '13px' }}>Tiada rekod dijumpai mengikut tapisan semasa.</td>
                       </tr>
-                    ))}
-                    {!paginatedData.length && (
-                      <tr><td colSpan={8 + (filterBulanDipilih.length > 0 ? selectedMonthColumns.length * 2 : 2) + 1} style={{ textAlign: 'center', padding: '50px 0', color: theme.textMuted, fontSize: '12px' }}>
-                        <HelpCircle style={{ width: '32px', height: '32px', margin: '0 auto 8px', opacity: 0.4, display: 'block' }} />Tiada data dijumpai mengikut kriteria tapisan anda</td></tr>
+                    ) : (
+                      paginatedData.map((d, i) => (
+                        <tr key={i} style={{ borderBottom: `1px solid ${theme.border}`, transition: 'background-color 0.15s ease' }} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme.tableRowHover)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                          <td style={{ padding: '8px 12px', color: theme.textMuted, fontFamily: 'monospace', fontSize: '11px' }}>{(currentPage - 1) * rowsPerPage + i + 1}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textPrimary, fontFamily: 'monospace', fontSize: '11px', fontWeight: '700' }}>{d['NO. SIRI'] || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', fontWeight: '500' }}>{d['JENIS TERMINAL'] || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px' }}>{d['NO. ISSI TETRA'] || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['SUBSCRIBER'] || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontWeight: '600', fontSize: '11px' }}>{d['ZON'] || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['BALAI'] || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px' }}>{d['TANGGUNGJAWAB PENGUJIAN'] || '—'}</td>
+                          
+                          {filterBulanDipilih.length > 0 ? selectedMonthColumns.map((mc) => {
+                            const ttVal = mc.tt && d[mc.tt] ? d[mc.tt].trim() : '';
+                            return (
+                              <React.Fragment key={mc.label}>
+                                <td style={{ padding: '8px 12px' }}>
+                                  <StatusBadge status={mc.status && d[mc.status] ? normalizeStatus(d[mc.status]) : 'TIADA DATA'} isDarkMode={isDarkMode} />
+                                </td>
+                                <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>
+                                  {(mc.tarikh && d[mc.tarikh]) || '—'}
+                                </td>
+                                <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                                  {ttVal && ttVal !== '-' && ttVal !== 'TIADA' ? (
+                                    <span style={{ padding: '3px 8px', borderRadius: '6px', backgroundColor: isDarkMode ? 'rgba(106, 27, 154, 0.35)' : 'rgba(243, 229, 245, 0.85)', color: isDarkMode ? '#ce93d8' : '#6a1b9a', fontWeight: '700', border: `1px solid ${isDarkMode ? '#8e24aa' : '#ce93d8'}` }}>
+                                      {ttVal}
+                                    </span>
+                                  ) : (
+                                    '—'
+                                  )}
+                                </td>
+                              </React.Fragment>
+                            );
+                          }) : (
+                            <React.Fragment>
+                              <td style={{ padding: '8px 12px' }}>
+                                <StatusBadge status={normalizeStatus(d[activeStatusCol])} isDarkMode={isDarkMode} />
+                              </td>
+                              <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>
+                                {(activeTarikhUjianCol && d[activeTarikhUjianCol]) || '—'}
+                              </td>
+                              <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                                {(() => {
+                                  const ttVal = activeTTCol && d[activeTTCol] ? d[activeTTCol].trim() : '';
+                                  return ttVal && ttVal !== '-' && ttVal !== 'TIADA' ? (
+                                    <span style={{ padding: '3px 8px', borderRadius: '6px', backgroundColor: isDarkMode ? 'rgba(106, 27, 154, 0.35)' : 'rgba(243, 229, 245, 0.85)', color: isDarkMode ? '#ce93d8' : '#6a1b9a', fontWeight: '700', border: `1px solid ${isDarkMode ? '#8e24aa' : '#ce93d8'}` }}>
+                                      {ttVal}
+                                    </span>
+                                  ) : '—';
+                                })()}
+                              </td>
+                            </React.Fragment>
+                          )}
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', fontWeight: '600' }}>{d['VEHICLE REG NO.'] || '—'}</td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
               </div>
 
               {/* Table Pagination */}
-              {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${theme.border}`, alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                  <span style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '600' }}>Halaman {currentPage} daripada {totalPages} ({filteredData.length} jumlah rekod)</span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    {['««','«'].map((t, i) => (
-                      <button key={t} onClick={() => setCurrentPage(i === 0 ? 1 : (p) => Math.max(1, p - 1))} disabled={currentPage === 1}
-                        style={{ padding: '6px 10px', fontSize: '11px', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', color: currentPage === 1 ? theme.textMuted : theme.textPrimary, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: '700' }}>{t}</button>
-                    ))}
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => { 
-                      let p; 
-                      if (totalPages <= 5) p = i + 1; 
-                      else if (currentPage <= 3) p = i + 1; 
-                      else if (currentPage >= totalPages - 2) p = totalPages - 4 + i; 
-                      else p = currentPage - 2 + i;
-                      return (<button key={p} onClick={() => setCurrentPage(p)} style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: currentPage === p ? '#1976d2' : theme.cardBg, color: currentPage === p ? '#fff' : theme.textPrimary, border: currentPage === p ? '1px solid #1565c0' : `1px solid ${theme.border}`, borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}>{p}</button>);
-                    })}
-                    {['»','»»'].map((t, i) => (
-                      <button key={t} onClick={() => setCurrentPage(i === 0 ? (p) => Math.min(totalPages, p + 1) : totalPages)} disabled={currentPage === totalPages}
-                        style={{ padding: '6px 10px', fontSize: '11px', backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', color: currentPage === totalPages ? theme.textMuted : theme.textPrimary, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: '700' }}>{t}</button>
-                    ))}
-                  </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                <span style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: '600' }}>
+                  Halaman <strong>{currentPage}</strong> daripada <strong>{totalPages}</strong> ({filteredData.length} jumlah rekod)
+                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} style={{ padding: '6px 12px', backgroundColor: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', color: theme.textPrimary, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                    <ChevronLeft style={{ width: '14px', height: '14px' }} /> Sebelumnya
+                  </button>
+                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} style={{ padding: '6px 12px', backgroundColor: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', color: theme.textPrimary, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                    Seterusnya <ChevronRight style={{ width: '14px', height: '14px' }} />
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </main>
-
-        <footer style={{ backgroundColor: theme.headerBg, borderTop: `1px solid ${theme.border}`, padding: '14px 20px', textAlign: 'center', position: 'sticky', bottom: 0, zIndex: 1000, boxShadow: isDarkMode ? '0 -4px 20px rgba(0,0,0,0.4)' : '0 -4px 20px rgba(0,0,0,0.06)', transition: 'all 0.2s ease', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-          <div style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <Truck style={{ width: '15px', height: '15px', color: '#d32f2f' }} />
-            <span>Data Pengurusan Aset GIRN <strong style={{ color: '#1976d2' }}>Jabatan Bomba & Penyelamat Malaysia Negeri Johor</strong></span>
-            {filterBulanDipilih.length > 0 && <span style={{ color: '#f57c00' }}>| Bulan Dipilih: {getBulanLabel()}</span>}
-          </div>
-          <div style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '500' }}>
-            Dibangunkan oleh: <span style={{ fontWeight: '700', color: '#1976d2' }}>PB Mohamad Aidil</span> | Unit: <span style={{ fontWeight: '700', color: theme.textSecondary }}>PGO Johor</span> | Hak Cipta &copy; 2026
-          </div>
-        </footer>
       </div>
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(0.95); }
-        }
-      `}</style>
     </div>
   );
 }
