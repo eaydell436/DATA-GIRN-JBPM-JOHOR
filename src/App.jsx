@@ -5,7 +5,7 @@ import {
   Flame, Shield, Siren, BadgeCheck, Wrench, Trash2, Truck, Check, Info,
   Sun, Moon, MapPin, Building2, Radio, UserCheck, Tag, Calendar, Activity,
   Maximize2, Minimize2, LineChart as LineIcon, Layers, TrendingUp, Cpu, GitCommit,
-  Eye, EyeOff, Hash, Ticket, FileText, ChevronLeft, ChevronRight
+  Eye, EyeOff, Hash, Ticket, FileText, ChevronLeft, ChevronRight, Printer
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -708,6 +708,10 @@ export default function App() {
     showNotification(`${ed.length} rekod × ${eh.length} kolum berjaya dieksport!`, 'success');
   }, [filteredData, filterBulanDipilih, selectedMonthColumns, showNotification]);
 
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
   const hasActiveFilters = filterZon.length > 0 || filterBalai.length > 0 || filterJenisTerminal.length > 0 || filterStatusSemasa.length > 0 || filterTanggungjawab.length > 0 || filterFinding.length > 0 || filterBulanDipilih.length > 0 || filterTTDibukaSahaja || searchText;
 
   const renderSingleChart = useCallback((cType) => {
@@ -948,6 +952,9 @@ export default function App() {
               </button>
               <button onClick={exportCSV} style={{ padding: '8px 14px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '10px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', backdropFilter: 'blur(12px)' }}>
                 <Download style={{ width: '15px', height: '15px', color: '#2e7d32' }} /> Eksport
+              </button>
+              <button onClick={handlePrint} style={{ padding: '8px 14px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '10px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', backdropFilter: 'blur(12px)' }}>
+                <Printer style={{ width: '15px', height: '15px', color: '#e65100' }} /> Cetak
               </button>
               <button onClick={fetchData} disabled={loading} style={{ padding: '8px 16px', backgroundColor: '#1976d2', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)' }}>
                 <RefreshCw style={{ width: '15px', height: '15px', animation: loading ? 'spin 1s linear infinite' : 'none' }} /> Refresh
@@ -1323,41 +1330,28 @@ export default function App() {
                                 <td style={{ padding: '8px 12px' }}>
                                   <StatusBadge status={mc.status && d[mc.status] ? normalizeStatus(d[mc.status]) : 'TIADA DATA'} isDarkMode={isDarkMode} />
                                 </td>
-                                <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>
-                                  {(mc.tarikh && d[mc.tarikh]) || '—'}
+                                <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', fontWeight: '500' }}>
+                                  {mc.tarikh && d[mc.tarikh] ? d[mc.tarikh] : '—'}
                                 </td>
-                                <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px', whiteSpace: 'nowrap' }}>
-                                  {ttVal && ttVal !== '-' && ttVal !== 'TIADA' ? (
-                                    <span style={{ padding: '3px 8px', borderRadius: '6px', backgroundColor: isDarkMode ? 'rgba(106, 27, 154, 0.35)' : 'rgba(243, 229, 245, 0.85)', color: isDarkMode ? '#ce93d8' : '#6a1b9a', fontWeight: '700', border: `1px solid ${isDarkMode ? '#8e24aa' : '#ce93d8'}` }}>
-                                      {ttVal}
-                                    </span>
-                                  ) : (
-                                    '—'
-                                  )}
+                                <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '11px', fontWeight: ttVal && ttVal !== 'TIADA' && ttVal !== '-' ? '700' : 'normal', color: ttVal && ttVal !== 'TIADA' && ttVal !== '-' ? (isDarkMode ? '#ce93d8' : '#6a1b9a') : theme.textSecondary }}>
+                                  {ttVal || '—'}
                                 </td>
                               </React.Fragment>
                             );
                           }) : (
-                            <React.Fragment>
+                            <>
                               <td style={{ padding: '8px 12px' }}>
-                                <StatusBadge status={normalizeStatus(d[activeStatusCol])} isDarkMode={isDarkMode} />
+                                <StatusBadge status={activeStatusCol && d[activeStatusCol] ? normalizeStatus(d[activeStatusCol]) : 'TIADA DATA'} isDarkMode={isDarkMode} />
                               </td>
-                              <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', whiteSpace: 'nowrap' }}>
-                                {(activeTarikhUjianCol && d[activeTarikhUjianCol]) || '—'}
+                              <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', fontWeight: '500' }}>
+                                {activeTarikhUjianCol && d[activeTarikhUjianCol] ? d[activeTarikhUjianCol] : '—'}
                               </td>
-                              <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px', whiteSpace: 'nowrap' }}>
-                                {(() => {
-                                  const ttVal = activeTTCol && d[activeTTCol] ? d[activeTTCol].trim() : '';
-                                  return ttVal && ttVal !== '-' && ttVal !== 'TIADA' ? (
-                                    <span style={{ padding: '3px 8px', borderRadius: '6px', backgroundColor: isDarkMode ? 'rgba(106, 27, 154, 0.35)' : 'rgba(243, 229, 245, 0.85)', color: isDarkMode ? '#ce93d8' : '#6a1b9a', fontWeight: '700', border: `1px solid ${isDarkMode ? '#8e24aa' : '#ce93d8'}` }}>
-                                      {ttVal}
-                                    </span>
-                                  ) : '—';
-                                })()}
+                              <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '11px', fontWeight: (activeTTCol && d[activeTTCol] && d[activeTTCol].trim() !== 'TIADA' && d[activeTTCol].trim() !== '-') ? '700' : 'normal', color: (activeTTCol && d[activeTTCol] && d[activeTTCol].trim() !== 'TIADA' && d[activeTTCol].trim() !== '-') ? (isDarkMode ? '#ce93d8' : '#6a1b9a') : theme.textSecondary }}>
+                                {activeTTCol && d[activeTTCol] ? d[activeTTCol] : '—'}
                               </td>
-                            </React.Fragment>
+                            </>
                           )}
-                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontSize: '11px', fontWeight: '600' }}>{d['VEHICLE REG NO.'] || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: theme.textSecondary, fontFamily: 'monospace', fontSize: '11px' }}>{d['VEHICLE REG NO.'] || '—'}</td>
                         </tr>
                       ))
                     )}
@@ -1365,16 +1359,19 @@ export default function App() {
                 </table>
               </div>
 
-              {/* Table Pagination */}
+              {/* Pagination Controls */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', flexWrap: 'wrap', gap: '10px' }}>
                 <span style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: '600' }}>
-                  Halaman <strong>{currentPage}</strong> daripada <strong>{totalPages}</strong> ({filteredData.length} jumlah rekod)
+                  Menunjukkan {(currentPage - 1) * rowsPerPage + 1} hingga {Math.min(currentPage * rowsPerPage, filteredData.length)} daripada {filteredData.length} rekod
                 </span>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} style={{ padding: '6px 12px', backgroundColor: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', color: theme.textPrimary, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} style={{ padding: '6px 12px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <ChevronLeft style={{ width: '14px', height: '14px' }} /> Sebelumnya
                   </button>
-                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} style={{ padding: '6px 12px', backgroundColor: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', color: theme.textPrimary, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                  <span style={{ fontSize: '12px', color: theme.textPrimary, fontWeight: '700', padding: '0 8px' }}>
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} style={{ padding: '6px 12px', backgroundColor: theme.cardBg, color: theme.textPrimary, border: `1px solid ${theme.border}`, borderRadius: '8px', fontSize: '12px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     Seterusnya <ChevronRight style={{ width: '14px', height: '14px' }} />
                   </button>
                 </div>
