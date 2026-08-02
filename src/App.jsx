@@ -1379,6 +1379,65 @@ export default function App() {
             </div>
           )}
         </main>
+
+        {}
+        <footer style={{
+          marginTop: 'auto',
+          padding: '24px 20px',
+          backgroundColor: theme.headerBg,
+          borderTop: `1px solid ${theme.border}`,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          position: 'relative',
+          overflow: 'hidden',
+          zIndex: 10
+        }}>
+          {/* Subtle Background Watermark Text Overlay */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: 'calc(1.8vw + 16px)',
+            fontWeight: '900',
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.035)',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            letterSpacing: '4px',
+            textTransform: 'uppercase'
+          }}>
+            PGO JOHOR • GIRN JBPM
+          </div>
+
+          <div style={{ maxWidth: '1800px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '8px', position: 'relative', zIndex: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Flame style={{ width: '16px', height: '16px', color: '#1976d2' }} />
+              <p style={{ fontSize: '13px', fontWeight: '800', color: theme.textPrimary, margin: 0, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                DATA ASET GIRN JABATAN BOMBA DAN PENYELAMAT NEGERI JOHOR
+              </p>
+            </div>
+            
+            <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0, fontWeight: '600', letterSpacing: '0.2px' }}>
+              © 2026 PGO JOHOR | Hak Cipta Terpelihara
+            </p>
+
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              backgroundColor: isDarkMode ? 'rgba(25, 118, 210, 0.2)' : 'rgba(25, 118, 210, 0.08)',
+              border: `1px solid ${isDarkMode ? 'rgba(25, 118, 210, 0.4)' : 'rgba(25, 118, 210, 0.25)'}`,
+              marginTop: '2px'
+            }}>
+              <p style={{ fontSize: '11px', color: '#1976d2', margin: 0, fontWeight: '800', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                DIBANGUNKAN OLEH: PB MOHAMAD AIDIL
+              </p>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
