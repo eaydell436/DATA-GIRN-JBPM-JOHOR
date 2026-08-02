@@ -1414,7 +1414,7 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <Flame style={{ width: '16px', height: '16px', color: '#1976d2' }} />
               <p style={{ fontSize: '13px', fontWeight: '800', color: theme.textPrimary, margin: 0, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
-                DATA ASET GIRN JABATAN BOMBA DAN PENYELAMAT NEGERI JOHOR
+                DATA ASET GIRN JABATAN BOMBA DAN PENYELAMAT MALAYSIA NEGERI JOHOR
               </p>
             </div>
             
