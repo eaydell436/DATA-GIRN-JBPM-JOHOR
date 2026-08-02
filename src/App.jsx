@@ -241,6 +241,27 @@ const FilterBadge = memo(({ label, onRemove, type = 'default', isDarkMode }) => 
 FilterBadge.displayName = 'FilterBadge';
 
 const PieChartCard = memo(({ title, data, colorMap, isDarkMode, innerRadius = 0 }) => {
+  const [unitMode, setUnitMode] = useState('count'); // 'count' atau 'percent'
+  const [cardType, setCardType] = useState('pie'); // 'pie' atau 'bar'
+
+  const totalSum = useMemo(() => {
+    return data.reduce((acc, curr) => acc + Number(curr.value || 0), 0);
+  }, [data]);
+
+  const formattedData = useMemo(() => {
+    return data.map((item) => {
+      const val = Number(item.value || 0);
+      const pct = totalSum > 0 ? (val / totalSum) * 100 : 0;
+      return {
+        ...item,
+        rawVal: val,
+        pctVal: Number(pct.toFixed(1)),
+        displayVal: unitMode === 'percent' ? `${pct.toFixed(1)}%` : val,
+        chartVal: unitMode === 'percent' ? Number(pct.toFixed(1)) : val
+      };
+    });
+  }, [data, totalSum, unitMode]);
+
   const theme = {
     bg: isDarkMode ? 'rgba(30, 41, 59, 0.72)' : 'rgba(255, 255, 255, 0.75)',
     border: isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(255, 255, 255, 0.5)',
@@ -250,25 +271,165 @@ const PieChartCard = memo(({ title, data, colorMap, isDarkMode, innerRadius = 0 
     tooltipBg: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
     tooltipBorder: isDarkMode ? '#334155' : '#e0e0e0',
     tooltipText: isDarkMode ? '#f8fafc' : '#333',
+    btnBg: isDarkMode ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.8)',
+    btnActiveBg: '#1976d2',
+    btnActiveText: '#ffffff',
+    btnText: isDarkMode ? '#cbd5e1' : '#475569',
   };
 
   return (
-    <div style={{ backgroundColor: theme.bg, borderRadius: '16px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.37)' : '0 8px 32px rgba(31, 38, 135, 0.08)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
-      <h3 style={{ fontSize: '13px', fontWeight: '700', color: theme.title, marginBottom: '16px', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <RePieChart>
-          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={innerRadius} paddingAngle={3}>
-            {data.map((_, idx) => (<Cell key={idx} fill={colorMap?.[data[idx].name] || PIE_COLORS[idx % PIE_COLORS.length]} stroke="transparent" />))}
-            <LabelList dataKey="value" position="outside" offset={10} fill={theme.title} fontSize={10} fontWeight="700" formatter={(val) => val > 0 ? val : ''} />
-          </Pie>
-          <Tooltip contentStyle={{ background: theme.tooltipBg, border: `1px solid ${theme.tooltipBorder}`, borderRadius: '8px', color: theme.tooltipText, fontFamily: 'Inter, sans-serif' }} itemStyle={{ color: theme.tooltipText }} />
-        </RePieChart>
-      </ResponsiveContainer>
+    <div style={{ backgroundColor: theme.bg, borderRadius: '16px', padding: '18px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.37)' : '0 8px 32px rgba(31, 38, 135, 0.08)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ marginBottom: '12px' }}>
+        <h3 style={{ fontSize: '13px', fontWeight: '700', color: theme.title, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px 0' }}>{title}</h3>
+        
+        {/* Butang Kawalan Pertukaran Unit dan Jenis Carta */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Suis Unit (% vs Jumlah) */}
+          <div style={{ display: 'inline-flex', backgroundColor: theme.btnBg, padding: '2px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+            <button
+              type="button"
+              onClick={() => setUnitMode('count')}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '700',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: unitMode === 'count' ? theme.btnActiveBg : 'transparent',
+                color: unitMode === 'count' ? theme.btnActiveText : theme.btnText,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Jumlah
+            </button>
+            <button
+              type="button"
+              onClick={() => setUnitMode('percent')}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '700',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: unitMode === 'percent' ? theme.btnActiveBg : 'transparent',
+                color: unitMode === 'percent' ? theme.btnActiveText : theme.btnText,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              %
+            </button>
+          </div>
+
+          {/* Suis Paparan Carta (Pai vs Bar) */}
+          <div style={{ display: 'inline-flex', backgroundColor: theme.btnBg, padding: '2px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+            <button
+              type="button"
+              onClick={() => setCardType('pie')}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '700',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: cardType === 'pie' ? theme.btnActiveBg : 'transparent',
+                color: cardType === 'pie' ? theme.btnActiveText : theme.btnText,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <PieChartIcon style={{ width: '11px', height: '11px' }} /> Pai
+            </button>
+            <button
+              type="button"
+              onClick={() => setCardType('bar')}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '700',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: cardType === 'bar' ? theme.btnActiveBg : 'transparent',
+                color: cardType === 'bar' ? theme.btnActiveText : theme.btnText,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <BarChart3 style={{ width: '11px', height: '11px' }} /> Bar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, minHeight: '220px' }}>
+        <ResponsiveContainer width="100%" height={220}>
+          {cardType === 'pie' ? (
+            <RePieChart>
+              <Pie data={formattedData} dataKey="chartVal" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={innerRadius} paddingAngle={3}>
+                {formattedData.map((entry, idx) => (
+                  <Cell key={idx} fill={colorMap?.[entry.name] || PIE_COLORS[idx % PIE_COLORS.length]} stroke="transparent" />
+                ))}
+                <LabelList 
+                  dataKey="chartVal" 
+                  position="outside" 
+                  offset={10} 
+                  fill={theme.title} 
+                  fontSize={10} 
+                  fontWeight="700" 
+                  formatter={(val) => val > 0 ? (unitMode === 'percent' ? `${val}%` : val) : ''} 
+                />
+              </Pie>
+              <Tooltip 
+                contentStyle={{ background: theme.tooltipBg, border: `1px solid ${theme.tooltipBorder}`, borderRadius: '8px', color: theme.tooltipText, fontFamily: 'Inter, sans-serif' }} 
+                itemStyle={{ color: theme.tooltipText }}
+                formatter={(val, name, item) => [
+                  unitMode === 'percent' ? `${val}% (${item.payload.rawVal})` : `${val} (${item.payload.pctVal}%)`,
+                  name
+                ]}
+              />
+            </RePieChart>
+          ) : (
+            <BarChart data={formattedData} margin={{ top: 20, right: 10, left: -20, bottom: 25 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'} />
+              <XAxis dataKey="name" stroke={theme.text} fontSize={10} angle={-30} textAnchor="end" interval={0} />
+              <YAxis stroke={theme.text} fontSize={10} unit={unitMode === 'percent' ? '%' : ''} />
+              <Tooltip 
+                contentStyle={{ background: theme.tooltipBg, border: `1px solid ${theme.tooltipBorder}`, borderRadius: '8px', color: theme.tooltipText }}
+                formatter={(val, name, item) => [
+                  unitMode === 'percent' ? `${val}% (${item.payload.rawVal})` : `${val} (${item.payload.pctVal}%)`,
+                  'Nilai'
+                ]}
+              />
+              <Bar dataKey="chartVal" radius={[4, 4, 0, 0]}>
+                {formattedData.map((entry, idx) => (
+                  <Cell key={idx} fill={colorMap?.[entry.name] || PIE_COLORS[idx % PIE_COLORS.length]} />
+                ))}
+                <LabelList 
+                  dataKey="chartVal" 
+                  position="top" 
+                  fill={theme.title} 
+                  fontSize={10} 
+                  fontWeight="700" 
+                  formatter={(val) => val > 0 ? (unitMode === 'percent' ? `${val}%` : val) : ''} 
+                />
+              </Bar>
+            </BarChart>
+          )}
+        </ResponsiveContainer>
+      </div>
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '12px' }}>
-        {data.slice(0, 5).map((e, i) => (
+        {formattedData.slice(0, 5).map((e, i) => (
           <span key={i} style={{ fontSize: '11px', color: theme.text, display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: colorMap?.[e.name] || PIE_COLORS[i % PIE_COLORS.length] }} />
-            {e.name}: <span style={{ fontWeight: '700', color: theme.valueText }}>{e.value}</span>
+            {e.name}: <span style={{ fontWeight: '700', color: theme.valueText }}>{e.displayVal}</span>
           </span>
         ))}
       </div>
@@ -975,7 +1136,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Filter Bar */}
+          {}
           <div style={{ 
             backgroundColor: theme.cardBg, 
             borderRadius: '18px', 
@@ -1086,7 +1247,7 @@ export default function App() {
             </div>
           ) : activeTab === 'dashboard' ? (
             <>
-              {/* Summary Cards */}
+              {}
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
@@ -1112,7 +1273,7 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Main Dynamic Chart Section */}
+              {}
               <div style={{
                 backgroundColor: theme.cardBg,
                 borderRadius: '18px',
@@ -1266,16 +1427,15 @@ export default function App() {
                 )}
               </div>
 
-              {/* Distribution Pie Charts Grid */}
+              {}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-                <PieChartCard title={`Carta Pai Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS} isDarkMode={isDarkMode} innerRadius={0} />
-                <PieChartCard title="Carta Donat Mengikut ZON" data={zonDistribution} isDarkMode={isDarkMode} innerRadius={45} />
+                <PieChartCard title={`Carta Status (${getBulanLabel()})`} data={statusDistribution} colorMap={STATUS_COLORS} isDarkMode={isDarkMode} innerRadius={0} />
+                <PieChartCard title="Carta Taburan Mengikut ZON" data={zonDistribution} isDarkMode={isDarkMode} innerRadius={45} />
                 <PieChartCard title="Top 10 BALAI" data={balaiDistribution} isDarkMode={isDarkMode} innerRadius={0} />
                 <PieChartCard title="Jenis Terminal" data={terminalDistribution} isDarkMode={isDarkMode} innerRadius={40} />
               </div>
             </>
           ) : (
-            /* Table Data View */
             <div style={{ backgroundColor: theme.cardBg, borderRadius: '18px', padding: '20px', boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 32px rgba(31, 38, 135, 0.07)', border: `1px solid ${theme.border}`, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '13px', fontWeight: '800', color: theme.textPrimary, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><Table2 style={{ width: '16px', height: '16px', color: '#1976d2' }} />Data Peranti Terminal — <span style={{ color: '#1976d2' }}>{filteredData.length} rekod</span></h3>
