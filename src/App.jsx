@@ -1433,7 +1433,7 @@ export default function App() {
               marginTop: '2px'
             }}>
               <p style={{ fontSize: '11px', color: '#1976d2', margin: 0, fontWeight: '800', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
-                DIBANGUNKAN OLEH: PB MOHAMAD AIDIL
+                PEMBANGUN APLIKASI: PB MOHAMAD AIDIL
               </p>
             </div>
           </div>
