@@ -4208,7 +4208,7 @@ export default function App() {
                 letterSpacing: '0.2px',
               }}
             >
-              © 2026 PB MOHAMAD AIDIL PGO JOHOR | Hak Cipta Terpelihara
+              © 2026 PGO JOHOR | Hak Cipta Terpelihara
             </p>
 
             <div
