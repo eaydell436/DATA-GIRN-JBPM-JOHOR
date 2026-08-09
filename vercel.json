@@ -1,0 +1,7 @@
+{
+    "rewrites": [
+      { "source": "/dashboard-radio", "destination": "/index.html" },
+      { "source": "/dashboard-radio/", "destination": "/index.html" },
+      { "source": "/dashboard-radio/assets/:path*", "destination": "/assets/:path*" }
+    ]
+  }
