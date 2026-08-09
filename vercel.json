@@ -1,7 +1,6 @@
 {
     "rewrites": [
-      { "source": "/dashboard-radio", "destination": "/index.html" },
-      { "source": "/dashboard-radio/", "destination": "/index.html" },
-      { "source": "/dashboard-radio/assets/:path*", "destination": "/assets/:path*" }
+      { "source": "/dashboard-radio", "destination": "https://data-girn-jbpm-johor.vercel.app/dashboard-radio" },
+      { "source": "/dashboard-radio/:path*", "destination": "https://data-girn-jbpm-johor.vercel.app/dashboard-radio/:path*" }
     ]
   }
