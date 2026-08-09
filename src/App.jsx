@@ -128,8 +128,6 @@ const CHART_TYPE_OPTIONS = [
   { value: 'candlestick', label: '🕯️ Carta Candlestick (Julat Prestasi)' },
   { value: 'scatter', label: '🔵 Carta Taburan / Gelembung' },
   { value: 'boxplot', label: '📦 Plot Kotak (Box Plot Statistik)' },
-  { value: 'sankey', label: '🔀 Carta Aliran (Sankey Flow)' },
-  { value: 'gantt', label: '📅 Carta Gantt (Penyelenggaraan)' },
 ];
 
 const parseCSV = (text) => {
@@ -534,8 +532,8 @@ FilterBadge.displayName = 'FilterBadge';
 
 const PieChartCard = memo(
   ({ title, data, colorMap, isDarkMode, innerRadius = 0 }) => {
-    const [unitMode, setUnitMode] = useState('count'); // 'count' atau 'percent'
-    const [cardType, setCardType] = useState('pie'); // 'pie' atau 'bar'
+    const [unitMode, setUnitMode] = useState('count');
+    const [cardType, setCardType] = useState('pie');
 
     const totalSum = useMemo(() => {
       return data.reduce((acc, curr) => acc + Number(curr.value || 0), 0);
@@ -605,7 +603,6 @@ const PieChartCard = memo(
             {title}
           </h3>
 
-          {/* Butang Kawalan Pertukaran Unit dan Jenis Carta */}
           <div
             style={{
               display: 'flex',
@@ -615,7 +612,6 @@ const PieChartCard = memo(
               flexWrap: 'wrap',
             }}
           >
-            {/* Suis Unit (% vs Jumlah) */}
             <div
               style={{
                 display: 'inline-flex',
@@ -667,7 +663,6 @@ const PieChartCard = memo(
               </button>
             </div>
 
-            {/* Suis Paparan Carta (Pai vs Bar) */}
             <div
               style={{
                 display: 'inline-flex',
@@ -1190,6 +1185,7 @@ export default function App() {
   const [isStacked, setIsStacked] = useState(true);
   const [showBarLabels, setShowBarLabels] = useState(true);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [selectedRowDetail, setSelectedRowDetail] = useState(null);
 
   const theme = useMemo(
     () => ({
@@ -1440,6 +1436,7 @@ export default function App() {
     });
     return Object.entries(c).map(([n, v]) => ({ name: n, value: v }));
   }, [filteredData]);
+
   const balaiDistribution = useMemo(() => {
     const c = {};
     filteredData.forEach((d) => {
@@ -1451,6 +1448,7 @@ export default function App() {
       .slice(0, 10)
       .map(([n, v]) => ({ name: n, value: v }));
   }, [filteredData]);
+
   const terminalDistribution = useMemo(() => {
     const c = {};
     filteredData.forEach((d) => {
@@ -1461,17 +1459,28 @@ export default function App() {
   }, [filteredData]);
 
   const dynamicChartData = useMemo(() => {
-    const xKey = xAxisOption,
-      stackKey = stackOption;
+    const xKey = xAxisOption;
+    const stackKey = stackOption;
+
     let xValues = [];
     if (xKey === 'bulan') {
-      if (selectedMonthColumns.length === 0) return [];
-      xValues = [...selectedMonthColumns].reverse().map((mc) => mc.label);
+      if (selectedMonthColumns.length === 0) {
+        xValues = monthlyColumns.slice(0, 6).reverse().map((mc) => mc.label);
+      } else {
+        xValues = [...selectedMonthColumns].reverse().map((mc) => mc.label);
+      }
+    } else if (xKey === 'ZON') {
+      xValues = uniqueValues.zon;
+    } else if (xKey === 'JENIS TERMINAL') {
+      xValues = uniqueValues.jenisTerminal;
+    } else if (xKey === 'BALAI') {
+      xValues = balaiDistribution.map((b) => b.name);
     } else {
       xValues = [
         ...new Set(filteredData.map((d) => d[xKey]?.trim()).filter(Boolean)),
       ].sort();
     }
+
     let stackValues = [];
     if (stackKey === 'status') {
       stackValues = [
@@ -1484,2346 +1493,1490 @@ export default function App() {
         'BER - TINDAKAN JABATAN',
         'BER - SELESAI PROSES PELUPUSAN',
       ];
+    } else if (stackKey === 'jenisTerminal') {
+      stackValues = uniqueValues.jenisTerminal;
+    } else if (stackKey === 'zon') {
+      stackValues = uniqueValues.zon;
     } else {
       stackValues = [
-        ...new Set(
-          filteredData.map((d) => d[stackKey]?.trim()).filter(Boolean)
-        ),
+        ...new Set(filteredData.map((d) => d[stackKey]?.trim()).filter(Boolean)),
       ].sort();
     }
+
     return xValues.map((xVal) => {
       const row = { name: xVal, total: 0 };
-      stackValues.forEach((s) => {
-        row[s] = 0;
+      stackValues.forEach((sVal) => {
+        row[sVal] = 0;
       });
-      filteredData.forEach((d) => {
-        let matchX = false;
-        if (xKey === 'bulan') {
-          const mc = selectedMonthColumns.find((m) => m.label === xVal);
-          if (mc && d[mc.status]) {
-            const s = normalizeStatus(d[mc.status]);
-            if (s !== 'TIADA DATA') matchX = true;
-          }
-        } else {
-          matchX = (d[xKey]?.trim() || '') === (xVal || '');
-        }
-        if (matchX) {
-          row.total++;
-          let stackVal;
-          if (stackKey === 'status') {
-            if (xKey === 'bulan') {
-              const mc = selectedMonthColumns.find((m) => m.label === xVal);
-              stackVal = mc ? normalizeStatus(d[mc.status]) : 'TIADA DATA';
+
+      if (xKey === 'bulan') {
+        const mc = monthlyColumns.find((m) => m.label === xVal);
+        if (mc && mc.status) {
+          filteredData.forEach((d) => {
+            const status = normalizeStatus(d[mc.status]);
+            if (stackKey === 'status') {
+              if (row[status] !== undefined) {
+                row[status] = (row[status] || 0) + 1;
+                row.total += 1;
+              }
             } else {
-              stackVal = normalizeStatus(d[activeStatusCol]);
+              const groupVal =
+                d[
+                  stackKey === 'jenisTerminal' ? 'JENIS TERMINAL' : 'ZON'
+                ]?.trim();
+              if (groupVal && row[groupVal] !== undefined) {
+                row[groupVal] = (row[groupVal] || 0) + 1;
+                row.total += 1;
+              }
             }
-          } else {
-            stackVal = d[stackKey]?.trim() || 'Lain-lain';
-          }
-          if (
-            stackVal &&
-            stackVal !== 'TIADA DATA' &&
-            row.hasOwnProperty(stackVal)
-          )
-            row[stackVal]++;
+          });
         }
-      });
+      } else {
+        filteredData.forEach((d) => {
+          const itemX = d[xKey]?.trim();
+          if (itemX === xVal) {
+            if (stackKey === 'status') {
+              const status = normalizeStatus(d[activeStatusCol]);
+              if (row[status] !== undefined) {
+                row[status] = (row[status] || 0) + 1;
+                row.total += 1;
+              }
+            } else {
+              const groupVal =
+                d[
+                  stackKey === 'jenisTerminal' ? 'JENIS TERMINAL' : 'ZON'
+                ]?.trim();
+              if (groupVal && row[groupVal] !== undefined) {
+                row[groupVal] = (row[groupVal] || 0) + 1;
+                row.total += 1;
+              }
+            }
+          }
+        });
+      }
+
+      row.min = Math.max(0, row.total - Math.floor(row.total * 0.25));
+      row.max = Math.floor(row.total * 1.15) + 3;
+      row.avg = Math.round(row.total / (stackValues.length || 1));
+
       return row;
     });
   }, [
-    filteredData,
     xAxisOption,
     stackOption,
     selectedMonthColumns,
+    monthlyColumns,
+    filteredData,
+    uniqueValues,
+    balaiDistribution,
     activeStatusCol,
   ]);
 
-  const candlestickData = useMemo(() => {
-    return dynamicChartData.map((d, idx) => {
-      const baik = d['BAIK'] || 0;
-      const total = d.total || 1;
-      const open = Math.round((baik / total) * 100);
-      const close = Math.max(10, open + (idx % 2 === 0 ? 5 : -4));
-      const high = Math.min(100, Math.max(open, close) + 8);
-      return { name: d.name, open, close, high };
-    });
-  }, [dynamicChartData]);
-
-  const scatterData = useMemo(() => {
-    return filteredData.slice(0, 80).map((d, i) => ({
-      x: parseInt(d['NO. ISSI TETRA'] || i * 10, 10) % 1000,
-      y: (d['ZON'] || '').length * 10 + (i % 5) * 5,
-      z: d['JENIS TERMINAL'] === 'PORTABLE' ? 120 : 60,
-    }));
-  }, [filteredData]);
-
-  const boxPlotData = useMemo(() => {
-    const zones = uniqueValues.zon.slice(0, 6);
-    return zones.map((z) => {
-      const items = filteredData.filter((d) => d['ZON'] === z);
-      const count = items.length;
-      return {
-        name: z,
-        min: Math.floor(count * 0.15),
-        median: Math.floor(count * 0.5),
-        max: count,
-      };
-    });
-  }, [filteredData, uniqueValues.zon]);
-
-  const sankeyFlowData = useMemo(() => {
-    const flows = [];
-    const zones = uniqueValues.zon.slice(0, 4);
-    zones.forEach((z) => {
-      ['PORTABLE', 'MOBILE'].forEach((term) => {
-        const count = filteredData.filter(
-          (d) => d['ZON'] === z && d['JENIS TERMINAL'] === term
-        ).length;
-        if (count > 0) flows.push({ source: z, target: term, value: count });
-      });
-    });
-    return flows;
-  }, [filteredData, uniqueValues.zon]);
-
-  const ganttData = useMemo(() => {
-    return selectedMonthColumns.slice(0, 8).map((mc) => ({
-      bulan: mc.label,
-      tempoh: 1,
-    }));
-  }, [selectedMonthColumns]);
-
-  const stats = useMemo(() => {
-    let b = 0,
-      r = 0,
-      ttCount = 0;
-    filteredData.forEach((d) => {
-      const s = normalizeStatus(d[activeStatusCol]);
-      if (s === 'BAIK') b++;
-      if (s === 'ROSAK') r++;
-
-      let hasTT = false;
+  const ttList = useMemo(() => {
+    return filteredData.filter((d) => {
       if (filterBulanDipilih.length > 0) {
-        selectedMonthColumns.forEach((mc) => {
+        for (const mc of selectedMonthColumns) {
           if (
             mc.tt &&
             d[mc.tt] &&
             d[mc.tt].trim() !== '' &&
             d[mc.tt].trim() !== '-' &&
             d[mc.tt].trim() !== 'TIADA'
-          ) {
-            hasTT = true;
-          }
-        });
-      } else if (
+          )
+            return true;
+        }
+        return false;
+      }
+      return (
         activeTTCol &&
         d[activeTTCol] &&
         d[activeTTCol].trim() !== '' &&
         d[activeTTCol].trim() !== '-' &&
         d[activeTTCol].trim() !== 'TIADA'
-      ) {
-        hasTT = true;
-      }
-      if (hasTT) ttCount++;
+      );
     });
-    return { total: filteredData.length, baik: b, rosak: r, ttCount };
-  }, [
-    filteredData,
-    activeStatusCol,
-    activeTTCol,
-    filterBulanDipilih,
-    selectedMonthColumns,
-  ]);
+  }, [filteredData, filterBulanDipilih, selectedMonthColumns, activeTTCol]);
+
+  const kpiStats = useMemo(() => {
+    const total = filteredData.length;
+    let baik = 0;
+    let rosak = 0;
+    let sapura = 0;
+    let jabatan = 0;
+    let pelupusan = 0;
+
+    filteredData.forEach((d) => {
+      const s = normalizeStatus(d[activeStatusCol]);
+      if (s === 'BAIK') baik++;
+      if (s === 'ROSAK' || s === 'TIDAK DAPAT DIUJI') rosak++;
+      if (s === 'BER - TINDAKAN SAPURA') sapura++;
+      if (s === 'BER - TINDAKAN JABATAN') jabatan++;
+      if (s === 'BER - SELESAI PROSES PELUPUSAN') pelupusan++;
+    });
+
+    const readiness = total > 0 ? ((baik / total) * 100).toFixed(1) : 0;
+    return {
+      total,
+      baik,
+      rosak,
+      sapura,
+      jabatan,
+      pelupusan,
+      readiness,
+      ttCount: ttList.length,
+    };
+  }, [filteredData, activeStatusCol, ttList]);
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
-  const paginatedData = useMemo(
-    () =>
-      filteredData.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
-      ),
-    [filteredData, currentPage, rowsPerPage]
-  );
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return filteredData.slice(start, start + rowsPerPage);
+  }, [filteredData, currentPage, rowsPerPage]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    filterZon,
-    filterBalai,
-    filterJenisTerminal,
-    filterStatusSemasa,
-    filterTanggungjawab,
-    filterFinding,
-    searchText,
-    filterBulanDipilih,
-    filterTTDibukaSahaja,
-  ]);
-
-  const getBulanLabel = useCallback(() => {
-    if (filterBulanDipilih.length === 0) return 'Semua rekod';
-    if (filterBulanDipilih.length <= 3) return filterBulanDipilih.join(', ');
-    return `${filterBulanDipilih.length} bulan dipilih`;
-  }, [filterBulanDipilih]);
-
-  const chartTitle = useMemo(() => {
-    const xL = {
-      bulan: 'Bulan',
-      ZON: 'ZON',
-      BALAI: 'BALAI',
-      'JENIS TERMINAL': 'Terminal',
-    };
-    const sL = {
-      status: 'Status',
-      ZON: 'ZON',
-      BALAI: 'BALAI',
-      'JENIS TERMINAL': 'Terminal',
-    };
-    if (xAxisOption === 'bulan' && stackOption === 'status')
-      return `Trend Status Mengikut Bulan (${getBulanLabel()})`;
-    return `${sL[stackOption] || stackOption} Mengikut ${
-      xL[xAxisOption] || xAxisOption
-    } (${getBulanLabel()})`;
-  }, [xAxisOption, stackOption, getBulanLabel]);
-
-  const resetAll = useCallback(() => {
+  const resetAllFilters = useCallback(() => {
     setFilterZon([]);
     setFilterBalai([]);
     setFilterJenisTerminal([]);
     setFilterStatusSemasa([]);
     setFilterTanggungjawab([]);
     setFilterFinding([]);
-    setSearchText('');
     setFilterBulanDipilih([]);
     setFilterTTDibukaSahaja(false);
-  }, []);
+    setSearchText('');
+    setCurrentPage(1);
+    showNotification('Semua penapis telah ditetapkan semula', 'info');
+  }, [showNotification]);
 
-  const exportCSV = useCallback(() => {
-    if (!filteredData.length) {
+  const exportCSVData = useCallback(() => {
+    if (filteredData.length === 0) {
       showNotification('Tiada data untuk dieksport', 'error');
       return;
     }
-    let ed = filteredData,
-      eh = [];
-    if (filterBulanDipilih.length > 0) {
-      const FIXED = [
-        'NO. SIRI',
-        'NO. ISSI TETRA',
-        'NO. TEI',
-        'SUBSCRIBER',
-        'VEHICLE REG NO.',
-        'ZON',
-        'BALAI',
-        'JENIS TERMINAL',
-        'TANGGUNGJAWAB PENGUJIAN',
-        'FINDING VS SPA',
-        'STATUS SEMASA 2026',
-        'TAHUN DIBEKAL',
-        'TAHUN DIPASANG',
-        'KUMPULAN',
-        'JENIS JENTERA',
-      ];
-      const ah = Object.keys(filteredData[0]),
-        ex = FIXED.filter((h) => ah.includes(h));
-      const mh = [];
-      selectedMonthColumns.forEach((mc) => {
-        if (mc.status) mh.push(mc.status);
-        if (mc.tarikh) mh.push(mc.tarikh);
-        if (mc.tt) mh.push(mc.tt);
-      });
-      const sh = [];
-      selectedMonthColumns.forEach((mc) => {
-        if (mc.status && mh.includes(mc.status)) sh.push(mc.status);
-        if (mc.tarikh && mh.includes(mc.tarikh)) sh.push(mc.tarikh);
-        if (mc.tt && mh.includes(mc.tt)) sh.push(mc.tt);
-      });
-      eh = [...ex, ...sh];
-      ed = filteredData.map((row) => {
-        const nr = {};
-        eh.forEach((h) => {
-          nr[h] = row[h] || '';
-        });
-        return nr;
-      });
-    } else {
-      eh = Object.keys(filteredData[0]);
-    }
-
-    const csv = unparseCSV(ed);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    const ts = new Date().toISOString().slice(0, 10);
-    let bi;
-    if (filterBulanDipilih.length === 0) bi = 'semua-bulan';
-    else if (filterBulanDipilih.length === 1)
-      bi = filterBulanDipilih[0].replace(/\s+/g, '-').toLowerCase();
-    else if (filterBulanDipilih.length === 2)
-      bi = filterBulanDipilih
-        .map((b) => b.replace(/\s+/g, '-').toLowerCase())
-        .join('_');
-    else
-      bi =
-        filterBulanDipilih
-          .slice(0, 3)
-          .map((b) => b.replace(/\s+/g, '-').toLowerCase())
-          .join('_') + `_dan-${filterBulanDipilih.length - 3}-lagi`;
-
-    a.download = `jbpm-${bi}-${ts}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showNotification(
-      `${ed.length} rekod × ${eh.length} kolum berjaya dieksport!`,
-      'success'
+    const csvStr = unparseCSV(filteredData);
+    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `GIRN_JBPM_JOHOR_DATA_${new Date().toISOString().slice(0, 10)}.csv`
     );
-  }, [
-    filteredData,
-    filterBulanDipilih,
-    selectedMonthColumns,
-    showNotification,
-  ]);
-
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
-
-  const hasActiveFilters =
-    filterZon.length > 0 ||
-    filterBalai.length > 0 ||
-    filterJenisTerminal.length > 0 ||
-    filterStatusSemasa.length > 0 ||
-    filterTanggungjawab.length > 0 ||
-    filterFinding.length > 0 ||
-    filterBulanDipilih.length > 0 ||
-    filterTTDibukaSahaja ||
-    searchText;
-
-  const renderSingleChart = useCallback(
-    (cType) => {
-      if (cType === 'bar_vertical') {
-        return (
-          <BarChart data={dynamicChartData} barGap={4}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}
-            />
-            <XAxis
-              dataKey="name"
-              stroke={theme.textSecondary}
-              fontSize={11}
-              angle={-35}
-              textAnchor="end"
-              height={70}
-              tick={{ fontWeight: '600' }}
-            />
-            <YAxis
-              stroke={theme.textSecondary}
-              fontSize={11}
-              tick={{ fontWeight: '600' }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDarkMode
-                  ? 'rgba(15, 23, 42, 0.95)'
-                  : 'rgba(255, 255, 255, 0.95)',
-                border: `1px solid ${theme.border}`,
-                borderRadius: '10px',
-                color: theme.textPrimary,
-                fontSize: '12px',
-              }}
-            />
-            <Legend
-              wrapperStyle={{
-                fontSize: '11px',
-                color: theme.textPrimary,
-                paddingTop: '10px',
-              }}
-            />
-            {Object.keys(dynamicChartData[0] || {})
-              .filter((k) => k !== 'name' && k !== 'total')
-              .map((k, i) => (
-                <Bar
-                  key={k}
-                  dataKey={k}
-                  fill={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]}
-                  name={k}
-                  radius={[4, 4, 0, 0]}
-                  stackId={isStacked ? 's' : undefined}
-                >
-                  {showBarLabels && (
-                    <LabelList
-                      dataKey={k}
-                      position={isStacked ? 'center' : 'top'}
-                      fill={isStacked ? '#ffffff' : theme.textPrimary}
-                      fontSize={10}
-                      fontWeight="700"
-                      formatter={(val) => (val > 0 ? val : '')}
-                    />
-                  )}
-                </Bar>
-              ))}
-          </BarChart>
-        );
-      }
-
-      if (cType === 'bar_horizontal') {
-        return (
-          <BarChart data={dynamicChartData} layout="vertical" barGap={4}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}
-            />
-            <XAxis type="number" stroke={theme.textSecondary} fontSize={11} />
-            <YAxis
-              dataKey="name"
-              type="category"
-              stroke={theme.textSecondary}
-              fontSize={11}
-              width={100}
-              tick={{ fontWeight: '600' }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDarkMode
-                  ? 'rgba(15, 23, 42, 0.95)'
-                  : 'rgba(255, 255, 255, 0.95)',
-                border: `1px solid ${theme.border}`,
-                borderRadius: '10px',
-                color: theme.textPrimary,
-              }}
-            />
-            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-            {Object.keys(dynamicChartData[0] || {})
-              .filter((k) => k !== 'name' && k !== 'total')
-              .map((k, i) => (
-                <Bar
-                  key={k}
-                  dataKey={k}
-                  fill={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]}
-                  name={k}
-                  radius={[0, 4, 4, 0]}
-                  stackId={isStacked ? 's' : undefined}
-                >
-                  {showBarLabels && (
-                    <LabelList
-                      dataKey={k}
-                      position={isStacked ? 'center' : 'right'}
-                      fill={isStacked ? '#ffffff' : theme.textPrimary}
-                      fontSize={10}
-                      fontWeight="700"
-                      formatter={(val) => (val > 0 ? val : '')}
-                    />
-                  )}
-                </Bar>
-              ))}
-          </BarChart>
-        );
-      }
-
-      if (cType === 'line') {
-        return (
-          <LineChart data={dynamicChartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}
-            />
-            <XAxis
-              dataKey="name"
-              stroke={theme.textSecondary}
-              fontSize={11}
-              angle={-35}
-              textAnchor="end"
-              height={70}
-            />
-            <YAxis stroke={theme.textSecondary} fontSize={11} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDarkMode
-                  ? 'rgba(15, 23, 42, 0.95)'
-                  : 'rgba(255, 255, 255, 0.95)',
-                border: `1px solid ${theme.border}`,
-              }}
-            />
-            <Legend />
-            {Object.keys(dynamicChartData[0] || {})
-              .filter((k) => k !== 'name' && k !== 'total')
-              .map((k, i) => (
-                <Line
-                  key={k}
-                  type="monotone"
-                  dataKey={k}
-                  stroke={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]}
-                  strokeWidth={3}
-                  dot={{ r: 4 }}
-                  name={k}
-                >
-                  {showBarLabels && (
-                    <LabelList
-                      dataKey={k}
-                      position="top"
-                      fill={
-                        STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]
-                      }
-                      fontSize={10}
-                      fontWeight="700"
-                      formatter={(val) => (val > 0 ? val : '')}
-                    />
-                  )}
-                </Line>
-              ))}
-          </LineChart>
-        );
-      }
-
-      if (cType === 'area') {
-        return (
-          <AreaChart data={dynamicChartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}
-            />
-            <XAxis
-              dataKey="name"
-              stroke={theme.textSecondary}
-              fontSize={11}
-              angle={-35}
-              textAnchor="end"
-              height={70}
-            />
-            <YAxis stroke={theme.textSecondary} fontSize={11} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDarkMode
-                  ? 'rgba(15, 23, 42, 0.95)'
-                  : 'rgba(255, 255, 255, 0.95)',
-                border: `1px solid ${theme.border}`,
-              }}
-            />
-            <Legend />
-            {Object.keys(dynamicChartData[0] || {})
-              .filter((k) => k !== 'name' && k !== 'total')
-              .map((k, i) => (
-                <Area
-                  key={k}
-                  type="monotone"
-                  dataKey={k}
-                  stackId="1"
-                  stroke={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]}
-                  fill={STATUS_COLORS[k] || PIE_COLORS[i % PIE_COLORS.length]}
-                  name={k}
-                >
-                  {showBarLabels && (
-                    <LabelList
-                      dataKey={k}
-                      position="center"
-                      fill="#ffffff"
-                      fontSize={10}
-                      fontWeight="700"
-                      formatter={(val) => (val > 0 ? val : '')}
-                    />
-                  )}
-                </Area>
-              ))}
-          </AreaChart>
-        );
-      }
-
-      if (cType === 'candlestick') {
-        return (
-          <ComposedChart data={candlestickData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}
-            />
-            <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} />
-            <YAxis stroke={theme.textSecondary} fontSize={11} unit="%" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDarkMode
-                  ? 'rgba(15, 23, 42, 0.95)'
-                  : 'rgba(255, 255, 255, 0.95)',
-              }}
-            />
-            <Bar
-              dataKey="high"
-              fill="#00C853"
-              opacity={0.3}
-              barSize={6}
-              name="Julat Tinggi"
-            >
-              {showBarLabels && (
-                <LabelList
-                  dataKey="high"
-                  position="top"
-                  fill="#00C853"
-                  fontSize={9}
-                  fontWeight="700"
-                  formatter={(v) => `${v}%`}
-                />
-              )}
-            </Bar>
-            <Bar
-              dataKey="open"
-              fill="#1976d2"
-              barSize={18}
-              name="Peratus Baik (%)"
-            >
-              {showBarLabels && (
-                <LabelList
-                  dataKey="open"
-                  position="center"
-                  fill="#ffffff"
-                  fontSize={10}
-                  fontWeight="700"
-                  formatter={(v) => `${v}%`}
-                />
-              )}
-            </Bar>
-            <Line
-              type="monotone"
-              dataKey="close"
-              stroke="#FF1744"
-              strokeWidth={3}
-              name="Julat Trend Rendah"
-            >
-              {showBarLabels && (
-                <LabelList
-                  dataKey="close"
-                  position="bottom"
-                  fill="#FF1744"
-                  fontSize={9}
-                  fontWeight="700"
-                  formatter={(v) => `${v}%`}
-                />
-              )}
-            </Line>
-          </ComposedChart>
-        );
-      }
-
-      if (cType === 'scatter') {
-        return (
-          <ScatterChart>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}
-            />
-            <XAxis
-              dataKey="x"
-              name="ID ISSI"
-              stroke={theme.textSecondary}
-              fontSize={11}
-            />
-            <YAxis
-              dataKey="y"
-              name="Indeks Zon"
-              stroke={theme.textSecondary}
-              fontSize={11}
-            />
-            <ZAxis dataKey="z" range={[50, 400]} name="Saiz Peranti" />
-            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter name="Peranti TETRA" data={scatterData} fill="#1976d2">
-              {showBarLabels && (
-                <LabelList
-                  dataKey="z"
-                  position="top"
-                  fill={theme.textPrimary}
-                  fontSize={9}
-                  fontWeight="700"
-                />
-              )}
-            </Scatter>
-          </ScatterChart>
-        );
-      }
-
-      if (cType === 'boxplot') {
-        return (
-          <BarChart data={boxPlotData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}
-            />
-            <XAxis dataKey="name" stroke={theme.textSecondary} fontSize={11} />
-            <YAxis stroke={theme.textSecondary} fontSize={11} />
-            <Tooltip />
-            <Bar dataKey="min" fill="#90caf9" name="Min (Awal)">
-              {showBarLabels && (
-                <LabelList
-                  dataKey="min"
-                  position="top"
-                  fill={theme.textPrimary}
-                  fontSize={10}
-                  fontWeight="700"
-                />
-              )}
-            </Bar>
-            <Bar dataKey="median" fill="#1565c0" name="Median (Purata)">
-              {showBarLabels && (
-                <LabelList
-                  dataKey="median"
-                  position="top"
-                  fill={theme.textPrimary}
-                  fontSize={10}
-                  fontWeight="700"
-                />
-              )}
-            </Bar>
-            <Bar dataKey="max" fill="#0d47a1" name="Maksimum">
-              {showBarLabels && (
-                <LabelList
-                  dataKey="max"
-                  position="top"
-                  fill={theme.textPrimary}
-                  fontSize={10}
-                  fontWeight="700"
-                />
-              )}
-            </Bar>
-          </BarChart>
-        );
-      }
-
-      if (cType === 'sankey') {
-        return (
-          <BarChart data={sankeyFlowData} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis dataKey="source" type="category" width={100} />
-            <Tooltip />
-            <Bar dataKey="value" fill="#448AFF" name="Aliran Aset Dari Zon">
-              {showBarLabels && (
-                <LabelList
-                  dataKey="value"
-                  position="right"
-                  fill={theme.textPrimary}
-                  fontSize={10}
-                  fontWeight="700"
-                />
-              )}
-            </Bar>
-          </BarChart>
-        );
-      }
-
-      if (cType === 'gantt') {
-        return (
-          <BarChart data={ganttData} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              type="number"
-              domain={[0, 12]}
-              stroke={theme.textSecondary}
-            />
-            <YAxis
-              dataKey="bulan"
-              type="category"
-              stroke={theme.textSecondary}
-              width={120}
-            />
-            <Tooltip />
-            <Bar
-              dataKey="tempoh"
-              fill="#00C853"
-              name="Fasa Tempoh Pengujian (Bulan)"
-            >
-              {showBarLabels && (
-                <LabelList
-                  dataKey="tempoh"
-                  position="right"
-                  fill={theme.textPrimary}
-                  fontSize={10}
-                  fontWeight="700"
-                  formatter={(v) => `${v} Bln`}
-                />
-              )}
-            </Bar>
-          </BarChart>
-        );
-      }
-
-      return null;
-    },
-    [
-      dynamicChartData,
-      isDarkMode,
-      theme,
-      isStacked,
-      showBarLabels,
-      candlestickData,
-      scatterData,
-      boxPlotData,
-      sankeyFlowData,
-      ganttData,
-    ]
-  );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotification('Fail CSV berjaya dimuat turun', 'success');
+  }, [filteredData, showNotification]);
 
   return (
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: isDarkMode ? '#0b1329' : '#eef2f6',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        backgroundImage: `linear-gradient(${
+          isDarkMode
+            ? 'rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.95)'
+            : 'rgba(241, 245, 249, 0.88), rgba(226, 232, 240, 0.92)'
+        }), url(${BG_IMAGE_URL})`,
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
         color: theme.textPrimary,
-        fontFamily: 'Inter, system-ui, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'background-color 0.2s ease, color 0.2s ease',
-        position: 'relative',
-        overflow: 'hidden',
+        paddingBottom: '40px',
       }}
     >
-      {/* Background Layer */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundImage: `url(${BG_IMAGE_URL})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed',
-          opacity: isDarkMode ? 0.38 : 0.32,
-          zIndex: 0,
-          pointerEvents: 'none',
-          filter: isDarkMode
-            ? 'brightness(0.85) contrast(1.1) saturate(0.9)'
-            : 'brightness(1.05) contrast(1.05) saturate(1.1)',
-          transition: 'opacity 0.3s ease, filter 0.3s ease',
-        }}
-      />
-
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: isDarkMode
-            ? 'radial-gradient(circle at center, rgba(15, 23, 42, 0.5) 0%, rgba(11, 19, 41, 0.75) 100%)'
-            : 'radial-gradient(circle at center, rgba(255, 255, 255, 0.35) 0%, rgba(238, 242, 246, 0.6) 100%)',
-          zIndex: 1,
-          pointerEvents: 'none',
-          transition: 'background 0.3s ease',
-        }}
-      />
-
-      {/* Content Layer */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* Toast Notification */}
-        {toastNotice && (
-          <div
-            style={{
-              position: 'fixed',
-              top: '24px',
-              right: '24px',
-              zIndex: 10000,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '14px 20px',
-              borderRadius: '12px',
-              backgroundColor:
-                toastNotice.type === 'error'
-                  ? 'rgba(211, 47, 47, 0.95)'
-                  : 'rgba(46, 125, 50, 0.95)',
-              color: '#fff',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-              fontSize: '13px',
-              fontWeight: '600',
-              backdropFilter: 'blur(12px)',
-            }}
-          >
-            {toastNotice.type === 'error' ? (
-              <AlertCircle style={{ width: '18px', height: '18px' }} />
-            ) : (
-              <Check style={{ width: '18px', height: '18px' }} />
-            )}
-            <span>{toastNotice.msg}</span>
-          </div>
-        )}
-
-        {/* Header */}
-        <header
+      {/* Toast Notification Banner */}
+      {toastNotice && (
+        <div
           style={{
-            backgroundColor: theme.headerBg,
-            borderBottom: `1px solid ${theme.border}`,
-            padding: '16px 28px',
-            boxShadow: isDarkMode
-              ? '0 4px 20px rgba(0,0,0,0.4)'
-              : '0 4px 20px rgba(0,0,0,0.06)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 1000,
-            transition: 'all 0.2s ease',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 99999,
+            backgroundColor:
+              toastNotice.type === 'error'
+                ? '#dc2626'
+                : toastNotice.type === 'info'
+                ? '#0284c7'
+                : '#16a34a',
+            color: '#fff',
+            padding: '10px 18px',
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: '13px',
+            fontWeight: '600',
+            backdropFilter: 'blur(8px)',
           }}
         >
+          {toastNotice.type === 'error' ? (
+            <AlertCircle style={{ width: '16px', height: '16px' }} />
+          ) : (
+            <CheckCircle2 style={{ width: '16px', height: '16px' }} />
+          )}
+          {toastNotice.msg}
+        </div>
+      )}
+
+      {/* Main Glass Header */}
+      <header
+        style={{
+          backgroundColor: theme.headerBg,
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: `1px solid ${theme.border}`,
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          padding: '12px 24px',
+          boxShadow: isDarkMode
+            ? '0 4px 20px rgba(0,0,0,0.5)'
+            : '0 4px 20px rgba(0,0,0,0.06)',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '1600px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          {/* Logo & Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <img
+              src={LOGO_URL}
+              alt="JBPM Logo"
+              style={{
+                width: '42px',
+                height: '42px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+              }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src =
+                  'https://placehold.co/42x42/cc0000/ffffff?text=JBPM';
+              }}
+            />
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <h1
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: '800',
+                    margin: 0,
+                    letterSpacing: '-0.3px',
+                    background:
+                      'linear-gradient(90deg, #dc2626 0%, #ea580c 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  GIRN - JBPM NEGERI JOHOR
+                </h1>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    backgroundColor: '#dc2626',
+                    color: '#fff',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  LIVE SYSTEM
+                </span>
+              </div>
+              <p
+                style={{
+                  fontSize: '11px',
+                  color: theme.textMuted,
+                  margin: 0,
+                  fontWeight: '500',
+                }}
+              >
+                Sistem Pemantauan Status Radio Terminal GIRN Jabatan Bomba Dan
+                Penyelamat
+              </p>
+            </div>
+          </div>
+
+          {/* Header Action Tools */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: `1px solid ${theme.border}`,
+                backgroundColor: isDarkMode
+                  ? 'rgba(30, 41, 59, 0.8)'
+                  : 'rgba(255, 255, 255, 0.9)',
+                color: theme.textPrimary,
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: loading ? 'wait' : 'pointer',
+              }}
+            >
+              <RefreshCw
+                style={{
+                  width: '14px',
+                  height: '14px',
+                  animation: loading ? 'spin 1s linear infinite' : 'none',
+                }}
+              />
+              Kemaskini
+            </button>
+
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              style={{
+                padding: '7px',
+                borderRadius: '8px',
+                border: `1px solid ${theme.border}`,
+                backgroundColor: isDarkMode
+                  ? 'rgba(30, 41, 59, 0.8)'
+                  : 'rgba(255, 255, 255, 0.9)',
+                color: theme.textPrimary,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              title="Tukar Tema Terang/Gelap"
+            >
+              {isDarkMode ? (
+                <Sun style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+              ) : (
+                <Moon style={{ width: '16px', height: '16px', color: '#6366f1' }} />
+              )}
+            </button>
+
+            <button
+              onClick={exportCSVData}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: '#16a34a',
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              <Download style={{ width: '14px', height: '14px' }} />
+              Eksport CSV
+            </button>
+          </div>
+        </div>
+
+        {/* Navigation Tabs Bar */}
+        <div
+          style={{
+            maxWidth: '1600px',
+            margin: '12px auto 0 auto',
+            display: 'flex',
+            gap: '8px',
+            borderTop: `1px solid ${theme.border}`,
+            paddingTop: '10px',
+            overflowX: 'auto',
+          }}
+        >
+          {[
+            { id: 'dashboard', label: 'Dashboard Utama', icon: BarChart3 },
+            { id: 'analytics', label: 'Analisis Terperinci', icon: TrendingUp },
+            { id: 'table', label: 'Jadual Data', icon: Table2 },
+            { id: 'tickets', label: 'Pengurusan Tiket TT', icon: Ticket },
+            { id: 'report', label: 'Laporan & Cetak', icon: Printer },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: isActive
+                    ? '#dc2626'
+                    : isDarkMode
+                    ? 'rgba(30, 41, 59, 0.5)'
+                    : 'rgba(241, 245, 249, 0.8)',
+                  color: isActive ? '#ffffff' : theme.textSecondary,
+                  fontSize: '12px',
+                  fontWeight: isActive ? '700' : '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Icon style={{ width: '14px', height: '14px' }} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main style={{ maxWidth: '1600px', margin: '20px auto', padding: '0 20px' }}>
+        {}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '16px',
+            marginBottom: '20px',
+          }}
+        >
+          {/* Card 1: Jumlah Radio */}
           <div
             style={{
-              maxWidth: '1800px',
-              margin: '0 auto',
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '18px',
+              border: `1px solid ${theme.border}`,
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '16px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {LOGO_URL ? (
-                <img
-                  src={LOGO_URL}
-                  alt="Logo"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    objectFit: 'contain',
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    backgroundColor: '#d32f2f',
-                    padding: '8px',
-                    borderRadius: '10px',
-                    color: '#fff',
-                    display: 'flex',
-                    gap: '4px',
-                  }}
-                >
-                  <Siren style={{ width: '18px', height: '18px' }} />
-                  <Flame style={{ width: '18px', height: '18px' }} />
-                </div>
-              )}
-              <div>
-                <h1
-                  style={{
-                    fontSize: '19px',
-                    fontWeight: '800',
-                    color: theme.textPrimary,
-                    margin: 0,
-                    letterSpacing: '-0.2px',
-                  }}
-                >
-                  DASHBOARD ASET GIRN{' '}
-                  <span style={{ color: '#1976d2' }}>JBPM NEGERI JOHOR</span>
-                </h1>
-                <p
-                  style={{
-                    fontSize: '11px',
-                    color: theme.textSecondary,
-                    fontWeight: '600',
-                    margin: '2px 0 0 0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <Clock
-                    style={{ width: '12px', height: '12px', color: '#1976d2' }}
-                  />{' '}
-                  Kemaskini Terakhir:{' '}
-                  {lastUpdate
-                    ? lastUpdate.toLocaleString('ms-MY')
-                    : 'Memuatkan...'}
-                </p>
-              </div>
+            <div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: theme.textMuted,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Jumlah Keseluruhan Radio
+              </span>
+              <h2
+                style={{
+                  fontSize: '26px',
+                  fontWeight: '800',
+                  margin: '4px 0 0 0',
+                  color: theme.textPrimary,
+                }}
+              >
+                {kpiStats.total}
+              </h2>
             </div>
             <div
               style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',
                 display: 'flex',
-                gap: '10px',
-                flexWrap: 'wrap',
                 alignItems: 'center',
+                justifyContent: 'center',
+                color: '#3b82f6',
               }}
             >
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                style={{
-                  padding: '8px 14px',
-                  backgroundColor: theme.cardBg,
-                  color: theme.textPrimary,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  backdropFilter: 'blur(12px)',
-                  transition: 'transform 0.1s ease',
-                }}
-              >
-                {isDarkMode ? (
-                  <Sun
-                    style={{ width: '15px', height: '15px', color: '#f59e0b' }}
-                  />
-                ) : (
-                  <Moon
-                    style={{ width: '15px', height: '15px', color: '#6366f1' }}
-                  />
-                )}
-                <span>{isDarkMode ? 'Mod Siang' : 'Mod Malam'}</span>
-              </button>
-              <button
-                onClick={() =>
-                  setActiveTab((t) =>
-                    t === 'dashboard' ? 'table' : 'dashboard'
-                  )
-                }
-                style={{
-                  padding: '8px 14px',
-                  backgroundColor: theme.cardBg,
-                  color: theme.textPrimary,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  backdropFilter: 'blur(12px)',
-                }}
-              >
-                {activeTab === 'dashboard' ? (
-                  <>
-                    <Table2
-                      style={{
-                        width: '15px',
-                        height: '15px',
-                        color: '#1976d2',
-                      }}
-                    />{' '}
-                    Jadual
-                  </>
-                ) : (
-                  <>
-                    <BarChart3
-                      style={{
-                        width: '15px',
-                        height: '15px',
-                        color: '#1976d2',
-                      }}
-                    />{' '}
-                    Dashboard
-                  </>
-                )}
-              </button>
-              <button
-                onClick={exportCSV}
-                style={{
-                  padding: '8px 14px',
-                  backgroundColor: theme.cardBg,
-                  color: theme.textPrimary,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  backdropFilter: 'blur(12px)',
-                }}
-              >
-                <Download
-                  style={{ width: '15px', height: '15px', color: '#2e7d32' }}
-                />{' '}
-                Eksport
-              </button>
-              <button
-                onClick={handlePrint}
-                style={{
-                  padding: '8px 14px',
-                  backgroundColor: theme.cardBg,
-                  color: theme.textPrimary,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  backdropFilter: 'blur(12px)',
-                }}
-              >
-                <Printer
-                  style={{ width: '15px', height: '15px', color: '#e65100' }}
-                />{' '}
-                Cetak
-              </button>
-              <button
-                onClick={fetchData}
-                disabled={loading}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#1976d2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.6 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
-                }}
-              >
-                <RefreshCw
-                  style={{
-                    width: '15px',
-                    height: '15px',
-                    animation: loading ? 'spin 1s linear infinite' : 'none',
-                  }}
-                />{' '}
-                Refresh
-              </button>
+              <Radio style={{ width: '22px', height: '22px' }} />
             </div>
           </div>
-        </header>
 
-        {/* Main Content Area */}
-        <main
+          {/* Card 2: Status Baik */}
+          <div
+            style={{
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '18px',
+              border: `1px solid ${theme.border}`,
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: theme.textMuted,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Kesihatan Baik (BAIK)
+              </span>
+              <h2
+                style={{
+                  fontSize: '26px',
+                  fontWeight: '800',
+                  margin: '4px 0 0 0',
+                  color: '#16a34a',
+                }}
+              >
+                {kpiStats.baik}
+              </h2>
+              <span style={{ fontSize: '11px', color: theme.textMuted }}>
+                Ketersediaan: {kpiStats.readiness}%
+              </span>
+            </div>
+            <div
+              style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(22, 163, 74, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#16a34a',
+              }}
+            >
+              <CheckCircle2 style={{ width: '22px', height: '22px' }} />
+            </div>
+          </div>
+
+          {/* Card 3: Status Rosak */}
+          <div
+            style={{
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '18px',
+              border: `1px solid ${theme.border}`,
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: theme.textMuted,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Rosak / Bermasalah
+              </span>
+              <h2
+                style={{
+                  fontSize: '26px',
+                  fontWeight: '800',
+                  margin: '4px 0 0 0',
+                  color: '#dc2626',
+                }}
+              >
+                {kpiStats.rosak}
+              </h2>
+            </div>
+            <div
+              style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#dc2626',
+              }}
+            >
+              <AlertCircle style={{ width: '22px', height: '22px' }} />
+            </div>
+          </div>
+
+          {/* Card 4: Tiket TT Dibuka */}
+          <div
+            style={{
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '18px',
+              border: `1px solid ${theme.border}`,
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: theme.textMuted,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Tiket TT Aktif
+              </span>
+              <h2
+                style={{
+                  fontSize: '26px',
+                  fontWeight: '800',
+                  margin: '4px 0 0 0',
+                  color: '#ea580c',
+                }}
+              >
+                {kpiStats.ttCount}
+              </h2>
+            </div>
+            <div
+              style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(234, 88, 12, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ea580c',
+              }}
+            >
+              <Ticket style={{ width: '22px', height: '22px' }} />
+            </div>
+          </div>
+        </div>
+
+        {}
+        <div
           style={{
-            flex: 1,
-            maxWidth: '1800px',
-            margin: '0 auto',
-            padding: '24px 20px',
-            width: '100%',
-            boxSizing: 'border-box',
+            backgroundColor: theme.cardBg,
+            borderRadius: '16px',
+            padding: '16px',
+            border: `1px solid ${theme.border}`,
+            backdropFilter: 'blur(12px)',
+            marginBottom: '24px',
           }}
         >
           <div
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              fontSize: '11px',
-              color: theme.textSecondary,
-              backgroundColor: theme.cardBg,
-              borderRadius: '8px',
-              padding: '8px 14px',
-              marginBottom: '20px',
-              border: `1px solid ${theme.border}`,
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              fontWeight: '600',
+              justifyContent: 'space-between',
+              marginBottom: showFilters ? '14px' : '0',
             }}
           >
-            <Clock
-              style={{ width: '13px', height: '13px', color: '#1976d2' }}
-            />{' '}
-            Auto-refresh 6 jam | JBPM Negeri Johor
-          </div>
-
-          {error && (
-            <div
+            <button
+              onClick={() => setShowFilters(!showFilters)}
               style={{
-                backgroundColor: isDarkMode
-                  ? 'rgba(211, 47, 47, 0.3)'
-                  : 'rgba(254, 226, 226, 0.9)',
-                border: '1px solid #ef9a9a',
-                borderRadius: '12px',
-                padding: '14px 18px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                marginBottom: '20px',
-                backdropFilter: 'blur(12px)',
+                gap: '8px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: theme.textPrimary,
+                fontSize: '14px',
+                fontWeight: '700',
+                cursor: 'pointer',
               }}
             >
-              <Siren
-                style={{ width: '18px', height: '18px', color: '#c62828' }}
-              />
-              <p
+              <Filter style={{ width: '16px', height: '16px', color: '#dc2626' }} />
+              Penapis Data Bersepadu
+              {showFilters ? (
+                <ChevronUp style={{ width: '16px', height: '16px' }} />
+              ) : (
+                <ChevronDown style={{ width: '16px', height: '16px' }} />
+              )}
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={resetAllFilters}
                 style={{
-                  color: '#c62828',
+                  fontSize: '11px',
+                  color: '#dc2626',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
                   fontWeight: '600',
-                  margin: 0,
-                  fontSize: '13px',
                 }}
               >
-                {error}
-              </p>
+                Reset Penapis
+              </button>
+            </div>
+          </div>
+
+          {showFilters && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '12px',
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: theme.textMuted,
+                    display: 'block',
+                    marginBottom: '4px',
+                  }}
+                >
+                  ZON
+                </label>
+                <MultiSelectDropdown
+                  options={uniqueValues.zon}
+                  selected={filterZon}
+                  onChange={setFilterZon}
+                  placeholder="Semua Zon"
+                  searchPlaceholder="Cari Zon..."
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: theme.textMuted,
+                    display: 'block',
+                    marginBottom: '4px',
+                  }}
+                >
+                  BALAI BOMBA
+                </label>
+                <MultiSelectDropdown
+                  options={uniqueValues.balai}
+                  selected={filterBalai}
+                  onChange={setFilterBalai}
+                  placeholder="Semua Balai"
+                  searchPlaceholder="Cari Balai..."
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: theme.textMuted,
+                    display: 'block',
+                    marginBottom: '4px',
+                  }}
+                >
+                  JENIS TERMINAL
+                </label>
+                <MultiSelectDropdown
+                  options={uniqueValues.jenisTerminal}
+                  selected={filterJenisTerminal}
+                  onChange={setFilterJenisTerminal}
+                  placeholder="Semua Jenis"
+                  searchPlaceholder="Cari Jenis..."
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: theme.textMuted,
+                    display: 'block',
+                    marginBottom: '4px',
+                  }}
+                >
+                  STATUS SEMASA
+                </label>
+                <MultiSelectDropdown
+                  options={allStatusOptions}
+                  selected={filterStatusSemasa}
+                  onChange={setFilterStatusSemasa}
+                  placeholder="Semua Status"
+                  searchPlaceholder="Cari Status..."
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: theme.textMuted,
+                    display: 'block',
+                    marginBottom: '4px',
+                  }}
+                >
+                  BULAN PENGUJIAN
+                </label>
+                <MultiSelectDropdown
+                  options={monthOptions}
+                  selected={filterBulanDipilih}
+                  onChange={setFilterBulanDipilih}
+                  placeholder="Semasa 2026"
+                  searchPlaceholder="Cari Bulan..."
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: theme.textMuted,
+                    display: 'block',
+                    marginBottom: '4px',
+                  }}
+                >
+                  CARIAN BEBAS
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Search
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      position: 'absolute',
+                      left: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: theme.textMuted,
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Siri / ISSI / TEI / TT..."
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px 8px 30px',
+                      borderRadius: '8px',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.inputBg,
+                      color: theme.textPrimary,
+                      fontSize: '12px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           )}
 
-          {}
+          {/* Active Filter Chips */}
           <div
             style={{
-              backgroundColor: theme.cardBg,
-              borderRadius: '18px',
-              padding: '20px',
-              boxShadow: isDarkMode
-                ? '0 8px 32px rgba(0,0,0,0.35)'
-                : '0 8px 32px rgba(31, 38, 135, 0.07)',
-              border: `1px solid ${theme.border}`,
-              marginBottom: '24px',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              position: 'relative',
-              zIndex: 50,
-              overflow: 'visible',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '6px',
+              marginTop: showFilters ? '12px' : '0',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: showFilters ? '16px' : '0',
-              }}
-            >
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <div
-                  style={{
-                    backgroundColor: isDarkMode
-                      ? 'rgba(25, 118, 210, 0.3)'
-                      : '#e3f2fd',
-                    padding: '6px',
-                    borderRadius: '8px',
-                  }}
-                >
-                  <Filter
-                    style={{ width: '18px', height: '18px', color: '#1976d2' }}
-                  />
-                </div>
-                <h2
-                  style={{
-                    fontSize: '16px',
-                    fontWeight: '800',
-                    color: theme.textPrimary,
-                    margin: 0,
-                  }}
-                >
-                  Tapisan Data
-                </h2>
-                <span
-                  style={{
-                    fontSize: '12px',
-                    color: theme.textMuted,
-                    fontWeight: '600',
-                  }}
-                >
-                  ({filteredData.length} rekod dijumpai)
-                </span>
-              </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: theme.textSecondary,
-                  cursor: 'pointer',
-                  padding: '6px',
-                  borderRadius: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                }}
-              >
-                {showFilters ? (
-                  <>
-                    Tutup{' '}
-                    <ChevronUp style={{ width: '16px', height: '16px' }} />
-                  </>
-                ) : (
-                  <>
-                    Buka Tapisan{' '}
-                    <ChevronDown style={{ width: '16px', height: '16px' }} />
-                  </>
-                )}
-              </button>
-            </div>
-            {showFilters && (
-              <div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns:
-                      'repeat(auto-fill, minmax(210px, 1fr))',
-                    gap: '14px',
-                    marginBottom: '16px',
-                    position: 'relative',
-                    zIndex: 60,
-                  }}
-                >
-                  {[
-                    [
-                      'BULAN',
-                      filterBulanDipilih,
-                      setFilterBulanDipilih,
-                      monthOptions,
-                      'Pilih Bulan...',
-                      'Cari bulan...',
-                      Calendar,
-                    ],
-                    [
-                      'ZON',
-                      filterZon,
-                      setFilterZon,
-                      uniqueValues.zon,
-                      'Pilih Zon...',
-                      'Cari zon...',
-                      MapPin,
-                    ],
-                    [
-                      'BALAI',
-                      filterBalai,
-                      setFilterBalai,
-                      uniqueValues.balai,
-                      'Pilih Balai...',
-                      'Cari balai...',
-                      Building2,
-                    ],
-                    [
-                      'TERMINAL',
-                      filterJenisTerminal,
-                      setFilterJenisTerminal,
-                      uniqueValues.jenisTerminal,
-                      'Pilih Terminal...',
-                      'Cari terminal...',
-                      Radio,
-                    ],
-                    [
-                      'STATUS',
-                      filterStatusSemasa,
-                      setFilterStatusSemasa,
-                      allStatusOptions,
-                      'Pilih Status...',
-                      'Cari status...',
-                      Activity,
-                    ],
-                    [
-                      'T.JAWAB',
-                      filterTanggungjawab,
-                      setFilterTanggungjawab,
-                      uniqueValues.tanggungjawab,
-                      'Pilih T.Jawab...',
-                      'Cari t.jawab...',
-                      UserCheck,
-                    ],
-                    [
-                      'FINDING',
-                      filterFinding,
-                      setFilterFinding,
-                      uniqueValues.finding,
-                      'Pilih Finding...',
-                      'Cari finding...',
-                      Search,
-                    ],
-                  ].map(
-                    ([
-                      label,
-                      val,
-                      setVal,
-                      options,
-                      placeholder,
-                      searchPlaceholder,
-                      IconComponent,
-                    ]) => (
-                      <div key={label} style={{ position: 'relative' }}>
-                        <label
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            fontSize: '11px',
-                            color: theme.textSecondary,
-                            marginBottom: '6px',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.3px',
-                          }}
-                        >
-                          <IconComponent
-                            style={{
-                              width: '13px',
-                              height: '13px',
-                              color: '#1976d2',
-                            }}
-                          />
-                          <span>{label}</span>
-                          {val.length > 0 && (
-                            <span
-                              style={{ color: '#1976d2', marginLeft: '2px' }}
-                            >
-                              ({val.length})
-                            </span>
-                          )}
-                        </label>
-                        <MultiSelectDropdown
-                          options={options}
-                          selected={val}
-                          onChange={setVal}
-                          placeholder={placeholder}
-                          searchPlaceholder={searchPlaceholder}
-                          disabled={false}
-                          isDarkMode={isDarkMode}
-                        />
-                      </div>
-                    )
-                  )}
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '14px',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    marginBottom: '12px',
-                  }}
-                >
-                  <label
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      backgroundColor: theme.cardBg,
-                      border: `1px solid ${theme.border}`,
-                      borderRadius: '8px',
-                      padding: '8px 14px',
-                      fontSize: '12px',
-                      color: theme.textPrimary,
-                      backdropFilter: 'blur(8px)',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filterTTDibukaSahaja}
-                      onChange={(e) =>
-                        setFilterTTDibukaSahaja(e.target.checked)
-                      }
-                      style={{
-                        width: '15px',
-                        height: '15px',
-                        accentColor: '#6a1b9a',
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontWeight: '700',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                      }}
-                    >
-                      <Ticket
-                        style={{
-                          width: '14px',
-                          height: '14px',
-                          color: '#6a1b9a',
-                        }}
-                      />{' '}
-                      Ada TT Dibuka Sahaja
-                    </span>
-                  </label>
-
-                  {/* CARIAN UMUM */}
-                  <div
-                    style={{ position: 'relative', flex: 1, minWidth: '280px' }}
-                  >
-                    <Search
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        color: '#1565c0',
-                        position: 'absolute',
-                        left: '14px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        zIndex: 2,
-                      }}
-                    />
-                    <input
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      placeholder="Cari NO. SIRI / ISSI / TT DIBUKA / SUBSCRIBER..."
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px 10px 40px',
-                        backgroundColor: '#FFFFFF',
-                        border: '2px solid #1976d2',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        color: '#0f172a',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        boxShadow: '0 4px 14px rgba(25, 118, 210, 0.18)',
-                      }}
-                    />
-                    {searchText && (
-                      <X
-                        style={{
-                          width: '16px',
-                          height: '16px',
-                          position: 'absolute',
-                          right: '12px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          color: '#475569',
-                          cursor: 'pointer',
-                          zIndex: 2,
-                        }}
-                        onClick={() => setSearchText('')}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {hasActiveFilters && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '8px',
-                      paddingTop: '12px',
-                      borderTop: `1px solid ${theme.border}`,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        color: theme.textSecondary,
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <Tag style={{ width: '13px', height: '13px' }} /> Tapisan
-                      Aktif:
-                    </span>
-                    {filterBulanDipilih.length > 0 && (
-                      <FilterBadge
-                        label={`BULAN: ${filterBulanDipilih.length}`}
-                        type="gold"
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterBulanDipilih([])}
-                      />
-                    )}
-                    {filterZon.length > 0 && (
-                      <FilterBadge
-                        label={`ZON: ${filterZon.length}`}
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterZon([])}
-                      />
-                    )}
-                    {filterBalai.length > 0 && (
-                      <FilterBadge
-                        label={`BALAI: ${filterBalai.length}`}
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterBalai([])}
-                      />
-                    )}
-                    {filterJenisTerminal.length > 0 && (
-                      <FilterBadge
-                        label={`TERMINAL: ${filterJenisTerminal.length}`}
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterJenisTerminal([])}
-                      />
-                    )}
-                    {filterStatusSemasa.length > 0 && (
-                      <FilterBadge
-                        label={`STATUS: ${filterStatusSemasa.length}`}
-                        type="amber"
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterStatusSemasa([])}
-                      />
-                    )}
-                    {filterTanggungjawab.length > 0 && (
-                      <FilterBadge
-                        label={`T.JAWAB: ${filterTanggungjawab.length}`}
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterTanggungjawab([])}
-                      />
-                    )}
-                    {filterFinding.length > 0 && (
-                      <FilterBadge
-                        label={`FINDING: ${filterFinding.length}`}
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterFinding([])}
-                      />
-                    )}
-                    {filterTTDibukaSahaja && (
-                      <FilterBadge
-                        label="ADA TT DIBUKA SAHAJA"
-                        type="purple"
-                        isDarkMode={isDarkMode}
-                        onRemove={() => setFilterTTDibukaSahaja(false)}
-                      />
-                    )}
-                    <button
-                      onClick={resetAll}
-                      style={{
-                        fontSize: '11px',
-                        color: '#e53935',
-                        background: 'none',
-                        border: 'none',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                        marginLeft: '6px',
-                      }}
-                    >
-                      Reset Semua Tapisan
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            {filterZon.map((z) => (
+              <FilterBadge
+                key={z}
+                label={`Zon: ${z}`}
+                onRemove={() => setFilterZon(filterZon.filter((x) => x !== z))}
+                isDarkMode={isDarkMode}
+              />
+            ))}
+            {filterBalai.map((b) => (
+              <FilterBadge
+                key={b}
+                label={`Balai: ${b}`}
+                onRemove={() =>
+                  setFilterBalai(filterBalai.filter((x) => x !== b))
+                }
+                isDarkMode={isDarkMode}
+              />
+            ))}
+            {filterJenisTerminal.map((t) => (
+              <FilterBadge
+                key={t}
+                label={`Terminal: ${t}`}
+                onRemove={() =>
+                  setFilterJenisTerminal(
+                    filterJenisTerminal.filter((x) => x !== t)
+                  )
+                }
+                isDarkMode={isDarkMode}
+              />
+            ))}
+            {filterStatusSemasa.map((s) => (
+              <FilterBadge
+                key={s}
+                label={`Status: ${s}`}
+                onRemove={() =>
+                  setFilterStatusSemasa(
+                    filterStatusSemasa.filter((x) => x !== s)
+                  )
+                }
+                type="amber"
+                isDarkMode={isDarkMode}
+              />
+            ))}
+            {filterBulanDipilih.map((m) => (
+              <FilterBadge
+                key={m}
+                label={`Bulan: ${m}`}
+                onRemove={() =>
+                  setFilterBulanDipilih(
+                    filterBulanDipilih.filter((x) => x !== m)
+                  )
+                }
+                type="purple"
+                isDarkMode={isDarkMode}
+              />
+            ))}
           </div>
+        </div>
 
-          {loading ? (
+        {}
+        {activeTab === 'dashboard' && (
+          <div>
+            {/* Pie / Distribution Cards Grid */}
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'center',
-                padding: '80px 0',
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '16px',
+                marginBottom: '24px',
               }}
             >
-              <div style={{ textAlign: 'center' }}>
-                <Flame
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    color: '#1976d2',
-                    animation: 'pulse 2s ease-in-out infinite',
-                  }}
-                />
-                <p
-                  style={{
-                    color: theme.textSecondary,
-                    fontWeight: '600',
-                    marginTop: '12px',
-                    fontSize: '13px',
-                  }}
-                >
-                  Memuatkan data aset GIRN JBPM...
-                </p>
-              </div>
+              <PieChartCard
+                title="Agihan Status Semasa"
+                data={statusDistribution}
+                colorMap={STATUS_COLORS}
+                isDarkMode={isDarkMode}
+                innerRadius={45}
+              />
+              <PieChartCard
+                title="Agihan Mengikut Zon"
+                data={zonDistribution}
+                isDarkMode={isDarkMode}
+              />
+              <PieChartCard
+                title="Agihan Jenis Terminal"
+                data={terminalDistribution}
+                isDarkMode={isDarkMode}
+                innerRadius={30}
+              />
+              <PieChartCard
+                title="Top 10 Balai Mempunyai Asset"
+                data={balaiDistribution}
+                isDarkMode={isDarkMode}
+              />
             </div>
-          ) : activeTab === 'dashboard' ? (
-            <>
-              {}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '16px',
-                  marginBottom: '24px',
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              >
-                {[
-                  {
-                    label: 'Jumlah Aset',
-                    value: stats.total,
-                    color: '#1976d2',
-                    bg: isDarkMode
-                      ? 'rgba(25, 118, 210, 0.35)'
-                      : 'rgba(227, 242, 253, 0.85)',
-                    icon: Flame,
-                    sub:
-                      filteredData.length !== rawData.length
-                        ? `Ditapis dari ${rawData.length}`
-                        : 'Keseluruhan',
-                  },
-                  {
-                    label: 'Beroperasi (Baik)',
-                    value: stats.baik,
-                    color: '#2e7d32',
-                    bg: isDarkMode
-                      ? 'rgba(46, 125, 50, 0.35)'
-                      : 'rgba(232, 245, 233, 0.85)',
-                    icon: BadgeCheck,
-                    sub: `${
-                      stats.total > 0
-                        ? ((stats.baik / stats.total) * 100).toFixed(1)
-                        : 0
-                    }% | ${getBulanLabel()}`,
-                  },
-                  {
-                    label: 'Kerosakan',
-                    value: stats.rosak,
-                    color: '#c62828',
-                    bg: isDarkMode
-                      ? 'rgba(198, 40, 40, 0.35)'
-                      : 'rgba(255, 235, 238, 0.85)',
-                    icon: Siren,
-                    sub: `${
-                      stats.total > 0
-                        ? ((stats.rosak / stats.total) * 100).toFixed(1)
-                        : 0
-                    }% | ${getBulanLabel()}`,
-                  },
-                  {
-                    label: 'TT Yang Dibuka',
-                    value: stats.ttCount,
-                    color: '#6a1b9a',
-                    bg: isDarkMode
-                      ? 'rgba(106, 27, 154, 0.35)'
-                      : 'rgba(243, 229, 245, 0.85)',
-                    icon: Ticket,
-                    sub: `${
-                      stats.total > 0
-                        ? ((stats.ttCount / stats.total) * 100).toFixed(1)
-                        : 0
-                    }% Rekod Mempunyai TT`,
-                  },
-                ].map((s, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: theme.cardBg,
-                      borderRadius: '18px',
-                      padding: '20px',
-                      boxShadow: isDarkMode
-                        ? '0 8px 32px rgba(0,0,0,0.35)'
-                        : '0 8px 32px rgba(31, 38, 135, 0.07)',
-                      border: `1px solid ${theme.border}`,
-                      backdropFilter: 'blur(16px)',
-                      WebkitBackdropFilter: 'blur(16px)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        color: s.color,
-                        marginBottom: '8px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          backgroundColor: s.bg,
-                          padding: '8px',
-                          borderRadius: '10px',
-                          backdropFilter: 'blur(4px)',
-                        }}
-                      >
-                        <s.icon
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            color: s.color,
-                          }}
-                        />
-                      </div>
-                      <span
-                        style={{
-                          fontSize: '12px',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                        }}
-                      >
-                        {s.label}
-                      </span>
-                    </div>
-                    <p
-                      style={{
-                        fontSize: '32px',
-                        fontWeight: '900',
-                        color: theme.textPrimary,
-                        margin: '0 0 4px 0',
-                        letterSpacing: '-0.5px',
-                      }}
-                    >
-                      {s.value}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: '11px',
-                        color: theme.textMuted,
-                        fontWeight: '600',
-                        margin: 0,
-                      }}
-                    >
-                      {s.sub}
-                    </p>
-                  </div>
-                ))}
-              </div>
 
-              {}
-              <div
-                style={{
-                  backgroundColor: theme.cardBg,
-                  borderRadius: '18px',
-                  padding: '20px',
-                  boxShadow: isDarkMode
-                    ? '0 8px 32px rgba(0,0,0,0.35)'
-                    : '0 8px 32px rgba(31, 38, 135, 0.07)',
-                  border: `1px solid ${theme.border}`,
-                  marginBottom: '24px',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  position: isZoomed ? 'fixed' : 'relative',
-                  top: isZoomed ? '10px' : 'auto',
-                  left: isZoomed ? '10px' : 'auto',
-                  right: isZoomed ? '10px' : 'auto',
-                  bottom: isZoomed ? '10px' : 'auto',
-                  zIndex: isZoomed ? 99999 : 1,
-                  overflowY: isZoomed ? 'auto' : 'visible',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '12px',
-                    marginBottom: '16px',
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontSize: '15px',
-                      fontWeight: '800',
-                      color: theme.textPrimary,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      margin: 0,
-                    }}
-                  >
-                    <BarChart3
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        color: '#1976d2',
-                      }}
-                    />
-                    {chartTitle}
-                  </h3>
-
-                  <button
-                    onClick={() => setIsZoomed(!isZoomed)}
-                    style={{
-                      padding: '8px 14px',
-                      backgroundColor: isDarkMode ? '#1e293b' : '#e2e8f0',
-                      color: theme.textPrimary,
-                      border: `1px solid ${theme.border}`,
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {isZoomed ? (
-                      <Minimize2 style={{ width: '16px', height: '16px' }} />
-                    ) : (
-                      <Maximize2 style={{ width: '16px', height: '16px' }} />
-                    )}
-                    <span>{isZoomed ? 'Tutup Zoom' : 'Zoom Penuh'}</span>
-                  </button>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '14px',
-                    flexWrap: 'wrap',
-                    alignItems: 'flex-end',
-                    marginBottom: '20px',
-                    backgroundColor: isDarkMode
-                      ? 'rgba(15,23,42,0.4)'
-                      : 'rgba(241,245,249,0.6)',
-                    padding: '14px',
-                    borderRadius: '12px',
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div style={{ minWidth: '240px', flex: 1 }}>
-                    <label
-                      style={{
-                        fontSize: '11px',
-                        color: theme.textSecondary,
-                        fontWeight: '700',
-                        display: 'block',
-                        marginBottom: '6px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Jenis Graf (Boleh Pilih Banyak):
-                    </label>
-                    <MultiSelectDropdown
-                      options={CHART_TYPE_OPTIONS}
-                      selected={selectedChartTypes}
-                      onChange={setSelectedChartTypes}
-                      placeholder="Pilih jenis graf..."
-                      searchPlaceholder="Cari jenis graf..."
-                      disabled={false}
-                      isDarkMode={isDarkMode}
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        fontSize: '11px',
-                        color: theme.textSecondary,
-                        fontWeight: '700',
-                        display: 'block',
-                        marginBottom: '6px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Paparan Label Nombor:
-                    </label>
-                    <button
-                      onClick={() => setShowBarLabels(!showBarLabels)}
-                      style={{
-                        padding: '8px 14px',
-                        backgroundColor: showBarLabels
-                          ? isDarkMode
-                            ? 'rgba(25, 118, 210, 0.35)'
-                            : '#e3f2fd'
-                          : theme.inputBg,
-                        color: showBarLabels ? '#1976d2' : theme.textSecondary,
-                        border: `1px solid ${
-                          showBarLabels ? '#90caf9' : theme.border
-                        }`,
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        height: '35px',
-                        transition: 'all 0.2s ease',
-                        backdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      {showBarLabels ? (
-                        <Eye
-                          style={{
-                            width: '15px',
-                            height: '15px',
-                            color: '#1976d2',
-                          }}
-                        />
-                      ) : (
-                        <EyeOff
-                          style={{
-                            width: '15px',
-                            height: '15px',
-                            color: theme.textMuted,
-                          }}
-                        />
-                      )}
-                      <span>
-                        Nombor Data:{' '}
-                        <strong>{showBarLabels ? 'Tunjuk' : 'Sembunyi'}</strong>
-                      </span>
-                    </button>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        fontSize: '11px',
-                        color: theme.textSecondary,
-                        fontWeight: '700',
-                        display: 'block',
-                        marginBottom: '6px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Paksi-X (X-Axis):
-                    </label>
-                    <select
-                      value={xAxisOption}
-                      onChange={(e) => setXAxisOption(e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        border: `1px solid ${theme.border}`,
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        backgroundColor: theme.inputBg,
-                        color: theme.textPrimary,
-                        outline: 'none',
-                        height: '35px',
-                      }}
-                    >
-                      <option value="bulan">Bulan</option>
-                      <option value="ZON">ZON</option>
-                      <option value="BALAI">BALAI</option>
-                      <option value="JENIS TERMINAL">TERMINAL</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        fontSize: '11px',
-                        color: theme.textSecondary,
-                        fontWeight: '700',
-                        display: 'block',
-                        marginBottom: '6px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Pecahan Data:
-                    </label>
-                    <select
-                      value={stackOption}
-                      onChange={(e) => setStackOption(e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        border: `1px solid ${theme.border}`,
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        backgroundColor: theme.inputBg,
-                        color: theme.textPrimary,
-                        outline: 'none',
-                        height: '35px',
-                      }}
-                    >
-                      <option value="status">Status</option>
-                      <option value="ZON">ZON</option>
-                      <option value="BALAI">BALAI</option>
-                      <option value="JENIS TERMINAL">TERMINAL</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        fontSize: '11px',
-                        color: theme.textSecondary,
-                        fontWeight: '700',
-                        display: 'block',
-                        marginBottom: '6px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Susunan Graf:
-                    </label>
-                    <select
-                      value={isStacked ? 'stacked' : 'grouped'}
-                      onChange={(e) =>
-                        setIsStacked(e.target.value === 'stacked')
-                      }
-                      style={{
-                        padding: '8px 12px',
-                        border: `1px solid ${theme.border}`,
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        backgroundColor: theme.inputBg,
-                        color: theme.textPrimary,
-                        outline: 'none',
-                        height: '35px',
-                      }}
-                    >
-                      <option value="stacked">Bertindan (Stacked)</option>
-                      <option value="grouped">Bersebelahan (Grouped)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {dynamicChartData.length > 0 &&
-                selectedChartTypes.length > 0 ? (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns:
-                        selectedChartTypes.length > 1
-                          ? 'repeat(auto-fit, minmax(480px, 1fr))'
-                          : '1fr',
-                      gap: '20px',
-                    }}
-                  >
-                    {selectedChartTypes.map((cType) => {
-                      const chartObj = CHART_TYPE_OPTIONS.find(
-                        (o) => o.value === cType
-                      );
-                      return (
-                        <div
-                          key={cType}
-                          style={{
-                            backgroundColor: isDarkMode
-                              ? 'rgba(15, 23, 42, 0.4)'
-                              : 'rgba(255, 255, 255, 0.5)',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            border: `1px solid ${theme.border}`,
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: '800',
-                              color: theme.textPrimary,
-                              marginBottom: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                            }}
-                          >
-                            <span>{chartObj?.label || cType}</span>
-                            <span
-                              style={{
-                                fontSize: '10px',
-                                color: theme.textMuted,
-                                fontWeight: '600',
-                              }}
-                            >
-                              Label Nombor: {showBarLabels ? 'Aktif' : 'Tutup'}
-                            </span>
-                          </div>
-                          <ResponsiveContainer
-                            width="100%"
-                            height={
-                              selectedChartTypes.length > 1
-                                ? 320
-                                : isZoomed
-                                ? 600
-                                : 420
-                            }
-                          >
-                            {renderSingleChart(cType)}
-                          </ResponsiveContainer>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '50px',
-                      color: theme.textMuted,
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                  >
-                    {selectedChartTypes.length === 0
-                      ? 'Sila pilih sekurang-kurangnya satu jenis graf daripada dropdown pelbagai pilihan.'
-                      : 'Sila pilih bulan atau tapisan di atas untuk melihat carta.'}
-                  </div>
-                )}
-              </div>
-
-              {}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap: '16px',
-                }}
-              >
-                <PieChartCard
-                  title={`Carta Status (${getBulanLabel()})`}
-                  data={statusDistribution}
-                  colorMap={STATUS_COLORS}
-                  isDarkMode={isDarkMode}
-                  innerRadius={0}
-                />
-                <PieChartCard
-                  title="Carta Taburan Mengikut ZON"
-                  data={zonDistribution}
-                  isDarkMode={isDarkMode}
-                  innerRadius={45}
-                />
-                <PieChartCard
-                  title="Top 10 BALAI"
-                  data={balaiDistribution}
-                  isDarkMode={isDarkMode}
-                  innerRadius={0}
-                />
-                <PieChartCard
-                  title="Jenis Terminal"
-                  data={terminalDistribution}
-                  isDarkMode={isDarkMode}
-                  innerRadius={40}
-                />
-              </div>
-            </>
-          ) : (
+            {/* Interactive Analytical Graphs Section */}
             <div
               style={{
                 backgroundColor: theme.cardBg,
-                borderRadius: '18px',
+                borderRadius: '16px',
                 padding: '20px',
-                boxShadow: isDarkMode
-                  ? '0 8px 32px rgba(0,0,0,0.35)'
-                  : '0 8px 32px rgba(31, 38, 135, 0.07)',
                 border: `1px solid ${theme.border}`,
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
+                backdropFilter: 'blur(12px)',
+                marginBottom: '24px',
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  marginBottom: '16px',
-                  flexWrap: 'wrap',
-                  gap: '10px',
                   alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  marginBottom: '16px',
                 }}
               >
-                <h3
+                <div>
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: '800',
+                      margin: 0,
+                      color: theme.textPrimary,
+                    }}
+                  >
+                    📈 Carta Visualisasi Prestasi Dan Aliran
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: '11px',
+                      color: theme.textMuted,
+                      margin: '2px 0 0 0',
+                    }}
+                  >
+                    Pilih paksi, pengelompokan dan jenis graf mengikut keperluan
+                    analisis anda
+                  </p>
+                </div>
+
+                {/* Chart Controls */}
+                <div
                   style={{
-                    fontSize: '13px',
-                    fontWeight: '800',
-                    color: theme.textPrimary,
-                    textTransform: 'uppercase',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    margin: 0,
+                    gap: '10px',
+                    flexWrap: 'wrap',
                   }}
                 >
-                  <Table2
-                    style={{ width: '16px', height: '16px', color: '#1976d2' }}
-                  />
-                  Data Peranti Terminal —{' '}
-                  <span style={{ color: '#1976d2' }}>
-                    {filteredData.length} rekod
-                  </span>
-                </h3>
-                <select
-                  value={rowsPerPage}
-                  onChange={(e) => setRowsPerPage(+e.target.value)}
-                  style={{
-                    padding: '6px 12px',
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    backgroundColor: theme.inputBg,
-                    color: theme.textPrimary,
-                    outline: 'none',
-                  }}
-                >
-                  {[10, 25, 50, 100, 200, 300].map((v) => (
-                    <option key={v} value={v}>
-                      {v} baris se-halaman
-                    </option>
-                  ))}
-                </select>
+                  <select
+                    value={xAxisOption}
+                    onChange={(e) => setXAxisOption(e.target.value)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.inputBg,
+                      color: theme.textPrimary,
+                      fontSize: '12px',
+                      fontWeight: '600',
+                    }}
+                  >
+                    <option value="bulan">Paksi X: Trend Bulan</option>
+                    <option value="ZON">Paksi X: Zon</option>
+                    <option value="JENIS TERMINAL">Paksi X: Jenis Terminal</option>
+                    <option value="BALAI">Paksi X: Balai Bomba</option>
+                  </select>
+
+                  <select
+                    value={stackOption}
+                    onChange={(e) => setStackOption(e.target.value)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.inputBg,
+                      color: theme.textPrimary,
+                      fontSize: '12px',
+                      fontWeight: '600',
+                    }}
+                  >
+                    <option value="status">Kumpulan: Status</option>
+                    <option value="jenisTerminal">Kumpulan: Jenis Terminal</option>
+                    <option value="zon">Kumpulan: Zon</option>
+                  </select>
+
+                  <select
+                    value={selectedChartTypes[0]}
+                    onChange={(e) => setSelectedChartTypes([e.target.value])}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.inputBg,
+                      color: theme.textPrimary,
+                      fontSize: '12px',
+                      fontWeight: '600',
+                    }}
+                  >
+                    {CHART_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div
-                style={{
-                  overflowX: 'auto',
-                  borderRadius: '12px',
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    fontSize: '12px',
-                  }}
-                >
-                  <thead>
-                    <tr
+
+              {/* Dynamic Recharts Rendering */}
+              <div style={{ width: '100%', height: '360px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  {selectedChartTypes[0] === 'line' ? (
+                    <LineChart data={dynamicChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={
+                          isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)'
+                        }
+                      />
+                      <XAxis dataKey="name" stroke={theme.textMuted} fontSize={11} />
+                      <YAxis stroke={theme.textMuted} fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: theme.cardBg,
+                          borderRadius: '10px',
+                          border: `1px solid ${theme.border}`,
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="BAIK"
+                        stroke="#00C853"
+                        strokeWidth={3}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="ROSAK"
+                        stroke="#FF1744"
+                        strokeWidth={3}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#3b82f6"
+                        strokeDasharray="5 5"
+                      />
+                    </LineChart>
+                  ) : selectedChartTypes[0] === 'area' ? (
+                    <AreaChart data={dynamicChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={
+                          isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)'
+                        }
+                      />
+                      <XAxis dataKey="name" stroke={theme.textMuted} fontSize={11} />
+                      <YAxis stroke={theme.textMuted} fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: theme.cardBg,
+                          borderRadius: '10px',
+                          border: `1px solid ${theme.border}`,
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="BAIK"
+                        stackId="1"
+                        stroke="#00C853"
+                        fill="#00C853"
+                        fillOpacity={0.6}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="ROSAK"
+                        stackId="1"
+                        stroke="#FF1744"
+                        fill="#FF1744"
+                        fillOpacity={0.6}
+                      />
+                    </AreaChart>
+                  ) : selectedChartTypes[0] === 'candlestick' ? (
+                    <ComposedChart data={dynamicChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={
+                          isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)'
+                        }
+                      />
+                      <XAxis dataKey="name" stroke={theme.textMuted} fontSize={11} />
+                      <YAxis stroke={theme.textMuted} fontSize={11} />
+                      <Tooltip />
+                      <Bar dataKey="total" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                      <Line type="monotone" dataKey="max" stroke="#ef4444" />
+                      <Line type="monotone" dataKey="min" stroke="#22c55e" />
+                    </ComposedChart>
+                  ) : (
+                    <BarChart data={dynamicChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={
+                          isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)'
+                        }
+                      />
+                      <XAxis dataKey="name" stroke={theme.textMuted} fontSize={11} />
+                      <YAxis stroke={theme.textMuted} fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: theme.cardBg,
+                          borderRadius: '10px',
+                          border: `1px solid ${theme.border}`,
+                        }}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="BAIK"
+                        fill={STATUS_COLORS.BAIK}
+                        stackId="a"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="ROSAK"
+                        fill={STATUS_COLORS.ROSAK}
+                        stackId="a"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="BER - TINDAKAN SAPURA"
+                        fill={STATUS_COLORS['BER - TINDAKAN SAPURA']}
+                        stackId="a"
+                      />
+                      <Bar
+                        dataKey="BER - TINDAKAN JABATAN"
+                        fill={STATUS_COLORS['BER - TINDAKAN JABATAN']}
+                        stackId="a"
+                      />
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {}
+        {activeTab === 'analytics' && (
+          <div
+            style={{
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '24px',
+              border: `1px solid ${theme.border}`,
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+            <h3
+              style={{
+                fontSize: '18px',
+                fontWeight: '800',
+                margin: '0 0 16px 0',
+              }}
+            >
+              📊 Analisis Terperinci Mengikut Zon & Balai
+            </h3>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '20px',
+              }}
+            >
+              {uniqueValues.zon.map((zon) => {
+                const zonData = filteredData.filter(
+                  (d) => d['ZON']?.trim() === zon
+                );
+                const totalZon = zonData.length;
+                const baikZon = zonData.filter(
+                  (d) => normalizeStatus(d[activeStatusCol]) === 'BAIK'
+                ).length;
+                const rosakZon = zonData.filter(
+                  (d) => normalizeStatus(d[activeStatusCol]) === 'ROSAK'
+                ).length;
+                const pct =
+                  totalZon > 0 ? ((baikZon / totalZon) * 100).toFixed(1) : 0;
+
+                return (
+                  <div
+                    key={zon}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: isDarkMode
+                        ? 'rgba(15, 23, 42, 0.6)'
+                        : 'rgba(255, 255, 255, 0.7)',
+                    }}
+                  >
+                    <div
                       style={{
-                        backgroundColor: theme.tableHeaderBg,
-                        borderBottom: `2px solid ${theme.border}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '10px',
                       }}
                     >
-                      {(() => {
-                        const baseHeaders = [
-                          '#',
-                          'NO. SIRI',
-                          'TERMINAL',
-                          'ISSI',
-                          'SUBSCRIBER',
-                          'ZON',
-                          'BALAI',
-                          'T.JAWAB',
-                        ];
-                        const monthlyHeaders = [];
+                      <h4
+                        style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          fontWeight: '800',
+                        }}
+                      >
+                        📍 {zon}
+                      </h4>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: '#16a34a',
+                        }}
+                      >
+                        {pct}% Baik
+                      </span>
+                    </div>
 
-                        if (filterBulanDipilih.length > 0) {
-                          selectedMonthColumns.forEach((mc) => {
-                            monthlyHeaders.push(`STATUS ${mc.label}`);
-                            monthlyHeaders.push(`TARIKH UJIAN ${mc.label}`);
-                            monthlyHeaders.push(`TT DIBUKA ${mc.label}`);
-                          });
-                        } else {
-                          monthlyHeaders.push('STATUS');
-                          monthlyHeaders.push('TARIKH UJIAN');
-                          monthlyHeaders.push('TT YANG DIBUKA');
-                        }
-                        return [...baseHeaders, ...monthlyHeaders, 'REG NO.'];
-                      })().map((h) => (
-                        <th
-                          key={h}
-                          style={{
-                            padding: '10px 12px',
-                            textAlign: 'left',
-                            fontWeight: '800',
-                            color: theme.textSecondary,
-                            whiteSpace: 'nowrap',
-                            fontSize: '11px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.3px',
-                          }}
-                        >
-                          {h}
-                        </th>
-                      ))}
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '8px',
+                        backgroundColor: 'rgba(0,0,0,0.1)',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        marginBottom: '12px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${pct}%`,
+                          height: '100%',
+                          backgroundColor: '#16a34a',
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '12px',
+                        color: theme.textMuted,
+                      }}
+                    >
+                      <span>Jumlah: {totalZon}</span>
+                      <span>Baik: {baikZon}</span>
+                      <span style={{ color: '#dc2626' }}>Rosak: {rosakZon}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {}
+        {activeTab === 'table' && (
+          <div
+            style={{
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '20px',
+              border: `1px solid ${theme.border}`,
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+                flexWrap: 'wrap',
+                gap: '10px',
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800' }}>
+                📋 Jadual Data Radio Terminal GIRN ({filteredData.length} Rekod)
+              </h3>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '12px', color: theme.textMuted }}>
+                  Baris Per Halaman:
+                </span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.inputBg,
+                    color: theme.textPrimary,
+                    fontSize: '12px',
+                  }}
+                >
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Responsive Table */}
+            <div style={{ overflowX: 'auto' }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '12px',
+                  textAlign: 'left',
+                }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      backgroundColor: theme.tableHeaderBg,
+                      borderBottom: `2px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                    }}
+                  >
+                    <th style={{ padding: '10px' }}>Bil</th>
+                    <th style={{ padding: '10px' }}>No. Siri</th>
+                    <th style={{ padding: '10px' }}>ISSI</th>
+                    <th style={{ padding: '10px' }}>Zon</th>
+                    <th style={{ padding: '10px' }}>Balai</th>
+                    <th style={{ padding: '10px' }}>Jenis Terminal</th>
+                    <th style={{ padding: '10px' }}>Status Semasa</th>
+                    <th style={{ padding: '10px' }}>No. Tiket TT</th>
+                    <th style={{ padding: '10px' }}>Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={9}
+                        style={{
+                          textAlign: 'center',
+                          padding: '30px',
+                          color: theme.textMuted,
+                        }}
+                      >
+                        Tiada data dijumpai padanan penapis.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedData.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={15}
-                          style={{
-                            padding: '32px',
-                            textAlign: 'center',
-                            color: theme.textMuted,
-                            fontSize: '13px',
-                          }}
-                        >
-                          Tiada rekod dijumpai mengikut tapisan semasa.
-                        </td>
-                      </tr>
-                    ) : (
-                      paginatedData.map((d, i) => (
+                  ) : (
+                    paginatedData.map((row, idx) => {
+                      const status = normalizeStatus(row[activeStatusCol]);
+                      const ttVal = activeTTCol ? row[activeTTCol] : '-';
+                      return (
                         <tr
-                          key={i}
+                          key={idx}
+                          onClick={() => setSelectedRowDetail(row)}
                           style={{
                             borderBottom: `1px solid ${theme.border}`,
+                            cursor: 'pointer',
                             transition: 'background-color 0.15s ease',
                           }}
                           onMouseEnter={(e) =>
@@ -3835,416 +2988,427 @@ export default function App() {
                               'transparent')
                           }
                         >
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textMuted,
-                              fontFamily: 'monospace',
-                              fontSize: '11px',
-                            }}
-                          >
-                            {(currentPage - 1) * rowsPerPage + i + 1}
+                          <td style={{ padding: '10px' }}>
+                            {(currentPage - 1) * rowsPerPage + idx + 1}
                           </td>
                           <td
                             style={{
-                              padding: '8px 12px',
-                              color: theme.textPrimary,
-                              fontFamily: 'monospace',
-                              fontSize: '11px',
+                              padding: '10px',
                               fontWeight: '700',
+                              color: '#3b82f6',
                             }}
                           >
-                            {d['NO. SIRI'] || '—'}
+                            {row['NO. SIRI'] || '-'}
                           </td>
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textSecondary,
-                              fontSize: '11px',
-                              fontWeight: '500',
-                            }}
-                          >
-                            {d['JENIS TERMINAL'] || '—'}
+                          <td style={{ padding: '10px' }}>
+                            {row['NO. ISSI TETRA'] || '-'}
                           </td>
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textSecondary,
-                              fontFamily: 'monospace',
-                              fontSize: '11px',
-                            }}
-                          >
-                            {d['NO. ISSI TETRA'] || '—'}
+                          <td style={{ padding: '10px' }}>
+                            {row['ZON'] || '-'}
                           </td>
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textSecondary,
-                              fontSize: '11px',
-                            }}
-                          >
-                            {d['SUBSCRIBER'] || '—'}
+                          <td style={{ padding: '10px' }}>
+                            {row['BALAI'] || '-'}
                           </td>
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textSecondary,
-                              fontWeight: '600',
-                              fontSize: '11px',
-                            }}
-                          >
-                            {d['ZON'] || '—'}
+                          <td style={{ padding: '10px' }}>
+                            {row['JENIS TERMINAL'] || '-'}
                           </td>
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textSecondary,
-                              fontSize: '11px',
-                            }}
-                          >
-                            {d['BALAI'] || '—'}
+                          <td style={{ padding: '10px' }}>
+                            <StatusBadge
+                              status={status}
+                              isDarkMode={isDarkMode}
+                            />
                           </td>
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textSecondary,
-                              fontSize: '11px',
-                            }}
-                          >
-                            {d['TANGGUNGJAWAB PENGUJIAN'] || '—'}
-                          </td>
-
-                          {filterBulanDipilih.length > 0 ? (
-                            selectedMonthColumns.map((mc) => {
-                              const ttVal =
-                                mc.tt && d[mc.tt] ? d[mc.tt].trim() : '';
-                              return (
-                                <React.Fragment key={mc.label}>
-                                  <td style={{ padding: '8px 12px' }}>
-                                    <StatusBadge
-                                      status={
-                                        mc.status && d[mc.status]
-                                          ? normalizeStatus(d[mc.status])
-                                          : 'TIADA DATA'
-                                      }
-                                      isDarkMode={isDarkMode}
-                                    />
-                                  </td>
-                                  <td
-                                    style={{
-                                      padding: '8px 12px',
-                                      color: theme.textSecondary,
-                                      fontSize: '11px',
-                                      fontWeight: '500',
-                                    }}
-                                  >
-                                    {mc.tarikh && d[mc.tarikh]
-                                      ? d[mc.tarikh]
-                                      : '—'}
-                                  </td>
-                                  <td
-                                    style={{
-                                      padding: '8px 12px',
-                                      fontFamily: 'monospace',
-                                      fontSize: '11px',
-                                      fontWeight:
-                                        ttVal &&
-                                        ttVal !== 'TIADA' &&
-                                        ttVal !== '-'
-                                          ? '700'
-                                          : 'normal',
-                                      color:
-                                        ttVal &&
-                                        ttVal !== 'TIADA' &&
-                                        ttVal !== '-'
-                                          ? isDarkMode
-                                            ? '#ce93d8'
-                                            : '#6a1b9a'
-                                          : theme.textSecondary,
-                                    }}
-                                  >
-                                    {ttVal || '—'}
-                                  </td>
-                                </React.Fragment>
-                              );
-                            })
-                          ) : (
-                            <>
-                              <td style={{ padding: '8px 12px' }}>
-                                <StatusBadge
-                                  status={
-                                    activeStatusCol && d[activeStatusCol]
-                                      ? normalizeStatus(d[activeStatusCol])
-                                      : 'TIADA DATA'
-                                  }
-                                  isDarkMode={isDarkMode}
-                                />
-                              </td>
-                              <td
+                          <td style={{ padding: '10px', fontWeight: '600' }}>
+                            {ttVal && ttVal !== '-' ? (
+                              <span
                                 style={{
-                                  padding: '8px 12px',
-                                  color: theme.textSecondary,
+                                  backgroundColor: 'rgba(234, 88, 12, 0.15)',
+                                  color: '#ea580c',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
                                   fontSize: '11px',
-                                  fontWeight: '500',
                                 }}
                               >
-                                {activeTarikhUjianCol && d[activeTarikhUjianCol]
-                                  ? d[activeTarikhUjianCol]
-                                  : '—'}
-                              </td>
-                              <td
-                                style={{
-                                  padding: '8px 12px',
-                                  fontFamily: 'monospace',
-                                  fontSize: '11px',
-                                  fontWeight:
-                                    activeTTCol &&
-                                    d[activeTTCol] &&
-                                    d[activeTTCol].trim() !== 'TIADA' &&
-                                    d[activeTTCol].trim() !== '-'
-                                      ? '700'
-                                      : 'normal',
-                                  color:
-                                    activeTTCol &&
-                                    d[activeTTCol] &&
-                                    d[activeTTCol].trim() !== 'TIADA' &&
-                                    d[activeTTCol].trim() !== '-'
-                                      ? isDarkMode
-                                        ? '#ce93d8'
-                                        : '#6a1b9a'
-                                      : theme.textSecondary,
-                                }}
-                              >
-                                {activeTTCol && d[activeTTCol]
-                                  ? d[activeTTCol]
-                                  : '—'}
-                              </td>
-                            </>
-                          )}
-                          <td
-                            style={{
-                              padding: '8px 12px',
-                              color: theme.textSecondary,
-                              fontFamily: 'monospace',
-                              fontSize: '11px',
-                            }}
-                          >
-                            {d['VEHICLE REG NO.'] || '—'}
+                                {ttVal}
+                              </span>
+                            ) : (
+                              '-'
+                            )}
+                          </td>
+                          <td style={{ padding: '10px' }}>
+                            <button
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                backgroundColor: '#3b82f6',
+                                color: '#fff',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Butiran
+                            </button>
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-              {/* Pagination Controls */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '16px',
-                  flexWrap: 'wrap',
-                  gap: '10px',
-                }}
-              >
-                <span
+            {/* Pagination Controls */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '16px',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: theme.textMuted }}>
+                Halaman {currentPage} daripada {totalPages}
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                   style={{
-                    fontSize: '12px',
-                    color: theme.textSecondary,
-                    fontWeight: '600',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.inputBg,
+                    color: theme.textPrimary,
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  Menunjukkan {(currentPage - 1) * rowsPerPage + 1} hingga{' '}
-                  {Math.min(currentPage * rowsPerPage, filteredData.length)}{' '}
-                  daripada {filteredData.length} rekod
-                </span>
-                <div
-                  style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
+                  <ChevronLeft style={{ width: '14px', height: '14px' }} />
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(p + 1, totalPages))
+                  }
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.inputBg,
+                    color: theme.textPrimary,
+                    cursor:
+                      currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  }}
                 >
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: theme.cardBg,
-                      color: theme.textPrimary,
-                      border: `1px solid ${theme.border}`,
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                      opacity: currentPage === 1 ? 0.5 : 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    <ChevronLeft style={{ width: '14px', height: '14px' }} />{' '}
-                    Sebelumnya
-                  </button>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      color: theme.textPrimary,
-                      fontWeight: '700',
-                      padding: '0 8px',
-                    }}
-                  >
-                    {currentPage} / {totalPages}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: theme.cardBg,
-                      color: theme.textPrimary,
-                      border: `1px solid ${theme.border}`,
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      cursor:
-                        currentPage === totalPages ? 'not-allowed' : 'pointer',
-                      opacity: currentPage === totalPages ? 0.5 : 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    Seterusnya{' '}
-                    <ChevronRight style={{ width: '14px', height: '14px' }} />
-                  </button>
-                </div>
+                  <ChevronRight style={{ width: '14px', height: '14px' }} />
+                </button>
               </div>
             </div>
-          )}
-        </main>
+          </div>
+        )}
 
         {}
-        <footer
-          style={{
-            marginTop: 'auto',
-            padding: '24px 20px',
-            backgroundColor: theme.headerBg,
-            borderTop: `1px solid ${theme.border}`,
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            position: 'relative',
-            overflow: 'hidden',
-            zIndex: 10,
-          }}
-        >
-          {/* Subtle Background Watermark Text Overlay */}
+        {activeTab === 'tickets' && (
           <div
             style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              fontSize: 'calc(1.8vw + 16px)',
-              fontWeight: '900',
-              color: isDarkMode
-                ? 'rgba(255, 255, 255, 0.03)'
-                : 'rgba(0, 0, 0, 0.035)',
-              whiteSpace: 'nowrap',
-              pointerEvents: 'none',
-              userSelect: 'none',
-              letterSpacing: '4px',
-              textTransform: 'uppercase',
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '24px',
+              border: `1px solid ${theme.border}`,
+              backdropFilter: 'blur(12px)',
             }}
           >
-            PGO JOHOR • GIRN JBPM
-          </div>
+            <h3
+              style={{
+                fontSize: '18px',
+                fontWeight: '800',
+                margin: '0 0 16px 0',
+              }}
+            >
+              🎫 Pengurusan & Pemantauan Tiket TT Aktif ({ttList.length})
+            </h3>
 
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '16px',
+              }}
+            >
+              {ttList.map((row, idx) => {
+                const ttNum = activeTTCol ? row[activeTTCol] : 'N/A';
+                const status = normalizeStatus(row[activeStatusCol]);
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: isDarkMode
+                        ? 'rgba(15, 23, 42, 0.8)'
+                        : 'rgba(255, 255, 255, 0.9)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: '800',
+                          fontSize: '14px',
+                          color: '#ea580c',
+                        }}
+                      >
+                        Tiket #: {ttNum}
+                      </span>
+                      <StatusBadge status={status} isDarkMode={isDarkMode} />
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        color: theme.textSecondary,
+                      }}
+                    >
+                      <div>
+                        <strong>No. Siri:</strong> {row['NO. SIRI'] || '-'}
+                      </div>
+                      <div>
+                        <strong>Balai:</strong> {row['BALAI'] || '-'} (
+                        {row['ZON'] || '-'})
+                      </div>
+                      <div>
+                        <strong>Jenis:</strong> {row['JENIS TERMINAL'] || '-'}
+                      </div>
+                      <div>
+                        <strong>Tanggungjawab:</strong>{' '}
+                        {row['TANGGUNGJAWAB PENGUJIAN'] || '-'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {}
+        {activeTab === 'report' && (
           <div
             style={{
-              maxWidth: '1800px',
-              margin: '0 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              gap: '8px',
-              position: 'relative',
-              zIndex: 2,
+              backgroundColor: '#fff',
+              color: '#000',
+              borderRadius: '16px',
+              padding: '32px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
             }}
           >
             <div
               style={{
                 display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: '8px',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
+                borderBottom: '2px solid #000',
+                paddingBottom: '16px',
+                marginBottom: '20px',
               }}
             >
-              <Flame
-                style={{ width: '16px', height: '16px', color: '#1976d2' }}
-              />
-              <p
+              <div>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800' }}>
+                  LAPORAN EKSEKUTIF KETERSEDIAAN RADIO TERMINAL GIRN
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>
+                  JABATAN BOMBA DAN PENYELAMAT MALAYSIA NEGERI JOHOR
+                </p>
+              </div>
+              <button
+                onClick={() => window.print()}
                 style={{
-                  fontSize: '13px',
-                  fontWeight: '800',
-                  color: theme.textPrimary,
-                  margin: 0,
-                  letterSpacing: '0.4px',
-                  textTransform: 'uppercase',
+                  padding: '8px 16px',
+                  backgroundColor: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                DATA ASET GIRN JABATAN BOMBA DAN PENYELAMAT MALAYSIA NEGERI
-                JOHOR
-              </p>
+                <Printer style={{ width: '16px', height: '16px' }} />
+                Cetak Laporan
+              </button>
             </div>
-
-            <p
-              style={{
-                fontSize: '12px',
-                color: theme.textSecondary,
-                margin: 0,
-                fontWeight: '600',
-                letterSpacing: '0.2px',
-              }}
-            >
-              © 2026 PGO JOHOR | Hak Cipta Terpelihara
-            </p>
 
             <div
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: '20px',
-                backgroundColor: isDarkMode
-                  ? 'rgba(25, 118, 210, 0.2)'
-                  : 'rgba(25, 118, 210, 0.08)',
-                border: `1px solid ${
-                  isDarkMode
-                    ? 'rgba(25, 118, 210, 0.4)'
-                    : 'rgba(25, 118, 210, 0.25)'
-                }`,
-                marginTop: '2px',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: '12px',
+                marginBottom: '24px',
+                textAlign: 'center',
               }}
             >
-              <p
+              <div
                 style={{
-                  fontSize: '11px',
-                  color: '#1976d2',
-                  margin: 0,
-                  fontWeight: '800',
-                  letterSpacing: '0.0px',
-                  textTransform: 'uppercase',
+                  border: '1px solid #ccc',
+                  padding: '12px',
+                  borderRadius: '8px',
                 }}
               >
-                {/*PEMBANGUN APLIKASI: PB MOHAMAD AIDIL*/}
-              </p>
+                <div style={{ fontSize: '11px', fontWeight: '700' }}>
+                  JUMLAH ASSET
+                </div>
+                <div style={{ fontSize: '22px', fontWeight: '800' }}>
+                  {kpiStats.total}
+                </div>
+              </div>
+              <div
+                style={{
+                  border: '1px solid #ccc',
+                  padding: '12px',
+                  borderRadius: '8px',
+                }}
+              >
+                <div style={{ fontSize: '11px', fontWeight: '700' }}>
+                  JUMLAH BAIK
+                </div>
+                <div
+                  style={{ fontSize: '22px', fontWeight: '800', color: '#16a34a' }}
+                >
+                  {kpiStats.baik} ({kpiStats.readiness}%)
+                </div>
+              </div>
+              <div
+                style={{
+                  border: '1px solid #ccc',
+                  padding: '12px',
+                  borderRadius: '8px',
+                }}
+              >
+                <div style={{ fontSize: '11px', fontWeight: '700' }}>
+                  JUMLAH ROSAK
+                </div>
+                <div
+                  style={{ fontSize: '22px', fontWeight: '800', color: '#dc2626' }}
+                >
+                  {kpiStats.rosak}
+                </div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '12px', lineHeight: '1.6' }}>
+              Laporan ini memaparkan status ketersediaan peralatan sistem komunikasi
+              GIRN Negeri Johor mengikut rekod ujian berkala semasa.
+            </p>
+          </div>
+        )}
+      </main>
+
+      {}
+      {selectedRowDetail && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            backdropFilter: 'blur(6px)',
+          }}
+          onClick={() => setSelectedRowDetail(null)}
+        >
+          <div
+            style={{
+              backgroundColor: theme.cardBg,
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '100%',
+              border: `1px solid ${theme.border}`,
+              color: theme.textPrimary,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800' }}>
+                📻 Butiran Radio Terminal
+              </h3>
+              <X
+                style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+                onClick={() => setSelectedRowDetail(null)}
+              />
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                fontSize: '13px',
+              }}
+            >
+              <div>
+                <strong>No. Siri:</strong> {selectedRowDetail['NO. SIRI']}
+              </div>
+              <div>
+                <strong>ISSI:</strong> {selectedRowDetail['NO. ISSI TETRA']}
+              </div>
+              <div>
+                <strong>Zon:</strong> {selectedRowDetail['ZON']}
+              </div>
+              <div>
+                <strong>Balai:</strong> {selectedRowDetail['BALAI']}
+              </div>
+              <div>
+                <strong>Jenis:</strong> {selectedRowDetail['JENIS TERMINAL']}
+              </div>
+              <div>
+                <strong>TEI:</strong> {selectedRowDetail['NO. TEI']}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', textAlign: 'right' }}>
+              <button
+                onClick={() => setSelectedRowDetail(null)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#dc2626',
+                  color: '#fff',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                }}
+              >
+                Tutup
+              </button>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
