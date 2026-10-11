@@ -334,14 +334,30 @@ const extractMonthlyColumns = (headers) => {
         );
       });
 
+      // Cari kolum KEROSAKAN untuk bulan ini (jika ada)
+      const rosakCol = headers.find((h) => {
+        const ch = cleanHeader(h);
+        if (ch.includes('VT')) return false;
+        if (!ch.includes('KEROSAKAN') && !ch.includes('ROSAK')) return false;
+        if (mn === 'SEMASA 2026') {
+          return (
+            (ch.includes('SEMASA') && ch.includes('2026')) ||
+            (ch.includes('KEROSAKAN') && !ch.match(/\b20\d{2}\b/))
+          );
+        }
+        return ch.includes(mn);
+      });
+
       return statusCol
         ? {
             label: mn,
             status: statusCol,
             tt: ttCol || null,
             tarikh: tarikhCol || null,
+            rosak: rosakCol || null,
           }
         : null;
+
     })
     .filter(Boolean);
 };
@@ -1303,11 +1319,20 @@ export default function App() {
     return anyWithTT ? anyWithTT.tt : null;
   }, [filterBulanDipilih, selectedMonthColumns, monthlyColumns]);
 
+  const activeRosakCol = useMemo(() => {
+    if (filterBulanDipilih.length > 0 && selectedMonthColumns.length > 0)
+      return selectedMonthColumns[0].rosak;
+    const semasaCol = monthlyColumns.find((mc) => mc.label === 'SEMASA 2026');
+    if (semasaCol && semasaCol.rosak) return semasaCol.rosak;
+    const anyWithRosak = monthlyColumns.find((mc) => mc.rosak);
+    return anyWithRosak ? anyWithRosak.rosak : null;
+  }, [filterBulanDipilih, selectedMonthColumns, monthlyColumns]);
+
   const allStatusOptions = useMemo(
     () => [...Object.keys(STATUS_COLORS)].sort(),
     []
   );
-
+  
   const filteredData = useMemo(() => {
     let data = rawData;
     if (filterBulanDipilih.length > 0) {
@@ -1593,14 +1618,15 @@ export default function App() {
   }, [selectedMonthColumns]);
 
   const stats = useMemo(() => {
-    let b = 0,
-      r = 0,
-      ttCount = 0;
-    filteredData.forEach((d) => {
-      const s = normalizeStatus(d[activeStatusCol]);
-      if (s === 'BAIK') b++;
-      if (s === 'ROSAK') r++;
+    const statusCounts = {};
+    let ttCount = 0;
 
+    filteredData.forEach((d) => {
+      // Kira SEMUA status (bukan hanya BAIK & ROSAK)
+      const s = normalizeStatus(d[activeStatusCol]);
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
+
+      // Kira TT dibuka
       let hasTT = false;
       if (filterBulanDipilih.length > 0) {
         selectedMonthColumns.forEach((mc) => {
@@ -1625,7 +1651,12 @@ export default function App() {
       }
       if (hasTT) ttCount++;
     });
-    return { total: filteredData.length, baik: b, rosak: r, ttCount };
+
+    return {
+      total: filteredData.length,
+      statusCounts,     // { BAIK: 406, ROSAK: 68, ... }
+      ttCount,
+    };
   }, [
     filteredData,
     activeStatusCol,
@@ -3152,6 +3183,8 @@ export default function App() {
           ) : activeTab === 'dashboard' ? (
             <>
               {}
+
+
               <div
                 style={{
                   display: 'grid',
@@ -3162,49 +3195,48 @@ export default function App() {
                   zIndex: 1,
                 }}
               >
-                {[
-                  {
-                    label: 'Jumlah Aset',
-                    value: stats.total,
-                    color: '#1976d2',
-                    bg: isDarkMode
-                      ? 'rgba(25, 118, 210, 0.35)'
-                      : 'rgba(227, 242, 253, 0.85)',
-                    icon: Flame,
-                    sub:
-                      filteredData.length !== rawData.length
-                        ? `Ditapis dari ${rawData.length}`
-                        : 'Keseluruhan',
-                  },
-                  {
-                    label: 'Beroperasi (Baik)',
-                    value: stats.baik,
-                    color: '#2e7d32',
-                    bg: isDarkMode
-                      ? 'rgba(46, 125, 50, 0.35)'
-                      : 'rgba(232, 245, 233, 0.85)',
-                    icon: BadgeCheck,
-                    sub: `${
-                      stats.total > 0
-                        ? ((stats.baik / stats.total) * 100).toFixed(1)
-                        : 0
-                    }% | ${getBulanLabel()}`,
-                  },
-                  {
-                    label: 'Kerosakan',
-                    value: stats.rosak,
-                    color: '#c62828',
-                    bg: isDarkMode
-                      ? 'rgba(198, 40, 40, 0.35)'
-                      : 'rgba(255, 235, 238, 0.85)',
-                    icon: Siren,
-                    sub: `${
-                      stats.total > 0
-                        ? ((stats.rosak / stats.total) * 100).toFixed(1)
-                        : 0
-                    }% | ${getBulanLabel()}`,
-                  },
-                  {
+                {(() => {
+                  // Bina senarai kad: Jumlah Aset + Semua Status + TT
+                  const cards = [
+                    {
+                      label: 'Jumlah Aset',
+                      value: stats.total,
+                      color: '#1976d2',
+                      bg: isDarkMode
+                        ? 'rgba(25, 118, 210, 0.35)'
+                        : 'rgba(227, 242, 253, 0.85)',
+                      icon: Flame,
+                      sub:
+                        filteredData.length !== rawData.length
+                          ? `Ditapis dari ${rawData.length}`
+                          : 'Keseluruhan',
+                    },
+                  ];
+
+                  // Tambah kad untuk SETIAP status yang ada dalam data
+                  Object.entries(stats.statusCounts)
+                    .sort((a, b) => b[1] - a[1]) // susun ikut kekerapan
+                    .forEach(([statusName, count]) => {
+                      const color = STATUS_COLORS[statusName] || '#607D8B';
+                      const Icon = STATUS_ICONS[statusName] || HelpCircle;
+                      const pct =
+                        stats.total > 0
+                          ? ((count / stats.total) * 100).toFixed(1)
+                          : 0;
+                      cards.push({
+                        label: statusName,
+                        value: count,
+                        color: color,
+                        bg: isDarkMode
+                          ? `${color}55`
+                          : `${color}22`,
+                        icon: Icon,
+                        sub: `${pct}% dari jumlah`,
+                      });
+                    });
+
+                  // Tambah kad TT Dibuka sebagai info tambahan
+                  cards.push({
                     label: 'TT Yang Dibuka',
                     value: stats.ttCount,
                     color: '#6a1b9a',
@@ -3217,8 +3249,12 @@ export default function App() {
                         ? ((stats.ttCount / stats.total) * 100).toFixed(1)
                         : 0
                     }% Rekod Mempunyai TT`,
-                  },
-                ].map((s, i) => (
+                  });
+
+                  return cards;
+                })().map((s, i) => (
+
+
                   <div
                     key={i}
                     style={{
@@ -3800,12 +3836,16 @@ export default function App() {
                             monthlyHeaders.push(`STATUS ${mc.label}`);
                             monthlyHeaders.push(`TARIKH UJIAN ${mc.label}`);
                             monthlyHeaders.push(`TT DIBUKA ${mc.label}`);
+                            monthlyHeaders.push(`KEROSAKAN ${mc.label}`);
                           });
                         } else {
                           monthlyHeaders.push('STATUS');
                           monthlyHeaders.push('TARIKH UJIAN');
                           monthlyHeaders.push('TT YANG DIBUKA');
+                          monthlyHeaders.push('KEROSAKAN SEMASA');
                         }
+
+
                         return [...baseHeaders, ...monthlyHeaders, 'REG NO.'];
                       })().map((h) => (
                         <th
@@ -3941,6 +3981,16 @@ export default function App() {
                             selectedMonthColumns.map((mc) => {
                               const ttVal =
                                 mc.tt && d[mc.tt] ? d[mc.tt].trim() : '';
+                              const rosakVal =
+                                mc.rosak && d[mc.rosak]
+                                  ? d[mc.rosak].trim()
+                                  : '';
+                              const hasRosak =
+                                rosakVal &&
+                                rosakVal !== '' &&
+                                rosakVal !== '-' &&
+                                rosakVal !== 'TIADA' &&
+                                rosakVal !== '0';
                               return (
                                 <React.Fragment key={mc.label}>
                                   <td style={{ padding: '8px 12px' }}>
@@ -3988,10 +4038,27 @@ export default function App() {
                                   >
                                     {ttVal || '—'}
                                   </td>
+                                  {/* KOLUM BARU: KEROSAKAN */}
+                                  <td
+                                    style={{
+                                      padding: '8px 12px',
+                                      fontSize: '11px',
+                                      fontWeight: hasRosak ? '700' : '500',
+                                      color: hasRosak
+                                        ? isDarkMode
+                                          ? '#e57373'
+                                          : '#c62828'
+                                        : theme.textSecondary,
+                                      textAlign: 'center',
+                                    }}
+                                  >
+                                    {hasRosak ? rosakVal : '—'}
+                                  </td>
                                 </React.Fragment>
                               );
                             })
                           ) : (
+
                             <>
                               <td style={{ padding: '8px 12px' }}>
                                 <StatusBadge
@@ -4042,8 +4109,46 @@ export default function App() {
                                   ? d[activeTTCol]
                                   : '—'}
                               </td>
+                              {/* KOLUM BARU: KEROSAKAN */}
+                              <td
+                                style={{
+                                  padding: '8px 12px',
+                                  fontSize: '11px',
+                                  fontWeight:
+                                    activeRosakCol &&
+                                    d[activeRosakCol] &&
+                                    d[activeRosakCol].trim() !== '' &&
+                                    d[activeRosakCol].trim() !== '-' &&
+                                    d[activeRosakCol].trim() !== 'TIADA' &&
+                                    d[activeRosakCol].trim() !== '0'
+                                      ? '700'
+                                      : '500',
+                                  color:
+                                    activeRosakCol &&
+                                    d[activeRosakCol] &&
+                                    d[activeRosakCol].trim() !== '' &&
+                                    d[activeRosakCol].trim() !== '-' &&
+                                    d[activeRosakCol].trim() !== 'TIADA' &&
+                                    d[activeRosakCol].trim() !== '0'
+                                      ? isDarkMode
+                                        ? '#e57373'
+                                        : '#c62828'
+                                      : theme.textSecondary,
+                                  textAlign: 'center',
+                                }}
+                              >
+                                {activeRosakCol &&
+                                d[activeRosakCol] &&
+                                d[activeRosakCol].trim() !== '' &&
+                                d[activeRosakCol].trim() !== '-' &&
+                                d[activeRosakCol].trim() !== 'TIADA' &&
+                                d[activeRosakCol].trim() !== '0'
+                                  ? d[activeRosakCol]
+                                  : '—'}
+                              </td>
                             </>
-                          )}
+                            
+                            )}
                           <td
                             style={{
                               padding: '8px 12px',
