@@ -1332,7 +1332,7 @@ export default function App() {
     () => [...Object.keys(STATUS_COLORS)].sort(),
     []
   );
-  
+
   const filteredData = useMemo(() => {
     let data = rawData;
     if (filterBulanDipilih.length > 0) {
@@ -4309,9 +4309,6 @@ export default function App() {
                 justifyContent: 'center',
               }}
             >
-              <Flame
-                style={{ width: '16px', height: '16px', color: '#1976d2' }}
-              />
               <p
                 style={{
                   fontSize: '13px',
@@ -4326,7 +4323,7 @@ export default function App() {
                 JOHOR
               </p>
             </div>
-
+            
             <p
               style={{
                 fontSize: '12px',
@@ -4339,37 +4336,6 @@ export default function App() {
               © 2026 PGO JOHOR | Hak Cipta Terpelihara
             </p>
 
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: '20px',
-                backgroundColor: isDarkMode
-                  ? 'rgba(25, 118, 210, 0.2)'
-                  : 'rgba(25, 118, 210, 0.08)',
-                border: `1px solid ${
-                  isDarkMode
-                    ? 'rgba(25, 118, 210, 0.4)'
-                    : 'rgba(25, 118, 210, 0.25)'
-                }`,
-                marginTop: '2px',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '11px',
-                  color: '#1976d2',
-                  margin: 0,
-                  fontWeight: '800',
-                  letterSpacing: '0.0px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {/*PEMBANGUN APLIKASI: PB MOHAMAD AIDIL*/}
-              </p>
-            </div>
           </div>
         </footer>
       </div>
