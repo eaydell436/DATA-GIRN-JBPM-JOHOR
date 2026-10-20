@@ -2497,12 +2497,12 @@ export default function App() {
                   textDecoration: 'none',
                 }}
               >
-                <ChevronLeft
+                  <ChevronLeft
                   style={{ width: '15px', height: '15px', color: '#1976d2' }}
                 />{' '}
-                Kembali
+                Menu Utama
               </a>
-              <button
+                <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 style={{
                   padding: '8px 14px',
